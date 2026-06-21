@@ -155,17 +155,18 @@ export class Level2 {
   }
 
   // Renders a great circle segment by segment (with depth shading)
-  drawGreatCircle(u, v, label, color, opacity = 1.0, isDashed = false) {
+  drawGreatCircle(u, v, label, color, opacity = 1.0, isDashed = false, customRadius = null) {
     const ctx = this.ctx;
     const segments = 120;
     const points = [];
+    const r = customRadius || this.radius;
 
     for (let i = 0; i <= segments; i++) {
       const theta = (i / segments) * Math.PI * 2;
       const rawPt = {
-        x: this.radius * (Math.cos(theta) * u.x + Math.sin(theta) * v.x),
-        y: this.radius * (Math.cos(theta) * u.y + Math.sin(theta) * v.y),
-        z: this.radius * (Math.cos(theta) * u.z + Math.sin(theta) * v.z)
+        x: r * (Math.cos(theta) * u.x + Math.sin(theta) * v.x),
+        y: r * (Math.cos(theta) * u.y + Math.sin(theta) * v.y),
+        z: r * (Math.cos(theta) * u.z + Math.sin(theta) * v.z)
       };
       const opt = this.transformPoint(rawPt);
       points.push(this.project(opt.x, opt.y, opt.z));
@@ -333,6 +334,73 @@ export class Level2 {
     const radInc = this.inclination * (Math.PI / 180);
     const radRot = this.earthRotation * (Math.PI / 180);
 
+    const rSky = this.radiusSky;
+    const cx2 = this.cx2;
+    const cy2 = this.cy2;
+
+    // Define Unit Vectors of Observer Frame in Celestial Sphere
+    const uZ = { x: Math.cos(radLat) * Math.cos(radRot), y: -Math.sin(radLat), z: Math.cos(radLat) * Math.sin(radRot) };
+    const uN = { x: Math.sin(radLat) * Math.cos(radRot), y: Math.cos(radLat), z: Math.sin(radLat) * Math.sin(radRot) };
+    const uE = { x: -Math.sin(radRot), y: 0, z: Math.cos(radRot) };
+
+    // Function to project celestial 3D coordinates into local Alt-Az Sky Dome
+    const projectLocal = (P) => {
+      // Normalize P to get unit direction vector components
+      const pMag = Math.hypot(P.x, P.y, P.z);
+      if (pMag < 0.001) return null;
+      const px = P.x / pMag;
+      const py = P.y / pMag;
+      const pz = P.z / pMag;
+
+      // Dot products to find components along Zenith, North, East axes
+      const zLoc = (px * uZ.x + py * uZ.y + pz * uZ.z);
+      const yLoc = (px * uN.x + py * uN.y + pz * uN.z);
+      const xLoc = (px * uE.x + py * uE.y + pz * uE.z);
+
+      if (zLoc < -0.05) return null; // Below horizon (with slight margin)
+
+      // Angular distance from zenith (zenith distance)
+      const zDist = Math.acos(Math.max(-1, Math.min(1, zLoc))); // 0 (zenith) to PI/2 (horizon)
+      const d = rSky * (zDist / (Math.PI / 2));
+
+      // 2D position in Alt-Az circle: North is top (-y), East is left (-x)
+      const r2d = Math.hypot(xLoc, yLoc);
+      const ux = r2d > 0 ? xLoc / r2d : 0;
+      const uy = r2d > 0 ? yLoc / r2d : 0;
+
+      return {
+        x: cx2 - d * ux,
+        y: cy2 - d * uy,
+        alt: (90 - zDist * 180 / Math.PI),
+        visible: zLoc >= 0
+      };
+    };
+
+    // Function to project celestial 3D coordinates into local Alt-Az Sky Dome (no horizon clipping for angle calculations)
+    const projectLocalNoClip = (P) => {
+      const pMag = Math.hypot(P.x, P.y, P.z);
+      if (pMag < 0.001) return null;
+      const px = P.x / pMag;
+      const py = P.y / pMag;
+      const pz = P.z / pMag;
+
+      const zLoc = (px * uZ.x + py * uZ.y + pz * uZ.z);
+      const yLoc = (px * uN.x + py * uN.y + pz * uN.z);
+      const xLoc = (px * uE.x + py * uE.y + pz * uE.z);
+
+      const zDist = Math.acos(Math.max(-1, Math.min(1, zLoc)));
+      const d = rSky * (zDist / (Math.PI / 2));
+
+      const r2d = Math.hypot(xLoc, yLoc);
+      const ux = r2d > 0 ? xLoc / r2d : 0;
+      const uy = r2d > 0 ? yLoc / r2d : 0;
+
+      return {
+        x: cx2 - d * ux,
+        y: cy2 - d * uy
+      };
+    };
+
     // Celestial Equator (Green) - fixed
     const eqU = { x: 1, y: 0, z: 0 };
     const eqV = { x: 0, y: 0, z: 1 };
@@ -347,7 +415,8 @@ export class Level2 {
     const totalTilt = radOb + radInc;
     const orbU = { x: Math.cos(totalTilt), y: -Math.sin(totalTilt), z: 0 };
     const orbV = { x: 0, y: 0, z: 1 };
-    this.drawGreatCircle(orbU, orbV, 'Moon\'s Inclined Orbit', '#06b6d4', 0.7);
+    const moonOrbRadius = this.radius * 0.45;
+    this.drawGreatCircle(orbU, orbV, 'Moon\'s Inclined Orbit', '#06b6d4', 0.7, false, moonOrbRadius);
 
     // Horizon (Grey/White) - Rotates around polar Y-axis with Earth self-rotation
     const horU_0 = { x: Math.sin(radLat), y: Math.cos(radLat), z: 0 };
@@ -528,9 +597,9 @@ export class Level2 {
     const sunLoc = this.transformPoint({ x: sun3D.x * this.radius, y: sun3D.y * this.radius, z: sun3D.z * this.radius });
     const pSun = this.project(sunLoc.x, sunLoc.y, sunLoc.z);
 
-    // Draw Sun in 3D sphere
+    // Draw Sun in 3D sphere (Larger size)
     ctx.beginPath();
-    ctx.arc(pSun.x, pSun.y, 9, 0, Math.PI * 2);
+    ctx.arc(pSun.x, pSun.y, 15, 0, Math.PI * 2);
     ctx.fillStyle = '#fbbf24';
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
@@ -538,7 +607,7 @@ export class Level2 {
     ctx.stroke();
     ctx.fillStyle = '#fbbf24';
     ctx.font = '600 12px Outfit';
-    ctx.fillText('Sun', pSun.x + 12, pSun.y + 4);
+    ctx.fillText('Sun', pSun.x + 18, pSun.y + 4);
 
     // Moon Position along its orbit (3D Vector)
     const moonRad = this.moonLongitude * (Math.PI / 180);
@@ -547,7 +616,7 @@ export class Level2 {
       y: Math.cos(moonRad) * orbU.y + Math.sin(moonRad) * orbV.y,
       z: Math.cos(moonRad) * orbU.z + Math.sin(moonRad) * orbV.z
     };
-    const moonLoc = this.transformPoint({ x: moon3D.x * this.radius, y: moon3D.y * this.radius, z: moon3D.z * this.radius });
+    const moonLoc = this.transformPoint({ x: moon3D.x * moonOrbRadius, y: moon3D.y * moonOrbRadius, z: moon3D.z * moonOrbRadius });
     const pMoon = this.project(moonLoc.x, moonLoc.y, moonLoc.z);
 
     // Helper to normalize angle to [0, 360)
@@ -555,19 +624,53 @@ export class Level2 {
     const sNorm = norm(this.sunLongitude);
     const mNorm = norm(this.moonLongitude);
     
+    // Topocentric positions for local observer view (with parallax shift)
+    const obsRE = 45; // virtual Earth radius for topocentric parallax
+    const obsPos = {
+      x: zenith.x * obsRE,
+      y: zenith.y * obsRE,
+      z: zenith.z * obsRE
+    };
+
+    const sunVec = {
+      x: sun3D.x * this.radius - obsPos.x,
+      y: sun3D.y * this.radius - obsPos.y,
+      z: sun3D.z * this.radius - obsPos.z
+    };
+
+    const moonVec = {
+      x: moon3D.x * moonOrbRadius - obsPos.x,
+      y: moon3D.y * moonOrbRadius - obsPos.y,
+      z: moon3D.z * moonOrbRadius - obsPos.z
+    };
+
+    const localSun = projectLocal(sunVec);
+    const localMoon = projectLocal(moonVec);
+
     // Solar Eclipse: Conjunction at nodes (90 or 270)
     const isSolarNode = Math.abs(sNorm - 90) < 4 || Math.abs(sNorm - 270) < 4;
     const diff = Math.abs(sNorm - mNorm);
     const isSolarAligned = diff < 4 || diff > 356;
-    const isSolarEclipse = isSolarNode && isSolarAligned;
+    const isCelestialSolar = isSolarNode && isSolarAligned;
+
+    // Solar Eclipse occurs only when the disks overlap in the local sky view (dist < 4.5px)
+    let isSolarEclipse = false;
+    if (isCelestialSolar && localSun && localMoon && localSun.visible && localMoon.visible) {
+      const dx = localSun.x - localMoon.x;
+      const dy = localSun.y - localMoon.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 4.5) {
+        isSolarEclipse = true;
+      }
+    }
     
     // Lunar Eclipse: Opposition at nodes (90 and 270)
     const isLunarEclipse = (Math.abs(sNorm - 90) < 4 && Math.abs(mNorm - 270) < 4) || 
                            (Math.abs(sNorm - 270) < 4 && Math.abs(mNorm - 90) < 4);
 
-    // Draw Moon in 3D sphere
+    // Draw Moon in 3D sphere (Smaller size)
     ctx.beginPath();
-    ctx.arc(pMoon.x, pMoon.y, 8, 0, Math.PI * 2);
+    ctx.arc(pMoon.x, pMoon.y, 5, 0, Math.PI * 2);
     ctx.fillStyle = isLunarEclipse ? '#ea580c' : '#22d3ee';
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
@@ -575,7 +678,7 @@ export class Level2 {
     ctx.stroke();
     ctx.fillStyle = '#ffffff';
     ctx.font = '600 12px Outfit';
-    ctx.fillText(isLunarEclipse ? 'Moon (Eclipse)' : 'Moon', pMoon.x + 12, pMoon.y + 4);
+    ctx.fillText(isLunarEclipse ? 'Moon (Eclipse)' : 'Moon', pMoon.x + 10, pMoon.y + 4);
 
     // Center Earth and lines
     const pCenter = this.project(0, 0, 0);
@@ -595,9 +698,9 @@ export class Level2 {
     ctx.strokeStyle = '#ffffff';
     ctx.stroke();
 
-    // Draw Earth's shadow umbra opposite to the Sun in the 3D sphere
+    // Draw Earth's shadow umbra opposite to the Sun in the 3D sphere (positioned at Moon's orbit)
     const shadow3D = { x: -sun3D.x, y: -sun3D.y, z: -sun3D.z };
-    const shadowLoc = this.transformPoint({ x: shadow3D.x * this.radius, y: shadow3D.y * this.radius, z: shadow3D.z * this.radius });
+    const shadowLoc = this.transformPoint({ x: shadow3D.x * moonOrbRadius, y: shadow3D.y * moonOrbRadius, z: shadow3D.z * moonOrbRadius });
     const pShadow = this.project(shadowLoc.x, shadowLoc.y, shadowLoc.z);
 
     ctx.save();
@@ -655,54 +758,8 @@ export class Level2 {
     // -------------------------------------------------------------
     // OBSERVER'S SKY DOME (RIGHT VIEW)
     // -------------------------------------------------------------
-    const rSky = this.radiusSky;
-    const cx2 = this.cx2;
-    const cy2 = this.cy2;
-
-    // Define Unit Vectors of Observer Frame in Celestial Sphere
-    const uZ = { x: Math.cos(radLat) * Math.cos(radRot), y: -Math.sin(radLat), z: Math.cos(radLat) * Math.sin(radRot) };
-    const uN = { x: Math.sin(radLat) * Math.cos(radRot), y: Math.cos(radLat), z: Math.sin(radLat) * Math.sin(radRot) };
-    const uE = { x: -Math.sin(radRot), y: 0, z: Math.cos(radRot) };
-
-    // Function to project celestial 3D coordinates into local Alt-Az Sky Dome
-    const projectLocal = (P) => {
-      // Normalize P to get unit direction vector components
-      const pMag = Math.hypot(P.x, P.y, P.z);
-      if (pMag < 0.001) return null;
-      const px = P.x / pMag;
-      const py = P.y / pMag;
-      const pz = P.z / pMag;
-
-      // Dot products to find components along Zenith, North, East axes
-      const zLoc = (px * uZ.x + py * uZ.y + pz * uZ.z);
-      const yLoc = (px * uN.x + py * uN.y + pz * uN.z);
-      const xLoc = (px * uE.x + py * uE.y + pz * uE.z);
-
-      if (zLoc < -0.05) return null; // Below horizon (with slight margin)
-
-      // Angular distance from zenith (zenith distance)
-      const zDist = Math.acos(Math.max(-1, Math.min(1, zLoc))); // 0 (zenith) to PI/2 (horizon)
-      const d = rSky * (zDist / (Math.PI / 2));
-
-      // 2D position in Alt-Az circle: North is top (-y), East is left (-x)
-      const r2d = Math.hypot(xLoc, yLoc);
-      const ux = r2d > 0 ? xLoc / r2d : 0;
-      const uy = r2d > 0 ? yLoc / r2d : 0;
-
-      return {
-        x: cx2 - d * ux,
-        y: cy2 - d * uy,
-        alt: (90 - zDist * 180 / Math.PI),
-        visible: zLoc >= 0
-      };
-    };
-
-    // Project Sun in local sky
-    const localSun = projectLocal({ x: sun3D.x * this.radius, y: sun3D.y * this.radius, z: sun3D.z * this.radius });
-
-    // Calculate Sun's altitude for background color
-    const sunAltRad = Math.asin(sun3D.x * uZ.x + sun3D.y * uZ.y + sun3D.z * uZ.z);
-    const sunAltDeg = sunAltRad * 180 / Math.PI;
+    // Calculate Sun's topocentric altitude for background color
+    const sunAltDeg = (localSun && localSun.visible) ? localSun.alt : -90;
 
     // Draw Sky Dome background based on Sun altitude (Day/Twilight/Night)
     ctx.save();
@@ -904,21 +961,10 @@ export class Level2 {
       ctx.fillText('Sun', localSun.x, localSun.y - 12);
     }
 
-    // Project and Draw Moon (with correct phase & orientation) in local sky
-    const localMoon = projectLocal({ x: moon3D.x * this.radius, y: moon3D.y * this.radius, z: moon3D.z * this.radius });
+    // Draw Moon (with correct phase & orientation) in local sky
     if (localMoon && localMoon.visible) {
-      // Project the Sun's direction vector to find the angle on the planisphere screen
-      const zLoc = (sun3D.x * uZ.x + sun3D.y * uZ.y + sun3D.z * uZ.z);
-      const yLoc = (sun3D.x * uN.x + sun3D.y * uN.y + sun3D.z * uN.z);
-      const xLoc = (sun3D.x * uE.x + sun3D.y * uE.y + sun3D.z * uE.z);
-      const zDist = Math.acos(Math.max(-1, Math.min(1, zLoc)));
-      const d = rSky * (zDist / (Math.PI / 2));
-      const r2d = Math.hypot(xLoc, yLoc);
-      const ux = r2d > 0 ? xLoc / r2d : 0;
-      const uy = r2d > 0 ? yLoc / r2d : 0;
-      const sunX = cx2 - d * ux;
-      const sunY = cy2 - d * uy;
-      const angleToSun = Math.atan2(sunY - localMoon.y, sunX - localMoon.x);
+      const sunProj = projectLocalNoClip(sunVec);
+      const angleToSun = sunProj ? Math.atan2(sunProj.y - localMoon.y, sunProj.x - localMoon.x) : 0;
 
       this.drawMoonPhase(ctx, localMoon.x, localMoon.y, 7, moon3D, sun3D, angleToSun, isLunarEclipse, isSolarEclipse);
       
