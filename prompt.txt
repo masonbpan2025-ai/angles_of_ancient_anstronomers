@@ -1,0 +1,44 @@
+Act as a Principal Software Architect and Lead JavaScript Game Developer. 
+
+I am building a web-based educational game tracking historical astronomical breakthroughs. The game uses a "Hub and Spoke" architecture:
+1. The Hub: A persistent 3D interactive solar system (built using Three.js) acting as a level-selection screen. Planets orbit, and clicking a level pans the camera to focus on a celestial body.
+2. The Spokes: Level-specific geometric puzzles. When entering a level, the 3D Hub system overlays or swaps rendering contexts to launch a focused mini-game (which can be 2D HTML5 Canvas or a dedicated Three.js scene).
+
+Project Roadmap for Architecture Planning:
+* Level 1: Eratosthenes (2D Canvas shadow geometry - Earth focus)
+* Level 2: Aristarchus (2D/3D lunar eclipse alignment - Earth/Moon focus)
+* Level 3: Ptolemy (3D diurnal parallax observation - Earth rotation focus)
+* Level 4: Copernicus & Kepler (3D inner solar system scaling - Sun/Orbit focus)
+* Level 5: Transit of Venus (3D micro-angle simulation - Earth/Venus/Sun focus)
+
+Your Task:
+Set up the complete boilerplate architecture, the global state management, the 3D Solar System Hub view, and fully implement the transition into Level 1 (Eratosthenes). Do not placeholders for the core mechanics.
+
+Architectural Requirements:
+1. Directory Structure: Plan a clean modular structure (e.g., /core, /scenes, /levels, /ui).
+2. State Management: Implement a global `GameState` object that tracks player progress, unlocked levels, active level, and custom level parameters.
+3. Scene Switching (Hub <-> Spoke): Design a clean transition system. When a level starts, the main 3D solar system animation loop should pause, its canvas should be hidden or faded, and the level-specific rendering engine should mount. On level completion, the level environment must be gracefully destroyed/cleaned up from memory, and the 3D solar system should resume, animating the camera to the next target.
+
+Implementation Specifications for Phase 1:
+
+A. The 3D Hub (Three.js)
+* Render the Sun and all planets.
+* Include visible orbital paths and active orbital animation loops.
+* Create good illumination effect so that we can clearly see effects like eclipse
+* Create a floating HTML UI overlay that lists the levels.
+* Clicking a level button must smoothly animate the Three.js camera (using lerp or a tweening mechanism) to focus directly on the target planet (e.g., Earth for Level 1).
+
+B. Level 1 Spoke (Eratosthenes - 2D Canvas)
+* Triggered when the user clicks "Launch Puzzle" after focusing on Earth.
+* Fades out the 3D Hub and mounts a 2D Canvas showing a cross-section of Earth.
+* Visuals: Show two distinct positions on Earth (Syene and Alexandria) with incoming parallel solar rays.
+* Write a short description to help users understand the background
+* Interactive Mechanics referencing the story in https://www.eg.bucknell.edu/physics/astronomy/astr101/specials/eratosthenes.html:
+  1. The player clicks to place a vertical obelisk in Alexandria.
+  2. The game casts a shadow behind the obelisk matching the angle of the solar ray.
+  3. Provide an interactive protractor tool that the player can drag and rotate to measure the shadow's interior angle (7.2 degrees).
+  4. Display the physical distance between the cities (5,000 stadia / 800 km).
+  5. Provide a text/numerical input field where the student uses the angular ratio to calculate the Earth's full circumference ($360 / 7.2 \times 800\text{ km} = 40,000\text{ km}$).
+* Win State: Validating the correct entry unlocks Level 2 in the global state, destroys the 2D canvas, unpauses the 3D Hub, and returns the camera to an overview mode.
+
+Provide the complete, integrated production-ready codebase (HTML, CSS, and modular vanilla JavaScript) to run this architectural prototype.
