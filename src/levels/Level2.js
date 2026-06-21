@@ -625,11 +625,15 @@ export class Level2 {
     const mNorm = norm(this.moonLongitude);
     
     // Topocentric positions for local observer view (with parallax shift)
+    // We use a virtual equator observer (latitude = 0) for parallax vectors to eliminate
+    // North-South separation at transit while retaining East-West self-rotation parallax.
     const obsRE = 45; // virtual Earth radius for topocentric parallax
+    const zenithPara_0 = { x: 1, y: 0, z: 0 };
+    const zenithPara = this.rotateY(zenithPara_0, radRot);
     const obsPos = {
-      x: zenith.x * obsRE,
-      y: zenith.y * obsRE,
-      z: zenith.z * obsRE
+      x: zenithPara.x * obsRE,
+      y: zenithPara.y * obsRE,
+      z: zenithPara.z * obsRE
     };
 
     const sunVec = {
