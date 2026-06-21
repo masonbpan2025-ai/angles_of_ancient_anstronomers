@@ -33,32 +33,32 @@ export class Level3 {
     this.animate = this.animate.bind(this);
     this.animationId = requestAnimationFrame(this.animate);
   }
-
   resize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     
-    const leftMargin = 410;
-    const rightMargin = 30;
-    const availableWidth = Math.max(300, this.canvas.width - leftMargin - rightMargin);
+    // The divider is at 410px. Left of 410px is the left panel (above) + parameter panel (below).
+    // Right of 410px is the right Alt-Az Sky Dome.
+    this.dividerX = 410;
     
-    this.dividerX = leftMargin + availableWidth * 0.5;
+    // Left Celestial Sphere center (centered in the 410px wide column, in the top half)
+    this.cx1 = 210;
+    this.cy1 = this.canvas.height * 0.28;
     
-    // Position both views centered in their respective halves
-    this.cx1 = leftMargin + availableWidth * 0.25;
-    this.cy1 = this.canvas.height / 2 + 10;
+    // Left Celestial Sphere radius: make it smaller (e.g., 105px) so it sits above the parameter panel (which is at the bottom)
+    this.radius = Math.min(105, (this.canvas.height * 0.28) - 30);
+    if (this.radius < 90) this.radius = 90;
     
-    this.cx2 = leftMargin + availableWidth * 0.75;
-    this.cy2 = this.canvas.height / 2 + 10;
+    // Right Alt-Az Sky Dome center (centered in the remaining right half, vertically centered)
+    const rightWidth = Math.max(300, this.canvas.width - this.dividerX - 30);
+    this.cx2 = this.dividerX + rightWidth * 0.5;
+    this.cy2 = this.canvas.height / 2;
     
-    // Spheres scale radii - optimized for size and screen limits
-    this.radius = Math.min(availableWidth * 0.22, (this.canvas.height - 80) * 0.5);
-    if (this.radius < 120) this.radius = 120;
-    if (this.radius > 260) this.radius = 260;
-    
-    this.radiusSky = this.radius * 0.95;
+    // Right Alt-Az Sky Dome radius: can be larger as it has the whole height/width of the right side
+    this.radiusSky = Math.min(rightWidth * 0.42, (this.canvas.height - 80) * 0.42);
+    if (this.radiusSky < 120) this.radiusSky = 120;
+    if (this.radiusSky > 250) this.radiusSky = 250;
   }
-
   onPointerDown(e) {
     // Only drag to rotate if clicking on the left 3D panel
     if (e.clientX > this.dividerX) return;
@@ -739,9 +739,12 @@ export class Level3 {
       const zDist = this.latitude - (this.obliquity + this.inclination);
       this.drawArc(zenith, moon3D, '#ef4444', `z = ${zDist.toFixed(2)}°`);
     } else {
+      ctx.save();
       ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-      ctx.font = 'italic 11px Outfit';
-      ctx.fillText('*Align Sun & Moon transiting Meridian (Noon, Solstice) to show angles', this.cx1 - 180, this.cy1 + this.radius + 25);
+      ctx.font = 'italic 9.5px Outfit';
+      ctx.textAlign = 'center';
+      ctx.fillText('*Align Sun & Moon transiting Meridian to show angles', this.cx1, this.cy1 + this.radius + 18);
+      ctx.restore();
     }
 
     // Bounding 3D circle

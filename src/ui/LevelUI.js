@@ -64,7 +64,8 @@ export class LevelUI {
     let activeTab = 'babylonian';
 
     this.container.innerHTML = `
-      <div class="absolute top-10 left-10 w-[440px] max-h-[calc(100%-80px)] overflow-y-auto bg-white/95 backdrop-blur-md border border-slate-200/80 p-6 rounded-2xl shadow-xl pointer-events-auto flex flex-col gap-5 text-slate-800" style="z-index: 100;">
+      <!-- Left sidebar card -->
+      <div class="absolute top-6 left-6 w-[420px] max-h-[calc(100%-48px)] overflow-y-auto bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-2xl shadow-xl pointer-events-auto flex flex-col gap-4 text-slate-800" style="z-index: 100;">
         <div class="flex justify-between items-center">
           <h2 class="text-xl font-bold text-slate-900 tracking-tight">Calendar Systems</h2>
           <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition" id="exit-btn">Exit to Orbit</button>
@@ -93,69 +94,6 @@ export class LevelUI {
           </div>
         </div>
 
-        <!-- Legend -->
-        <div class="bg-slate-50 border border-slate-100 rounded-xl p-3 flex wrap gap-2 items-center justify-around text-[10px]">
-          <div class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
-            <span class="font-medium text-slate-600">Sun Path</span>
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-            <span class="font-medium text-slate-600">Moon Path</span>
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-gray-400"></span>
-            <span class="font-medium text-slate-600">Equator</span>
-          </div>
-        </div>
-
-        <!-- Dashboard 2x2 Grid -->
-        <div class="grid grid-cols-2 gap-2.5">
-          <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex flex-col">
-            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Day of Year</span>
-            <span id="dash-day" class="text-sm font-bold text-slate-800 mt-0.5">172.0</span>
-          </div>
-          <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex flex-col">
-            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Sun Peak Alt</span>
-            <span id="dash-sun-alt" class="text-sm font-bold text-slate-800 mt-0.5">72.4°</span>
-          </div>
-          <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex flex-col">
-            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Moon Peak Alt</span>
-            <span id="dash-moon-alt" class="text-sm font-bold text-slate-800 mt-0.5">40.1°</span>
-          </div>
-          <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex flex-col">
-            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Moon Boundary</span>
-            <span id="dash-moon-path" class="text-[11px] font-bold text-slate-600 mt-0.5">Within boundaries</span>
-          </div>
-        </div>
-
-        <!-- Sliders -->
-        <div class="flex flex-col gap-3.5">
-          <div class="flex flex-col gap-1">
-            <div class="flex justify-between text-[11px] font-bold text-slate-600">
-              <span>Day of Year:</span>
-              <span id="slider-day-val" class="text-blue-600">172.0</span>
-            </div>
-            <input type="range" id="slider-day" min="0" max="365" step="0.1" value="172" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <div class="flex justify-between text-[11px] font-bold text-slate-600">
-              <span>Time of Day (Hours):</span>
-              <span id="slider-time-val" class="text-blue-600">12.0</span>
-            </div>
-            <input type="range" id="slider-time" min="0" max="24" step="0.1" value="12" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <div class="flex justify-between text-[11px] font-bold text-slate-600">
-              <span>Latitude:</span>
-              <span id="slider-lat-val" class="text-blue-600">41°</span>
-            </div>
-            <input type="range" id="slider-lat" min="0" max="90" step="1" value="41" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-          </div>
-        </div>
-
         <!-- Sub-tasks Checklist -->
         <div class="border-t border-slate-100 pt-3.5 flex flex-col gap-1.5">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Calendar Sub-tasks:</span>
@@ -179,6 +117,77 @@ export class LevelUI {
 
         <!-- Final Unlock Button -->
         <button id="final-submit-btn" disabled class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold transition cursor-not-allowed text-xs border border-slate-200">Verify & Unlock Next Level</button>
+      </div>
+
+      <!-- Right parameter panel (horizontal, placed bottom-right below the canvas) -->
+      <div class="absolute bottom-6 right-6 left-[460px] bg-white/95 backdrop-blur-md border border-slate-200/80 p-4 rounded-2xl shadow-xl pointer-events-auto flex flex-col gap-3 text-slate-800" style="z-index: 100;">
+        <div class="flex gap-4">
+          <!-- Left side of parameter panel: Legend & Dashboard -->
+          <div class="w-[45%] flex flex-col gap-2.5">
+            <!-- Legend -->
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex justify-around items-center text-[10px] gap-1.5">
+              <div class="flex items-center gap-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span class="font-medium text-slate-600">Sun Path</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="w-2.5 h-2.5 rounded-full border border-slate-300" style="background: linear-gradient(90deg, #ffffff 50%, #1e293b 50%);"></span>
+                <span class="font-medium text-slate-600">Moon Path</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                <span class="font-medium text-slate-600">Equator</span>
+              </div>
+            </div>
+
+            <!-- Dashboard 2x2 Grid -->
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
+                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Day of Year</span>
+                <span id="dash-day" class="text-xs font-bold text-slate-800 mt-0.5">172.0</span>
+              </div>
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
+                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Sun Peak Alt</span>
+                <span id="dash-sun-alt" class="text-xs font-bold text-slate-800 mt-0.5">72.4°</span>
+              </div>
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
+                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Moon Peak Alt</span>
+                <span id="dash-moon-alt" class="text-xs font-bold text-slate-800 mt-0.5">40.1°</span>
+              </div>
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
+                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Moon Boundary</span>
+                <span id="dash-moon-path" class="text-[10px] font-bold text-slate-600 mt-0.5 truncate">Within boundaries</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right side of parameter panel: Sliders -->
+          <div class="w-[55%] flex flex-col justify-between py-1 gap-2">
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between text-[10px] font-bold text-slate-600">
+                <span>Day of Year:</span>
+                <span id="slider-day-val" class="text-blue-600">172.0</span>
+              </div>
+              <input type="range" id="slider-day" min="0" max="365" step="0.1" value="172" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between text-[10px] font-bold text-slate-600">
+                <span>Time of Day (Hours):</span>
+                <span id="slider-time-val" class="text-blue-600">12.0</span>
+              </div>
+              <input type="range" id="slider-time" min="0" max="24" step="0.1" value="12" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between text-[10px] font-bold text-slate-600">
+                <span>Latitude:</span>
+                <span id="slider-lat-val" class="text-blue-600">41°</span>
+              </div>
+              <input type="range" id="slider-lat" min="0" max="90" step="1" value="41" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -337,7 +346,7 @@ export class LevelUI {
 
   renderLevel2() {
     this.container.innerHTML = `
-      <div class="level-panel" style="max-height: calc(100% - 80px); overflow-y: auto;">
+      <div class="level-panel">
         <h2>Eratosthenes' Experiment</h2>
         <div class="story-container">
           <p class="story-short">
@@ -416,7 +425,7 @@ export class LevelUI {
     };
 
     this.container.innerHTML = `
-      <div class="level-panel" style="max-height: calc(100% - 80px); overflow-y: auto;">
+      <div class="level-panel">
         <h2>Lunar Orbit Inclination</h2>
         <div class="story-container">
           <p class="story-short">
@@ -437,11 +446,11 @@ export class LevelUI {
           </div>
         </div>
 
-        <div class="instruction-box" style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="instruction-box" style="display: flex; flex-direction: column; gap: 6px;">
           <strong>Interactive Model Parameters:</strong>
           
           <div class="slider-group">
-            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px;">
               <span style="color: var(--text-main);">Moon Position (Longitude):</span>
               <span id="moon-long-val" style="color: var(--primary); font-weight: 600;">90°</span>
             </div>
@@ -449,7 +458,7 @@ export class LevelUI {
           </div>
 
           <div class="slider-group">
-            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px;">
               <span style="color: var(--text-main);">Sun Position (Longitude):</span>
               <span id="sun-long-val" style="color: var(--primary); font-weight: 600;">90°</span>
             </div>
@@ -457,7 +466,7 @@ export class LevelUI {
           </div>
 
           <div class="slider-group">
-            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px;">
               <span style="color: var(--text-main);">Earth Self-Rotation:</span>
               <span id="earth-rot-val" style="color: var(--primary); font-weight: 600;">0° (12:00 PM Noon)</span>
             </div>
@@ -465,28 +474,28 @@ export class LevelUI {
           </div>
 
           <div class="slider-group">
-            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px;">
               <span style="color: var(--text-main);">Orbit Inclination (β):</span>
               <span id="moon-inc-val" style="color: var(--primary); font-weight: 600;">5.0°</span>
             </div>
             <input type="range" id="moon-inc-slider" min="0" max="10" step="0.1" value="5.0" class="observatory-slider" />
           </div>
 
-          <div class="slider-group" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-            <span style="color: var(--text-main); font-size: 0.85rem;">Reference Frame:</span>
+          <div class="slider-group" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+            <span style="color: var(--text-main); font-size: 0.72rem;">Reference Frame:</span>
             <div class="reference-toggle-group" style="display: flex; gap: 4px; background: rgba(0,0,0,0.3); padding: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);">
-              <button id="ref-rotate-earth-btn" class="toggle-pill" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 4px; border: none; background: var(--primary); color: #05050a; font-weight: bold; cursor: pointer; transition: all 0.2s;">Rotate Earth</button>
-              <button id="ref-fixed-horizon-btn" class="toggle-pill" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 4px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Fixed Horizon</button>
+              <button id="ref-rotate-earth-btn" class="toggle-pill" style="padding: 3px 8px; font-size: 0.68rem; border-radius: 4px; border: none; background: var(--primary); color: #05050a; font-weight: bold; cursor: pointer; transition: all 0.2s;">Rotate Earth</button>
+              <button id="ref-fixed-horizon-btn" class="toggle-pill" style="padding: 3px 8px; font-size: 0.68rem; border-radius: 4px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Fixed Horizon</button>
             </div>
           </div>
 
-          <div style="margin-top: 6px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 6px;">
-            <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Eclipse Sub-tasks:</div>
-            <div id="solar-eclipse-task" style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-muted); transition: all 0.2s;">
+          <div style="margin-top: 4px; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
+            <div style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Eclipse Sub-tasks:</div>
+            <div id="solar-eclipse-task" style="display: flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-muted); transition: all 0.2s;">
               <span class="status-icon" style="color: #ef4444; font-weight: bold;">\u2717</span>
               <span>Solar Eclipse (Align at node, e.g. 90° & 90°)</span>
             </div>
-            <div id="lunar-eclipse-task" style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-muted); transition: all 0.2s;">
+            <div id="lunar-eclipse-task" style="display: flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-muted); transition: all 0.2s;">
               <span class="status-icon" style="color: #ef4444; font-weight: bold;">\u2717</span>
               <span>Lunar Eclipse (Align at nodes, e.g. 90° & 270°)</span>
             </div>
@@ -495,14 +504,14 @@ export class LevelUI {
 
         <div class="instruction-box">
           <strong>Instructions:</strong><br>
-          <div id="step-1" style="margin-top: 6px; transition: all 0.3s;">• Drag the 3D canvas to rotate the celestial sphere.</div>
-          <div id="step-2" style="margin-top: 6px; transition: all 0.3s;">• Use the sliders to adjust Moon, Sun, and Earth rotation. Compare reference frames (**Rotate Earth** vs **Fixed Horizon**) to see how coordinates revolve.</div>
-          <div id="step-3" style="margin-top: 6px; transition: all 0.3s;">• Find the correct positions for **Solar Eclipse** and **Lunar Eclipse** in the sub-tasks checklist.</div>
-          <div id="step-4" style="margin-top: 6px; transition: all 0.3s;">• Enter Ptolemy's calculated orbital inclination angle β in the box below.</div>
+          <div id="step-1" style="margin-top: 4px; transition: all 0.3s; font-size: 0.75rem;">• Drag the 3D canvas to rotate the celestial sphere.</div>
+          <div id="step-2" style="margin-top: 4px; transition: all 0.3s; font-size: 0.75rem;">• Adjust sliders to compare reference frames.</div>
+          <div id="step-3" style="margin-top: 4px; transition: all 0.3s; font-size: 0.75rem;">• Align for Solar and Lunar Eclipses in checklist.</div>
+          <div id="step-4" style="margin-top: 4px; transition: all 0.3s; font-size: 0.75rem;">• Enter Ptolemy's calculated inclination angle β.</div>
         </div>
 
         <div class="input-group">
-          <label>Orbital Inclination Angle β (degrees)</label>
+          <label style="font-size: 0.75rem;">Orbital Inclination Angle β (degrees)</label>
           <div class="input-row">
             <input type="number" id="inclination-input" placeholder="e.g. 5.0" step="0.1" />
             <button id="submit-btn">Verify</button>
