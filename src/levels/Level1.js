@@ -1,395 +1,393 @@
+import * as THREE from 'three';
+import { gameState } from '../core/GameState.js';
+
 export class Level1 {
   constructor(container) {
     this.container = container;
-    this.canvas = document.createElement('canvas');
-    this.ctx = this.canvas.getContext('2d');
-    this.container.appendChild(this.canvas);
     
-    this.resize();
-    window.addEventListener('resize', this.resize.bind(this));
-    
-    this.obeliskPlaced = false;
-    this.obeliskPos = null;
-    this.angle = 7.2; // degrees (historical)
-    
-    // Listen for clicks to place obelisk
-    this.canvas.addEventListener('click', this.onClick.bind(this));
-    
+    // Create level canvas container
+    this.levelContainer = document.createElement('div');
+    this.levelContainer.style.width = '100%';
+    this.levelContainer.style.height = '100%';
+    this.levelContainer.style.position = 'relative';
+    this.container.appendChild(this.levelContainer);
+
+    this.day = 172;
+    this.time = 12;
+    this.latitude = 41;
+
+    this.sunPeakAlt = 72.4;
+    this.moonPeakAlt = 40.1;
+    this.moonPathStatus = "Within boundaries";
+
+    this.initThree();
+    this.initScene();
+    this.createLabels();
+
     this.animate = this.animate.bind(this);
-    this.animationId = requestAnimationFrame(this.animate);
-  }
-  
-  resize() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-  }
-  
-  onClick(e) {
-    if(!this.obeliskPlaced) {
-      const centerX = this.canvas.width / 2;
-      const centerY = this.canvas.height / 2 + 80;
-      const radius = 180;
-      
-      const visualAngle = 25; // degrees for visual spacing
-      const visualAngleRad = visualAngle * (Math.PI / 180);
-      const alexX = centerX - Math.sin(visualAngleRad) * radius;
-      const alexY = centerY - Math.cos(visualAngleRad) * radius;
-      
-      // Calculate click distance from Alexandria
-      const dist = Math.hypot(e.clientX - alexX, e.clientY - alexY);
+    this.animate();
 
-      // If clicked reasonably near Alexandria or the upper left quadrant of Earth, place it
-      if (dist < 80 || (e.clientX < centerX && e.clientY < centerY - 40)) {
-        this.obeliskPlaced = true;
-        
-        // Update DOM instruction states
-        const s1 = document.getElementById('step-1');
-        const s2 = document.getElementById('step-2');
-        const s3 = document.getElementById('step-3');
-        if (s1) {
-          s1.innerHTML = '• <s>Click the yellow marker at <strong>Alexandria</strong> to erect the obelisk.</s> <span style="color: #4ade80; font-weight: bold; margin-left: 4px;">✓</span>';
-          s1.style.color = 'var(--text-muted)';
-        }
-        if (s2) s2.style.opacity = '1';
-        if (s3) s3.style.opacity = '1';
-      }
+    window.addEventListener('resize', this.onWindowResize.bind(this));
+  }
+
+  initThree() {
+    this.width = this.levelContainer.clientWidth || window.innerWidth;
+    this.height = this.levelContainer.clientHeight || window.innerHeight;
+
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0xffffff);
+
+    // Left sidebar is 440px, canvas is to the right
+    const canvasWidth = Math.max(300, this.width - 440);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.setSize(canvasWidth, this.height);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.domElement.style.position = 'absolute';
+    this.renderer.domElement.style.right = '0';
+    this.renderer.domElement.style.top = '0';
+    this.levelContainer.appendChild(this.renderer.domElement);
+
+    // Perspective camera, static position
+    this.camera = new THREE.PerspectiveCamera(25, canvasWidth / this.height, 0.1, 1000);
+    this.camera.position.set(65, 28, 95);
+    this.camera.lookAt(0, 8, 0);
+  }
+
+  initScene() {
+    // Ambient light and directional light for observer meshes
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    this.scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(20, 50, 20);
+    this.scene.add(dirLight);
+
+    // The Ground: CircleGeometry flat (radius 32). Slate-100 (0xf1f5f9)
+    const groundGeo = new THREE.CircleGeometry(32, 64);
+    const groundMat = new THREE.MeshBasicMaterial({ color: 0xf1f5f9, depthWrite: true });
+    this.ground = new THREE.Mesh(groundGeo, groundMat);
+    this.ground.rotation.x = -Math.PI / 2;
+    this.scene.add(this.ground);
+
+    // Faint grey line border around ground
+    const borderGeo = new THREE.RingGeometry(31.9, 32, 64);
+    const borderMat = new THREE.MeshBasicMaterial({ color: 0xcbd5e1, side: THREE.DoubleSide });
+    const border = new THREE.Mesh(borderGeo, borderMat);
+    border.rotation.x = -Math.PI / 2;
+    this.scene.add(border);
+
+    // Observer: body (cylinder) & head (sphere) at (0,0,0)
+    const observerGroup = new THREE.Group();
+    
+    const bodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 16);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x475569 }); // Slate-600
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.9;
+    observerGroup.add(body);
+
+    const headGeo = new THREE.SphereGeometry(0.35, 16, 16);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0x334155 }); // Slate-700
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 1.95;
+    observerGroup.add(head);
+    
+    this.scene.add(observerGroup);
+
+    // Axes: Solid black line across ground for North-South (-X to +X)
+    const nsGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-32, 0.01, 0),
+      new THREE.Vector3(32, 0.01, 0)
+    ]);
+    const nsMat = new THREE.LineBasicMaterial({ color: 0x000000 });
+    const nsLine = new THREE.Line(nsGeo, nsMat);
+    this.scene.add(nsLine);
+
+    // Faint line for East-West (-Z to +Z)
+    const ewGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0.01, -32),
+      new THREE.Vector3(0, 0.01, 32)
+    ]);
+    const ewMat = new THREE.LineBasicMaterial({ color: 0xcbd5e1 });
+    const ewLine = new THREE.Line(ewGeo, ewMat);
+    this.scene.add(ewLine);
+
+    // Vertical dashed line from center to Y=36 (Zenith)
+    const zenithPoints = [];
+    for (let y = 0; y <= 36; y += 1) {
+      zenithPoints.push(new THREE.Vector3(0, y, 0));
     }
+    const zenithGeo = new THREE.BufferGeometry().setFromPoints(zenithPoints);
+    const zenithMat = new THREE.LineDashedMaterial({ color: 0x64748b, dashSize: 1, gapSize: 1 });
+    this.zenithLine = new THREE.Line(zenithGeo, zenithMat);
+    this.zenithLine.computeLineDistances();
+    this.scene.add(this.zenithLine);
+
+    // Solid arc from North (-X) over Zenith to South (+X) representing the Meridian
+    const meridianPoints = [];
+    const meridianRadius = 32;
+    for (let a = 0; a <= 180; a += 2) {
+      const rad = a * Math.PI / 180;
+      meridianPoints.push(new THREE.Vector3(-meridianRadius * Math.cos(rad), meridianRadius * Math.sin(rad), 0));
+    }
+    const meridianGeo = new THREE.BufferGeometry().setFromPoints(meridianPoints);
+    const meridianMat = new THREE.LineBasicMaterial({ color: 0x0f172a });
+    const meridianLine = new THREE.Line(meridianGeo, meridianMat);
+    this.scene.add(meridianLine);
+
+    // UniversePivot Group (tilted based on latitude)
+    this.universePivot = new THREE.Group();
+    this.scene.add(this.universePivot);
+
+    // Equator Path: dashed circle of radius 26
+    const eqPoints = [];
+    for (let a = 0; a <= 360; a += 3) {
+      const rad = a * Math.PI / 180;
+      eqPoints.push(new THREE.Vector3(26 * Math.cos(rad), 0, 26 * Math.sin(rad)));
+    }
+    const eqGeo = new THREE.BufferGeometry().setFromPoints(eqPoints);
+    const eqMat = new THREE.LineDashedMaterial({ color: 0x94a3b8, dashSize: 0.8, gapSize: 0.8 });
+    this.eqLine = new THREE.Line(eqGeo, eqMat);
+    this.eqLine.computeLineDistances();
+    this.universePivot.add(this.eqLine);
+
+    // Sun Orbit Circle path
+    const sunOrbPoints = [];
+    for (let a = 0; a <= 360; a += 2) {
+      const rad = a * Math.PI / 180;
+      sunOrbPoints.push(new THREE.Vector3(Math.cos(rad), 0, Math.sin(rad)));
+    }
+    const sunOrbGeo = new THREE.BufferGeometry().setFromPoints(sunOrbPoints);
+    const sunOrbMat = new THREE.LineBasicMaterial({ color: 0xfef08a }); // yellow-200
+    this.sunOrbitLine = new THREE.Line(sunOrbGeo, sunOrbMat);
+    this.universePivot.add(this.sunOrbitLine);
+
+    // Moon Orbit Circle path
+    const moonOrbPoints = [];
+    for (let a = 0; a <= 360; a += 2) {
+      const rad = a * Math.PI / 180;
+      moonOrbPoints.push(new THREE.Vector3(Math.cos(rad), 0, Math.sin(rad)));
+    }
+    const moonOrbGeo = new THREE.BufferGeometry().setFromPoints(moonOrbPoints);
+    const moonOrbMat = new THREE.LineBasicMaterial({ color: 0x93c5fd }); // blue-300
+    this.moonOrbitLine = new THREE.Line(moonOrbGeo, moonOrbMat);
+    this.universePivot.add(this.moonOrbitLine);
+
+    // Sun Mesh: Yellow Sphere
+    const sunSphereGeo = new THREE.SphereGeometry(1.4, 32, 32);
+    const sunSphereMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b }); // amber-500
+    this.sunMesh = new THREE.Mesh(sunSphereGeo, sunSphereMat);
+    this.universePivot.add(this.sunMesh);
+
+    // Moon Mesh: Blue Sphere
+    const moonSphereGeo = new THREE.SphereGeometry(0.9, 32, 32);
+    const moonSphereMat = new THREE.MeshBasicMaterial({ color: 0x3b82f6 }); // blue-500
+    this.moonMesh = new THREE.Mesh(moonSphereGeo, moonSphereMat);
+    this.universePivot.add(this.moonMesh);
   }
 
-  drawEarth() {
-    const ctx = this.ctx;
-    const cx = this.canvas.width / 2;
-    const cy = this.canvas.height / 2 + 80;
-    const radius = 180;
+  createLabels() {
+    this.labelContainer = document.createElement('div');
+    this.labelContainer.style.position = 'absolute';
+    this.labelContainer.style.top = '0';
+    this.labelContainer.style.left = '440px'; // Offset by sidebar
+    this.labelContainer.style.width = 'calc(100% - 440px)';
+    this.labelContainer.style.height = '100%';
+    this.labelContainer.style.pointerEvents = 'none';
+    this.levelContainer.appendChild(this.labelContainer);
 
-    // --- EARTH CROSS SECTION INNER LAYERS ---
-    // Outer atmosphere glow
-    const glowGrad = ctx.createRadialGradient(cx, cy, radius - 10, cx, cy, radius + 15);
-    glowGrad.addColorStop(0, 'rgba(37, 99, 235, 0.05)');
-    glowGrad.addColorStop(0.7, 'rgba(59, 130, 246, 0.12)');
-    glowGrad.addColorStop(1, 'rgba(59, 130, 246, 0)');
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius + 15, 0, Math.PI * 2);
-    ctx.fillStyle = glowGrad;
-    ctx.fill();
+    this.labels = {};
 
-    // Crust (Outer Earth)
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fillStyle = '#081329'; // Dark space blue
-    ctx.fill();
-    ctx.strokeStyle = '#2563eb'; // Neon blue outline
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    const labelNames = ['Sun', 'Moon', 'North', 'South', 'East', 'West', 'Zenith'];
+    labelNames.forEach(name => {
+      const div = document.createElement('div');
+      div.className = 'absolute bg-slate-900/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity duration-100';
+      div.style.transform = 'translate(-50%, -100%)';
+      div.textContent = name;
+      this.labelContainer.appendChild(div);
+      this.labels[name] = div;
+    });
 
-    // Mantle Layer
-    ctx.beginPath();
-    ctx.arc(cx, cy, 110, 0, Math.PI * 2);
-    ctx.fillStyle = '#1e1b4b'; // Slate deep purple
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(249, 115, 22, 0.25)'; // Faint orange mantle border
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Custom classes for specific labels
+    this.labels['Sun'].className = 'absolute bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity duration-100';
+    this.labels['Moon'].className = 'absolute bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity duration-100';
+    this.labels['Zenith'].className = 'absolute bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity duration-100';
+  }
 
-    // Outer Core
-    ctx.beginPath();
-    ctx.arc(cx, cy, 60, 0, Math.PI * 2);
-    ctx.fillStyle = '#3f1d0b'; // Deep brown-red magma core
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(249, 115, 22, 0.4)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+  updateParameters(day, time, latitude) {
+    this.day = day;
+    this.time = time;
+    this.latitude = latitude;
+  }
 
-    // Inner Core
-    ctx.beginPath();
-    ctx.arc(cx, cy, 25, 0, Math.PI * 2);
-    ctx.fillStyle = '#fbbf24'; // Glowing golden center
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+  updatePhysics() {
+    // 1. Tilt universe pivot based on latitude
+    const tiltRad = (90 - this.latitude) * Math.PI / 180;
+    this.universePivot.rotation.set(0, 0, 0); // reset
+    this.universePivot.rotateZ(tiltRad);
 
-    // Core label
-    ctx.fillStyle = '#fbbf24';
-    ctx.font = '600 11px Outfit';
-    ctx.fillText('Core', cx - 12, cy + 4);
+    // 2. Calculate Declinations (in radians)
+    const sunDecDeg = Math.cos(((this.day - 172) / 365) * 2 * Math.PI) * 23.5;
+    const sunDec = sunDecDeg * Math.PI / 180;
 
-    // --- CITY ANGLE AND COORDINATES ---
-    const visualAngle = 25; // degrees for visual spacing
-    const visualAngleRad = visualAngle * (Math.PI / 180);
+    const moonDecDeg = Math.cos((this.day / 27.32) * 2 * Math.PI) * 28.5;
+    const moonDec = moonDecDeg * Math.PI / 180;
 
-    const syeneX = cx;
-    const syeneY = cy - radius;
+    this.sunDecDeg = sunDecDeg;
+    this.moonDecDeg = moonDecDeg;
 
-    const alexX = cx - Math.sin(visualAngleRad) * radius;
-    const alexY = cy - Math.cos(visualAngleRad) * radius;
+    // 3. Orbit Adjustments
+    const sunRadius = 26;
+    this.sunOrbitLine.scale.set(Math.cos(sunDec), 1, Math.cos(sunDec));
+    this.sunOrbitLine.position.y = sunRadius * Math.sin(sunDec);
 
-    // --- SYENE DEEP WELL ---
-    // Draw a dark rectangular well cut into the Earth at Syene (width 10, depth 25)
-    ctx.save();
-    ctx.translate(syeneX, syeneY);
-    // Well goes straight down (towards center)
-    ctx.fillStyle = '#020617'; // Well shadow
-    ctx.fillRect(-5, 0, 10, 25);
-    
-    // Well walls
-    ctx.strokeStyle = '#2563eb';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-5, 0);
-    ctx.lineTo(-5, 25);
-    ctx.moveTo(5, 0);
-    ctx.lineTo(5, 25);
-    ctx.stroke();
-    
-    // Bottom of the well
-    ctx.strokeStyle = 'rgba(253, 224, 71, 0.8)'; // illuminated bottom
-    ctx.beginPath();
-    ctx.moveTo(-5, 25);
-    ctx.lineTo(5, 25);
-    ctx.stroke();
-    ctx.restore();
+    const moonRadius = 19;
+    this.moonOrbitLine.scale.set(Math.cos(moonDec), 1, Math.cos(moonDec));
+    this.moonOrbitLine.position.y = moonRadius * Math.sin(moonDec);
 
-    // --- ABSOLUTE CENTER OF EARTH ---
-    ctx.beginPath();
-    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#10b981'; // Emerald green center point
-    ctx.fill();
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    
-    ctx.fillStyle = '#047857';
-    ctx.font = '600 13px Outfit';
-    ctx.fillText('Center of Earth (C)', cx + 12, cy + 4);
+    // 4. Body Placements
+    const timeAngle = ((12 - this.time) / 24) * 2 * Math.PI;
 
-    // --- STAGE-SPECIFIC DRAWING ---
-    // City markers
-    // Syene City Marker (Red)
-    ctx.beginPath();
-    ctx.arc(syeneX, syeneY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#ef4444';
-    ctx.fill();
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    // Sun Position relative to tilted universe pivot
+    const sunScaledR = sunRadius * Math.cos(sunDec);
+    this.sunMesh.position.set(
+      sunScaledR * Math.cos(timeAngle),
+      sunRadius * Math.sin(sunDec),
+      sunScaledR * -Math.sin(timeAngle)
+    );
 
-    ctx.fillStyle = '#0f172a';
-    ctx.font = '600 14px Outfit';
-    ctx.fillText('Syene', syeneX + 12, syeneY - 12);
+    // Moon Position relative to tilted universe pivot (drift angle added)
+    const driftAngle = (this.day / 27.32) * 2 * Math.PI;
+    const moonScaledR = moonRadius * Math.cos(moonDec);
+    this.moonMesh.position.set(
+      moonScaledR * Math.cos(timeAngle + driftAngle),
+      moonRadius * Math.sin(moonDec),
+      moonScaledR * -Math.sin(timeAngle + driftAngle)
+    );
 
-    // Alexandria City Marker (Yellow)
-    ctx.beginPath();
-    ctx.arc(alexX, alexY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#f59e0b';
-    ctx.fill();
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    // 5. Dashboard computations
+    let sPeak = 90 - this.latitude + sunDecDeg;
+    if (sPeak > 90) sPeak = 180 - sPeak;
+    this.sunPeakAlt = sPeak;
 
-    ctx.fillStyle = '#0f172a';
-    ctx.font = '600 14px Outfit';
-    ctx.fillText('Alexandria', alexX - 85, alexY - 12);
+    let mPeak = 90 - this.latitude + moonDecDeg;
+    if (mPeak > 90) mPeak = 180 - mPeak;
+    this.moonPeakAlt = mPeak;
 
-    // --- DISTANCE ARC BETWEEN CITIES ---
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius + 4, -Math.PI/2 - visualAngleRad, -Math.PI/2);
-    ctx.strokeStyle = '#10b981'; // Green distance arc
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Distance Label: "800 km" (5000 stadia)
-    const midAngle = -Math.PI/2 - visualAngleRad / 2;
-    const lx = cx + Math.cos(midAngle) * (radius + 24);
-    const ly = cy + Math.sin(midAngle) * (radius + 24);
-    ctx.fillStyle = '#047857';
-    ctx.font = '600 13px Outfit';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('800 km', lx, ly);
-    ctx.textAlign = 'left'; // Reset
-    ctx.textBaseline = 'alphabetic'; // Reset
-
-    // --- PARALLEL SUN RAYS ---
-    // Background parallel rays (vertical)
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
-    ctx.lineWidth = 1.5;
-    const raySpacings = [-260, -180, -90, 90, 180, 260];
-    for (const offset of raySpacings) {
-      ctx.beginPath();
-      ctx.moveTo(cx + offset, -50);
-      ctx.lineTo(cx + offset, cy + radius - 20);
-      ctx.stroke();
-    }
-
-    // Direct vertical Sun ray at Syene going ALL the way to the Earth center (through the well)
-    // Draw the ray above Earth
-    ctx.strokeStyle = 'rgba(217, 119, 6, 0.7)';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(syeneX, -50);
-    ctx.lineTo(syeneX, syeneY);
-    ctx.stroke();
-
-    // Draw the ray inside the well (shining straight down)
-    ctx.strokeStyle = '#fbbf24'; // Brighter inside the well
-    ctx.beginPath();
-    ctx.moveTo(syeneX, syeneY);
-    ctx.lineTo(syeneX, syeneY + 25);
-    ctx.stroke();
-
-    // Radial Dashed Line from Syene (bottom of well) to Earth's Center
-    ctx.setLineDash([5, 4]);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(syeneX, syeneY + 25);
-    ctx.lineTo(cx, cy);
-    ctx.stroke();
-
-    // Radial Dashed Line from Alexandria to Earth's Center
-    ctx.beginPath();
-    ctx.moveTo(alexX, alexY);
-    ctx.lineTo(cx, cy);
-    ctx.stroke();
-    ctx.setLineDash([]); // Reset
-
-    if (this.obeliskPlaced) {
-      const obHeight = 60;
-      const obTipX = alexX - Math.sin(visualAngleRad) * obHeight;
-      const obTipY = alexY - Math.cos(visualAngleRad) * obHeight;
-
-      // Draw Obelisk at Alexandria
-      ctx.save();
-      ctx.translate(alexX, alexY);
-      ctx.rotate(-visualAngleRad);
-
-      // Obelisk column body
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillRect(-3, -obHeight, 6, obHeight);
-
-      // Golden pyramidion tip
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath();
-      ctx.moveTo(-3, -obHeight);
-      ctx.lineTo(0, -obHeight - 8);
-      ctx.lineTo(3, -obHeight);
-      ctx.fill();
-      ctx.restore();
-
-      // --- SHADOW GEOMETRY (PERFECTLY VERTICAL SUN RAYS) ---
-      // Alexandria sun ray is vertical: x = obTipX.
-      // Shadow end point on ground tangent:
-      const shadowLength = obHeight * Math.tan(visualAngleRad);
-      const shadowEndX = obTipX;
-      const shadowEndY = alexY + shadowLength * Math.sin(visualAngleRad);
-
-      // Draw Obelisk Shadow cast along the tangent ground line
-      ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
-      ctx.lineWidth = 4;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(alexX, alexY);
-      ctx.lineTo(shadowEndX, shadowEndY);
-      ctx.stroke();
-
-      // Label the shadow
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-      ctx.font = '500 12px Outfit';
-      ctx.fillText('Shadow', shadowEndX - 45, shadowEndY + 12);
-
-      // --- ALEXANDRIA SUN RAY (PERFECTLY VERTICAL) ---
-      // Sunlight ray from top of screen to the obelisk tip
-      ctx.strokeStyle = 'rgba(217, 119, 6, 0.7)';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(obTipX, -50);
-      ctx.lineTo(obTipX, obTipY);
-      ctx.stroke();
-
-      // Tangent ray extension grazing the obelisk tip to the shadow end
-      ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = 'rgba(217, 119, 6, 0.85)';
-      ctx.beginPath();
-      ctx.moveTo(obTipX, obTipY);
-      ctx.lineTo(shadowEndX, shadowEndY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // --- ANGLE ANNOTATIONS (ALTERNATE INTERIOR) ---
-      // Angle A: Angle at the center of the Earth (between radial lines)
-      ctx.beginPath();
-      ctx.arc(cx, cy, 45, -Math.PI/2 - visualAngleRad, -Math.PI/2);
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Label for Angle at Center
-      ctx.fillStyle = '#d97706';
-      ctx.font = '600 13px Outfit';
-      ctx.fillText('7.2°', cx - 20, cy - 60);
-
-      // Label "Central Angle"
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
-      ctx.font = '12px Outfit';
-      ctx.fillText('Central Angle (θ)', cx - 95, cy - 35);
-
-      // Angle B: Angle at the obelisk tip (between vertical ray and obelisk column axis)
-      // Obelisk points inwards from tip to base at angle: Math.PI/2 - visualAngleRad.
-      // Vertical ray goes straight down at angle: Math.PI/2.
-      ctx.beginPath();
-      ctx.arc(obTipX, obTipY, 25, Math.PI/2 - visualAngleRad, Math.PI/2);
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Label for Angle at Tip
-      ctx.fillStyle = '#d97706';
-      ctx.font = '600 13px Outfit';
-      ctx.fillText('7.2°', obTipX - 8, obTipY + 42);
-
-      // Label "Shadow Angle"
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
-      ctx.font = '12px Outfit';
-      ctx.fillText('Shadow Angle (θ)', obTipX - 102, obTipY + 22);
-
-      // Connection/Explanation text
-      ctx.fillStyle = '#047857';
-      ctx.font = '600 13px Outfit';
-      ctx.fillText('Alternate interior angles are equal (θ = 7.2°)', cx - 130, cy - 100);
-
-      // Scale warning
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.5)';
-      ctx.font = 'italic 11px Outfit';
-      ctx.fillText('*Angles and scale exaggerated for visual clarity', cx - 120, cy + radius + 40);
-
+    if (moonDecDeg > 23.5) {
+      this.moonPathStatus = "Higher than Summer Sun";
+    } else if (moonDecDeg < -23.5) {
+      this.moonPathStatus = "Lower than Winter Sun";
     } else {
-      ctx.fillStyle = '#0f172a';
-      ctx.font = '500 16px Outfit';
-      ctx.fillText('Click Alexandria (indicated by the yellow marker) to erect the obelisk', cx - 240, 45);
+      this.moonPathStatus = "Within Sun's boundaries";
     }
+
+    // 6. Day/Night Background Color Transition based on Sun's Y coordinate in World space
+    const tempVec = new THREE.Vector3();
+    this.sunMesh.getWorldPosition(tempVec);
+    const sunWorldY = tempVec.y;
+
+    if (sunWorldY >= 5) {
+      // Full day sky: light blue
+      this.scene.background.setHex(0xe0f2fe); // sky-100
+    } else if (sunWorldY > -2) {
+      // Twilight (sunset/sunrise): fade from orange to purple
+      const t = (sunWorldY + 2) / 7; // [0, 1]
+      const r = Math.round(15 + t * (254 - 15));
+      const g = Math.round(23 + t * (215 - 23));
+      const b = Math.round(42 + t * (170 - 42));
+      this.scene.background.setRGB(r / 255, g / 255, b / 255);
+    } else {
+      // Starry Night: dark slate
+      this.scene.background.setHex(0x020617); // slate-950
+    }
+  }
+
+  updateLabels() {
+    const project = (pos3D) => {
+      const tempV = new THREE.Vector3().copy(pos3D);
+      tempV.project(this.camera);
+
+      // Convert Normalized Device Coordinates [-1, 1] to CSS pixels
+      const x = (tempV.x * 0.5 + 0.5) * this.labelContainer.clientWidth;
+      const y = (-tempV.y * 0.5 + 0.5) * this.labelContainer.clientHeight;
+      return { x, y, z: tempV.z };
+    };
+
+    const targets = {
+      North: new THREE.Vector3(-32, 0.05, 0),
+      South: new THREE.Vector3(32, 0.05, 0),
+      East: new THREE.Vector3(0, 0.05, 32),
+      West: new THREE.Vector3(0, 0.05, -32),
+      Zenith: new THREE.Vector3(0, 36, 0)
+    };
+
+    // Sun World Position
+    const sunWorld = new THREE.Vector3();
+    this.sunMesh.getWorldPosition(sunWorld);
+    targets['Sun'] = sunWorld;
+
+    // Moon World Position
+    const moonWorld = new THREE.Vector3();
+    this.moonMesh.getWorldPosition(moonWorld);
+    targets['Moon'] = moonWorld;
+
+    // Update each label
+    Object.keys(targets).forEach(name => {
+      const pos = targets[name];
+      const projPos = project(pos);
+      const el = this.labels[name];
+      
+      if (!el) return;
+
+      el.style.left = projPos.x + 'px';
+      el.style.top = projPos.y + 'px';
+
+      const isBehindCamera = projPos.z > 1;
+      
+      if (isBehindCamera) {
+        el.style.opacity = '0';
+      } else {
+        if (name === 'Sun' || name === 'Moon') {
+          if (pos.y < -0.5) {
+            el.style.opacity = '0';
+          } else {
+            el.style.opacity = '1';
+          }
+        } else {
+          el.style.opacity = '1';
+        }
+      }
+    });
   }
 
   animate() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Daylight sky background (vertical linear gradient)
-    const skyGrad = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-    skyGrad.addColorStop(0, '#7dd3fc');  // Sky blue at the top
-    skyGrad.addColorStop(0.5, '#bae6fd'); // Light sky blue in the middle
-    skyGrad.addColorStop(1, '#f0f9ff');   // Very light blue/white at the bottom
-    this.ctx.fillStyle = skyGrad;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    this.drawEarth();
-    
     this.animationId = requestAnimationFrame(this.animate);
+    this.updatePhysics();
+    this.renderer.render(this.scene, this.camera);
+    this.updateLabels();
+  }
+
+  onWindowResize() {
+    this.width = this.levelContainer.clientWidth || window.innerWidth;
+    this.height = this.levelContainer.clientHeight || window.innerHeight;
+
+    const canvasWidth = Math.max(300, this.width - 440);
+    this.renderer.setSize(canvasWidth, this.height);
+    this.camera.aspect = canvasWidth / this.height;
+    this.camera.updateProjectionMatrix();
   }
 
   destroy() {
     cancelAnimationFrame(this.animationId);
-    if (this.canvas && this.canvas.parentNode) {
-      this.canvas.parentNode.removeChild(this.canvas);
+    window.removeEventListener('resize', this.onWindowResize.bind(this));
+    if (this.renderer && this.renderer.domElement && this.renderer.domElement.parentNode) {
+      this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+    }
+    if (this.labelContainer && this.labelContainer.parentNode) {
+      this.labelContainer.parentNode.removeChild(this.labelContainer);
+    }
+    if (this.levelContainer && this.levelContainer.parentNode) {
+      this.levelContainer.parentNode.removeChild(this.levelContainer);
     }
   }
 }

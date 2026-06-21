@@ -6,12 +6,22 @@ export class LevelUI {
     this.container.className = 'level-ui';
     uiLayer.appendChild(this.container);
 
+    this.calendarVerified = {
+      babylonian: false,
+      chinese: false,
+      julian: false,
+      modern: false
+    };
+
     gameState.subscribe((state) => {
       if (state.activeLevel === 1) {
         this.renderLevel1();
         this.show();
       } else if (state.activeLevel === 2) {
         this.renderLevel2();
+        this.show();
+      } else if (state.activeLevel === 3) {
+        this.renderLevel3();
         this.show();
       } else {
         this.hide();
@@ -20,6 +30,312 @@ export class LevelUI {
   }
 
   renderLevel1() {
+    const tabData = {
+      babylonian: {
+        title: "Babylonian Calendar",
+        desc: "The Babylonian calendar was lunisolar, meaning months were defined by the Moon's phase (~29.53 days) while the year was kept in sync with the Sun's seasons (~365.24 days). Because 12 lunar months are ~11 days shorter than a solar year, they added an extra intercalary month (Adaru or Elulu) 7 times within a 19-year cycle (the Metonic Cycle) to prevent seasonal drift.",
+        question: "A Metonic cycle contains 19 solar years and 235 lunar months. If a regular year has 12 lunar months, how many intercalary months must be added to align the calendar over a full 19-year cycle?",
+        placeholder: "e.g. 7",
+        answer: 7
+      },
+      chinese: {
+        title: "Traditional Chinese Calendar",
+        desc: "The traditional Chinese calendar divides the solar year into 24 solar terms (Jieqi), starting with the spring equinox. It integrates lunar months beginning on the day of the new moon. To align the lunar cycles with solar years, a leap month (Runyue) is inserted roughly every 3 years. This alignment follows the same 19-year cycle math.",
+        question: "Using the Metonic alignment of 19 solar years (235 lunar months), how many years out of the 19 years will contain a leap month (Runyue)?",
+        placeholder: "e.g. 7",
+        answer: 7
+      },
+      julian: {
+        title: "Julian Calendar Drift",
+        desc: "Proposed by Julius Caesar in 46 BC, the Julian calendar was a solar calendar defining the year as 365.25 days, adding a leap day every 4 years. However, the true solar year is ~365.2422 days, meaning the Julian year was too long by ~11.25 minutes. Over centuries, this causes the solar date of the equinox to shift earlier.",
+        question: "If the Julian calendar year drifts by 11.25 minutes (0.1875 hours) per year, how many years will it take for the calendar to drift backward by exactly 1 full day (24 hours) relative to the sun?",
+        placeholder: "e.g. 128",
+        answer: 128
+      },
+      modern: {
+        title: "Modern Gregorian Rule",
+        desc: "The Gregorian calendar, introduced in 1582, corrected the Julian drift by skipping leap days in centurial years that are not divisible by 400 (e.g. 1700, 1800, 1900 were not leap years, but 2000 was). This yields an average year of 365.2425 days, reducing the drift to just 1 day every 3,200 years.",
+        question: "In the modern Gregorian system, how many leap years occur in a span of 400 years?",
+        placeholder: "e.g. 97",
+        answer: 97
+      }
+    };
+
+    let activeTab = 'babylonian';
+
+    this.container.innerHTML = `
+      <div class="absolute top-10 left-10 w-[440px] max-h-[calc(100%-80px)] overflow-y-auto bg-white/95 backdrop-blur-md border border-slate-200/80 p-6 rounded-2xl shadow-xl pointer-events-auto flex flex-col gap-5 text-slate-800" style="z-index: 100;">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold text-slate-900 tracking-tight">Calendar Systems</h2>
+          <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition" id="exit-btn">Exit to Orbit</button>
+        </div>
+        
+        <!-- Tabs Header -->
+        <div class="flex border-b border-slate-200 gap-1 pb-1">
+          <button id="tab-babylonian" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: rgb(59, 130, 246); color: white;">Babylonian</button>
+          <button id="tab-chinese" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(71, 85, 105);">Chinese</button>
+          <button id="tab-julian" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(71, 85, 105);">Julian</button>
+          <button id="tab-modern" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(71, 85, 105);">Modern</button>
+        </div>
+
+        <!-- Tab Contents Card -->
+        <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl flex flex-col gap-3">
+          <h3 id="tab-title" class="text-xs font-bold text-slate-800 uppercase tracking-wider">Babylonian Calendar</h3>
+          <p id="tab-desc" class="text-[11px] leading-relaxed text-slate-500">...</p>
+          
+          <div class="border-t border-slate-100 pt-3 flex flex-col gap-2">
+            <span class="text-[11px] font-semibold text-slate-700" id="tab-question">...</span>
+            <div class="flex gap-2">
+              <input type="number" id="calc-input" class="flex-1 bg-white border border-slate-200 text-slate-800 text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="e.g. 7">
+              <button id="verify-tab-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="tab-feedback" class="text-[11px] font-semibold hidden"></div>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="bg-slate-50 border border-slate-100 rounded-xl p-3 flex wrap gap-2 items-center justify-around text-[10px]">
+          <div class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+            <span class="font-medium text-slate-600">Sun Path</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span class="font-medium text-slate-600">Moon Path</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+            <span class="font-medium text-slate-600">Equator</span>
+          </div>
+        </div>
+
+        <!-- Dashboard 2x2 Grid -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex flex-col">
+            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Day of Year</span>
+            <span id="dash-day" class="text-sm font-bold text-slate-800 mt-0.5">172.0</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex flex-col">
+            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Sun Peak Alt</span>
+            <span id="dash-sun-alt" class="text-sm font-bold text-slate-800 mt-0.5">72.4°</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex flex-col">
+            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Moon Peak Alt</span>
+            <span id="dash-moon-alt" class="text-sm font-bold text-slate-800 mt-0.5">40.1°</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex flex-col">
+            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Moon Boundary</span>
+            <span id="dash-moon-path" class="text-[11px] font-bold text-slate-600 mt-0.5">Within boundaries</span>
+          </div>
+        </div>
+
+        <!-- Sliders -->
+        <div class="flex flex-col gap-3.5">
+          <div class="flex flex-col gap-1">
+            <div class="flex justify-between text-[11px] font-bold text-slate-600">
+              <span>Day of Year:</span>
+              <span id="slider-day-val" class="text-blue-600">172.0</span>
+            </div>
+            <input type="range" id="slider-day" min="0" max="365" step="0.1" value="172" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <div class="flex justify-between text-[11px] font-bold text-slate-600">
+              <span>Time of Day (Hours):</span>
+              <span id="slider-time-val" class="text-blue-600">12.0</span>
+            </div>
+            <input type="range" id="slider-time" min="0" max="24" step="0.1" value="12" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <div class="flex justify-between text-[11px] font-bold text-slate-600">
+              <span>Latitude:</span>
+              <span id="slider-lat-val" class="text-blue-600">41°</span>
+            </div>
+            <input type="range" id="slider-lat" min="0" max="90" step="1" value="41" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+          </div>
+        </div>
+
+        <!-- Sub-tasks Checklist -->
+        <div class="border-t border-slate-100 pt-3.5 flex flex-col gap-1.5">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Calendar Sub-tasks:</span>
+          <div id="check-babylonian" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium transition">
+            <span class="status-check-tw text-red-500">❌</span>
+            <span>Babylonian Metonic Cycle Verified</span>
+          </div>
+          <div id="check-chinese" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium transition">
+            <span class="status-check-tw text-red-500">❌</span>
+            <span>Chinese Runyue Cycle Verified</span>
+          </div>
+          <div id="check-julian" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium transition">
+            <span class="status-check-tw text-red-500">❌</span>
+            <span>Julian Drift Calculation Verified</span>
+          </div>
+          <div id="check-modern" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium transition">
+            <span class="status-check-tw text-red-500">❌</span>
+            <span>Modern Gregorian Leap Rule Verified</span>
+          </div>
+        </div>
+
+        <!-- Final Unlock Button -->
+        <button id="final-submit-btn" disabled class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold transition cursor-not-allowed text-xs border border-slate-200">Verify & Unlock Next Level</button>
+      </div>
+    `;
+
+    // Exit button
+    document.getElementById('exit-btn').addEventListener('click', () => {
+      gameState.activeLevel = null;
+      gameState.notify();
+    });
+
+    const tabTitle = document.getElementById('tab-title');
+    const tabDesc = document.getElementById('tab-desc');
+    const tabQuestion = document.getElementById('tab-question');
+    const calcInput = document.getElementById('calc-input');
+    const verifyTabBtn = document.getElementById('verify-tab-btn');
+    const tabFeedback = document.getElementById('tab-feedback');
+    const finalSubmitBtn = document.getElementById('final-submit-btn');
+
+    // UI updating functions
+    const updateTabContent = () => {
+      const data = tabData[activeTab];
+      tabTitle.textContent = data.title;
+      tabDesc.textContent = data.desc;
+      tabQuestion.textContent = data.question;
+      calcInput.placeholder = data.placeholder;
+      calcInput.value = '';
+      tabFeedback.classList.add('hidden');
+      
+      // Update tab buttons visual
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const tabId = btn.id.replace('tab-', '');
+        if (tabId === activeTab) {
+          btn.style.background = 'rgb(59, 130, 246)';
+          btn.style.color = 'white';
+        } else {
+          btn.style.background = 'transparent';
+          btn.style.color = 'rgb(71, 85, 105)';
+        }
+      });
+    };
+
+    const updateChecklist = () => {
+      let allVerified = true;
+      Object.keys(this.calendarVerified).forEach(key => {
+        const itemEl = document.getElementById(`check-${key}`);
+        const iconEl = itemEl.querySelector('.status-check-tw');
+        if (this.calendarVerified[key]) {
+          iconEl.textContent = '✅';
+          itemEl.classList.remove('text-slate-400');
+          itemEl.classList.add('text-green-600');
+        } else {
+          iconEl.textContent = '❌';
+          itemEl.classList.remove('text-green-600');
+          itemEl.classList.add('text-slate-400');
+          allVerified = false;
+        }
+      });
+
+      if (allVerified) {
+        finalSubmitBtn.disabled = false;
+        finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
+        finalSubmitBtn.style.color = 'white';
+        finalSubmitBtn.style.cursor = 'pointer';
+        finalSubmitBtn.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+        finalSubmitBtn.classList.add('hover:bg-green-600');
+      } else {
+        finalSubmitBtn.disabled = true;
+        finalSubmitBtn.style.background = 'rgb(241, 245, 249)'; // slate-100
+        finalSubmitBtn.style.color = 'rgb(148, 163, 184)';
+        finalSubmitBtn.style.cursor = 'not-allowed';
+      }
+    };
+
+    // Tab buttons event listeners
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        activeTab = e.target.id.replace('tab-', '');
+        updateTabContent();
+      });
+    });
+
+    // Verify button event listener
+    verifyTabBtn.addEventListener('click', () => {
+      const val = parseInt(calcInput.value, 10);
+      const data = tabData[activeTab];
+      tabFeedback.classList.remove('hidden');
+      if (val === data.answer) {
+        tabFeedback.textContent = "Correct!";
+        tabFeedback.className = "text-[11px] font-semibold text-green-600 mt-1";
+        this.calendarVerified[activeTab] = true;
+        updateChecklist();
+      } else {
+        tabFeedback.textContent = "Incorrect. Try again!";
+        tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+      }
+    });
+
+    // Final unlock event listener
+    finalSubmitBtn.addEventListener('click', () => {
+      gameState.completeLevel(1);
+    });
+
+    // Initialize tab content & checklist
+    updateTabContent();
+    updateChecklist();
+
+    // Bind slider listeners
+    const sliderDay = document.getElementById('slider-day');
+    const valDay = document.getElementById('slider-day-val');
+    const sliderTime = document.getElementById('slider-time');
+    const valTime = document.getElementById('slider-time-val');
+    const sliderLat = document.getElementById('slider-lat');
+    const valLat = document.getElementById('slider-lat-val');
+
+    const dashDay = document.getElementById('dash-day');
+    const dashSunAlt = document.getElementById('dash-sun-alt');
+    const dashMoonAlt = document.getElementById('dash-moon-alt');
+    const dashMoonPath = document.getElementById('dash-moon-path');
+
+    const updateDashboard = () => {
+      const day = parseFloat(sliderDay.value);
+      const time = parseFloat(sliderTime.value);
+      const lat = parseFloat(sliderLat.value);
+
+      valDay.textContent = day.toFixed(1);
+      valTime.textContent = time.toFixed(1);
+      valLat.textContent = lat + '°';
+
+      dashDay.textContent = day.toFixed(1);
+
+      // Trigger Three.js updates if instance exists
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.updateParameters === 'function') {
+        window.activeLevelInstance.updateParameters(day, time, lat);
+        
+        // Retrieve calculated variables from active instance
+        const inst = window.activeLevelInstance;
+        dashSunAlt.textContent = inst.sunPeakAlt.toFixed(1) + '°';
+        dashMoonAlt.textContent = inst.moonPeakAlt.toFixed(1) + '°';
+        dashMoonPath.textContent = inst.moonPathStatus;
+        if (inst.moonPathStatus === "Higher than Summer Sun") {
+          dashMoonPath.className = "text-[11px] font-bold text-red-500 mt-0.5";
+        } else if (inst.moonPathStatus === "Lower than Winter Sun") {
+          dashMoonPath.className = "text-[11px] font-bold text-blue-500 mt-0.5";
+        } else {
+          dashMoonPath.className = "text-[11px] font-bold text-slate-600 mt-0.5";
+        }
+      }
+    };
+
+    sliderDay.addEventListener('input', updateDashboard);
+    sliderTime.addEventListener('input', updateDashboard);
+    sliderLat.addEventListener('input', updateDashboard);
+
+    // Initial trigger
+    setTimeout(updateDashboard, 50);
+  }
+
+  renderLevel2() {
     this.container.innerHTML = `
       <div class="level-panel" style="max-height: calc(100% - 80px); overflow-y: auto;">
         <h2>Eratosthenes' Experiment</h2>
@@ -80,7 +396,7 @@ export class LevelUI {
     });
   }
 
-  renderLevel2() {
+  renderLevel3() {
     const formatLocalTime = (deg) => {
       const d = parseFloat(deg);
       const totalMinutes = Math.round((12 * 60 + d * 4) % 1440);

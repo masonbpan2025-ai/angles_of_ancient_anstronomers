@@ -12,7 +12,7 @@ export class HubUI {
 
     this.selectedLevelId = 0;
 
-    // Define all 6 historical levels + Overview screen
+    // Define all 7 historical levels + Overview screen
     this.levels = [
       { 
         id: 0, 
@@ -24,47 +24,55 @@ export class HubUI {
       },
       { 
         id: 1, 
-        title: 'Level 1: Eratosthenes', 
+        title: 'Level 1: Calendar System', 
+        target: 'earth-moon', 
+        desc: 'Diurnal and annual orbits', 
+        briefingTitle: 'Calendar Systems', 
+        briefingText: 'Explore how ancient civilizations developed calendar systems by observing the diurnal and annual orbits of the Sun and Moon from a geocentric perspective.' 
+      },
+      { 
+        id: 2, 
+        title: 'Level 2: Eratosthenes', 
         target: 'earth', 
         desc: 'Measure the Earth\'s size', 
         briefingTitle: 'Eratosthenes\' Circumference', 
         briefingText: 'In 240 BC, Eratosthenes calculated the Earth\'s circumference using shadow geometry in Alexandria and Syene. Place an obelisk at Alexandria, measure the shadow angle (7.2°), and calculate the circumference.' 
       },
       { 
-        id: 2, 
-        title: 'Level 2: Lunar Inclination', 
+        id: 3, 
+        title: 'Level 3: Lunar Inclination', 
         target: 'earth-moon', 
         desc: 'Measure Moon\'s orbit inclination', 
         briefingTitle: 'Lunar Orbit Inclination', 
         briefingText: 'Determine the 5° inclination of the Moon\'s orbit relative to the ecliptic by measuring the Moon\'s zenith distance at meridian transit during the summer solstice.' 
       },
       { 
-        id: 3, 
-        title: 'Level 3: Aristarchus', 
+        id: 4, 
+        title: 'Level 4: Aristarchus', 
         target: 'earth-moon', 
         desc: 'Lunar eclipse alignment', 
         briefingTitle: 'Aristarchus\' Lunar Ratio', 
         briefingText: 'Measure the curvature of Earth\'s shadow during a lunar eclipse to deduce the relative size of the Moon and the distance to the Sun. Observe the Moon orbiting through the Earth\'s dark umbra shadow cone.' 
       },
       { 
-        id: 4, 
-        title: 'Level 4: Ptolemy', 
+        id: 5, 
+        title: 'Level 5: Ptolemy', 
         target: 'earth-polar', 
         desc: 'Diurnal polar parallax', 
         briefingTitle: 'Ptolemy\'s Parallax Angle', 
         briefingText: 'Leverage Earth\'s structural rotation to calculate the parallax angle of the Moon relative to the absolute center of the Earth. Observe the Earth\'s rotation from a polar perspective.' 
       },
       { 
-        id: 5, 
-        title: 'Level 5: Kepler\'s Law', 
+        id: 6, 
+        title: 'Level 6: Kepler\'s Law', 
         target: 'system-inner', 
         desc: 'Empirical orbital scales', 
         briefingTitle: 'Kepler\'s Empirical Orbits', 
         briefingText: 'Analyze Tycho Brahe\'s raw observational positional markers to verify that planetary orbits are elliptical and adhere to Kepler\'s third ratio: P² ∝ a³.' 
       },
       { 
-        id: 6, 
-        title: 'Level 6: Transit of Venus', 
+        id: 7, 
+        title: 'Level 7: Transit of Venus', 
         target: 'venus-transit', 
         desc: 'Determine the AU distance', 
         briefingTitle: 'The Transit of Venus', 
