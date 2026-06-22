@@ -1,6 +1,6 @@
 class GameState {
   constructor() {
-    this.unlockedLevels = [1, 2, 3, 4, 5, 6, 7];
+    this.unlockedLevels = [1, 2, 3, 4, 5, 6, 7, 8];
     this.activeLevel = null;
     this.listeners = [];
   }

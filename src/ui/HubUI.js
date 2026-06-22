@@ -12,7 +12,7 @@ export class HubUI {
 
     this.selectedLevelId = 0;
 
-    // Define all 7 historical levels + Overview screen
+    // Define all 8 historical levels + Overview screen
     this.levels = [
       { 
         id: 0, 
@@ -48,31 +48,39 @@ export class HubUI {
       },
       { 
         id: 4, 
-        title: 'Level 4: Eratosthenes', 
+        title: 'Level 4: Aristarchus 2', 
+        target: 'earth-moon', 
+        desc: 'Measure relative moon size', 
+        briefingTitle: 'Aristarchus\' Moon Size & Distance', 
+        briefingText: 'Use the geometry of similar triangles during a lunar eclipse to calculate the Moon\'s radius relative to Earth\'s radius, and then deduce the Earth-Moon distance.' 
+      },
+      { 
+        id: 5, 
+        title: 'Level 5: Eratosthenes', 
         target: 'earth', 
         desc: 'Measure the Earth\'s size', 
         briefingTitle: 'Eratosthenes\' Circumference', 
         briefingText: 'In 240 BC, Eratosthenes calculated the Earth\'s circumference using shadow geometry in Alexandria and Syene. Place an obelisk at Alexandria, measure the shadow angle (7.2°), and calculate the circumference.' 
       },
       { 
-        id: 5, 
-        title: 'Level 5: Ptolemy', 
+        id: 6, 
+        title: 'Level 6: Ptolemy', 
         target: 'earth-polar', 
         desc: 'Diurnal polar parallax', 
         briefingTitle: 'Ptolemy\'s Parallax Angle', 
         briefingText: 'Leverage Earth\'s structural rotation to calculate the parallax angle of the Moon relative to the absolute center of the Earth. Observe the Earth\'s rotation from a polar perspective.' 
       },
       { 
-        id: 6, 
-        title: 'Level 6: Kepler\'s Law', 
+        id: 7, 
+        title: 'Level 7: Kepler\'s Law', 
         target: 'system-inner', 
         desc: 'Empirical orbital scales', 
         briefingTitle: 'Kepler\'s Empirical Orbits', 
         briefingText: 'Analyze Tycho Brahe\'s raw observational positional markers to verify that planetary orbits are elliptical and adhere to Kepler\'s third ratio: P² ∝ a³.' 
       },
       { 
-        id: 7, 
-        title: 'Level 7: Transit of Venus', 
+        id: 8, 
+        title: 'Level 8: Transit of Venus', 
         target: 'venus-transit', 
         desc: 'Determine the AU distance', 
         briefingTitle: 'The Transit of Venus', 

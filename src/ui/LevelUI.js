@@ -20,6 +20,10 @@ export class LevelUI {
     };
 
     this.distanceVerified = false;
+    this.aristarchus2Verified = {
+      size: false,
+      distance: false
+    };
 
     gameState.subscribe((state) => {
       if (state.activeLevel === 1) {
@@ -33,6 +37,9 @@ export class LevelUI {
         this.show();
       } else if (state.activeLevel === 4) {
         this.renderLevel4();
+        this.show();
+      } else if (state.activeLevel === 5) {
+        this.renderLevel5();
         this.show();
       } else {
         this.hide();
@@ -934,9 +941,229 @@ export class LevelUI {
   }
 
   renderLevel4() {
+    let activeTab = 'size';
+    const tabData = {
+      size: {
+        title: "1. Relative Moon Size",
+        desc: "Aristarchus timed lunar eclipses. The Moon spends approximately <strong>2.5 hours</strong> completely inside Earth's shadow umbra, and takes <strong>1.0 hour</strong> to travel its own diameter. This means the shadow is 2.5 Moon diameters wide ($d_{shad} = 2.5 d_M$).<br><br>Because the Sun has a finite size, the shadow cone tapers by exactly one Moon diameter at the Moon's distance (since the Sun and Moon have the same angular size, $\\theta \\approx 0.5^\\circ$):<br><span class=\"block text-center font-mono my-1.5 text-sky-400 text-xs\">d_shad = d_E - d_M</span><br>Substituting $d_{shad} = 2.5 d_M$ yields:<br><span class=\"block text-center font-mono my-1.5 text-sky-400 text-xs\">2.5 d_M = d_E - d_M &rArr; 3.5 d_M = d_E</span>",
+        question: "Calculate the Moon's radius relative to Earth's radius ($R_M / R_E = 1 / 3.5$). Round to 3 decimal places.",
+        placeholder: "e.g. 0.286",
+        answer: 0.286
+      },
+      distance: {
+        title: "2. Earth-Moon Distance",
+        desc: "Now that we know the Moon's radius is <strong>0.286</strong> times Earth's radius, we can calculate its physical distance. The Moon's angular diameter viewed from Earth is $\\theta = 0.5^\\circ$, which means its angular radius is $\\alpha = 0.25^\\circ$.<br><br>From the observer's right triangle:<br><span class=\"block text-center font-mono my-1.5 text-sky-400 text-xs\">sin(&alpha;) = R_M / D_EM &rArr; D_EM = R_M / sin(0.25&deg;)</span>",
+        question: "Using $R_M = 0.286 R_E$, calculate the Earth-Moon distance in terms of Earth's radius ($D_EM / R_E$). Round to 1 decimal place.",
+        placeholder: "e.g. 65.5",
+        answer: 65.5
+      }
+    };
+
+    this.container.innerHTML = `
+      <div class="level-panel" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-sky-400">Level 4: Aristarchus 2</h2>
+          <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
+        </div>
+        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">Measure relative moon size & distance</p>
+        
+        <!-- Tabs Header -->
+        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1">
+          <button id="tab-size" class="tab-btn px-2.5 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: rgb(56, 189, 248); color: black;">Moon Size</button>
+          <button id="tab-distance" class="tab-btn px-2.5 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Moon Distance</button>
+        </div>
+
+        <!-- Tab Contents Card -->
+        <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+          <h3 id="tab-title" class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">1. Relative Moon Size</h3>
+          <p id="tab-desc" class="text-[11px] leading-relaxed text-slate-300">...</p>
+          
+          <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1.5">
+            <span class="text-[11px] font-semibold text-slate-300" id="tab-question">...</span>
+            <div class="flex gap-2">
+              <input type="number" id="calc-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-sky-500 transition" placeholder="e.g. 0.286" step="0.001">
+              <button id="verify-tab-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="tab-feedback" class="text-[11px] font-semibold hidden"></div>
+          </div>
+        </div>
+
+        <!-- Sub-tasks Checklist -->
+        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Sub-tasks:</span>
+          <div id="check-size" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check text-red-500">❌</span>
+            <span>Relative Moon Size (R_M / R_E) Verified</span>
+          </div>
+          <div id="check-distance" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check text-red-500">❌</span>
+            <span>Earth-Moon Distance (D_EM / R_E) Verified</span>
+          </div>
+        </div>
+
+        <!-- Final Unlock Button -->
+        <button id="final-submit-btn" disabled class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2">Verify & Unlock Next Level</button>
+      </div>
+
+      <!-- Parameter panel positioned at bottom right below the illustration -->
+      <div class="absolute bottom-6 right-6 left-[420px] bg-slate-900/90 backdrop-blur-md border border-slate-800 p-4 rounded-xl shadow-xl flex flex-col gap-2 text-slate-200 pointer-events-auto shadow-2xl" style="z-index: 100;">
+        <div class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          <span>Interactive Model Parameters</span>
+          <span id="progress-val" class="text-sky-400 font-semibold text-xs">50%</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-[10px] text-slate-400 font-semibold w-24">Eclipse Progress:</span>
+          <input type="range" id="progress-slider" min="0" max="100" step="0.1" value="50.0" class="flex-1 h-1 bg-slate-750 rounded appearance-none cursor-pointer accent-sky-400">
+        </div>
+      </div>
+    `;
+
+    document.getElementById('exit-btn').addEventListener('click', () => {
+      gameState.activeLevel = null;
+      gameState.notify();
+    });
+
+    const progressSlider = document.getElementById('progress-slider');
+    const progressVal = document.getElementById('progress-val');
+    
+    progressSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      progressVal.textContent = Math.round(val) + '%';
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setProgress === 'function') {
+        window.activeLevelInstance.setProgress(val);
+      }
+    });
+
+    const tabTitle = document.getElementById('tab-title');
+    const tabDesc = document.getElementById('tab-desc');
+    const tabQuestion = document.getElementById('tab-question');
+    const calcInput = document.getElementById('calc-input');
+    const verifyTabBtn = document.getElementById('verify-tab-btn');
+    const tabFeedback = document.getElementById('tab-feedback');
+    const finalSubmitBtn = document.getElementById('final-submit-btn');
+
+    const updateChecklist = () => {
+      let allVerified = true;
+      Object.keys(this.aristarchus2Verified).forEach(key => {
+        const itemEl = document.getElementById(`check-${key}`);
+        if (!itemEl) return;
+        const iconEl = itemEl.querySelector('.status-check');
+        if (this.aristarchus2Verified[key]) {
+          iconEl.textContent = '✅';
+          itemEl.classList.remove('text-slate-500');
+          itemEl.classList.add('text-green-500');
+        } else {
+          iconEl.textContent = '❌';
+          itemEl.classList.remove('text-green-500');
+          itemEl.classList.add('text-slate-500');
+          allVerified = false;
+        }
+      });
+
+      if (allVerified) {
+        finalSubmitBtn.disabled = false;
+        finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
+        finalSubmitBtn.style.color = 'white';
+        finalSubmitBtn.style.cursor = 'pointer';
+        finalSubmitBtn.classList.remove('bg-slate-800', 'text-slate-500', 'cursor-not-allowed');
+        finalSubmitBtn.classList.add('hover:bg-green-600');
+      } else {
+        finalSubmitBtn.disabled = true;
+        finalSubmitBtn.style.background = 'rgb(30, 41, 59)'; // slate-800
+        finalSubmitBtn.style.color = 'rgb(100, 116, 139)';
+        finalSubmitBtn.style.cursor = 'not-allowed';
+        finalSubmitBtn.classList.remove('hover:bg-green-600');
+      }
+    };
+
+    const updateTabContent = () => {
+      const data = tabData[activeTab];
+      tabTitle.textContent = data.title;
+      tabDesc.innerHTML = data.desc;
+      tabQuestion.textContent = data.question;
+      calcInput.placeholder = data.placeholder;
+      calcInput.value = '';
+      tabFeedback.classList.add('hidden');
+
+      if (activeTab === 'size') {
+        calcInput.step = '0.001';
+        if (this.aristarchus2Verified.size) {
+          calcInput.value = '0.286';
+          tabFeedback.textContent = "Correct! R_M / R_E = 1 / 3.5 ≈ 0.286 (historically Aristarchus estimated this at ~0.3).";
+          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+          tabFeedback.classList.remove('hidden');
+        }
+      } else {
+        calcInput.step = '0.1';
+        if (this.aristarchus2Verified.distance) {
+          calcInput.value = '65.5';
+          tabFeedback.textContent = "Correct! D_EM = 0.286 R_E / sin(0.25°) ≈ 65.5 R_E (modern mean distance is ~60.3 R_E).";
+          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+          tabFeedback.classList.remove('hidden');
+        }
+      }
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const tabId = btn.id.replace('tab-', '');
+        if (tabId === activeTab) {
+          btn.style.background = 'rgb(56, 189, 248)';
+          btn.style.color = 'black';
+        } else {
+          btn.style.background = 'transparent';
+          btn.style.color = 'rgb(148, 163, 184)';
+        }
+      });
+    };
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        activeTab = e.target.id.replace('tab-', '');
+        updateTabContent();
+      });
+    });
+
+    verifyTabBtn.addEventListener('click', () => {
+      const val = parseFloat(calcInput.value);
+      if (isNaN(val)) return;
+
+      const data = tabData[activeTab];
+      tabFeedback.classList.remove('hidden');
+
+      if (activeTab === 'size') {
+        if (Math.abs(val - 0.286) < 0.015) {
+          tabFeedback.textContent = "Correct! R_M / R_E = 1 / 3.5 ≈ 0.286 (historically Aristarchus estimated this at ~0.3).";
+          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+          this.aristarchus2Verified.size = true;
+          updateChecklist();
+        } else {
+          tabFeedback.textContent = "Incorrect. Remember: d_M = d_E / 3.5 = 2/7 d_E ≈ 0.286 d_E.";
+          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+        }
+      } else {
+        if (Math.abs(val - 65.5) < 1.1) {
+          tabFeedback.textContent = "Correct! D_EM = 0.286 R_E / sin(0.25°) ≈ 65.5 R_E (modern mean distance is ~60.3 R_E).";
+          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+          this.aristarchus2Verified.distance = true;
+          updateChecklist();
+        } else {
+          tabFeedback.textContent = "Incorrect. Compute 0.286 / sin(0.25°). Hint: sin(0.25°) ≈ 0.004363. Try 65.5.";
+          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+        }
+      }
+    });
+
+    finalSubmitBtn.addEventListener('click', () => {
+      gameState.completeLevel(4);
+    });
+
+    updateTabContent();
+    updateChecklist();
+  }
+
+  renderLevel5() {
     this.container.innerHTML = `
       <div class="level-panel">
-        <h2>Level 4: Eratosthenes' Experiment</h2>
+        <h2>Level 5: Eratosthenes' Experiment</h2>
         <div class="story-container">
           <p class="story-short">
             In 240 BC, Eratosthenes calculated the Earth's circumference by comparing the Sun's angles at Alexandria and Syene. 
@@ -962,7 +1189,7 @@ export class LevelUI {
         <div class="input-group">
           <label>Earth's Circumference (km)</label>
           <div class="input-row">
-            <input type="number" id="circumference-input" placeholder="e.g. 10000" />
+            <input type="number" id="circumference-input" placeholder="e.g. 40000" />
             <button id="submit-btn">Verify</button>
           </div>
           <div id="feedback" class="feedback-msg"></div>
@@ -985,7 +1212,7 @@ export class LevelUI {
         feedback.textContent = "Correct! The Earth's circumference is ~40,000 km.";
         feedback.className = "feedback-msg show success";
         setTimeout(() => {
-          gameState.completeLevel(4);
+          gameState.completeLevel(5);
         }, 2000);
       } else {
         feedback.textContent = "Incorrect. Remember: (360 / 7.2) * 800 = 50 * 800.";
