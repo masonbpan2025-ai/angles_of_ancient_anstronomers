@@ -13,6 +13,12 @@ export class LevelUI {
       modern: false
     };
 
+    this.inclinationVerified = {
+      inclination: false,
+      lunar: false,
+      solar: false
+    };
+
     gameState.subscribe((state) => {
       if (state.activeLevel === 1) {
         this.renderLevel1();
@@ -410,6 +416,399 @@ export class LevelUI {
   }
 
   renderLevel2() {
+    const tabData = {
+      inclination: {
+        title: "1. Lunar Inclination",
+        desc: "Ancient Greek astronomers realized that eclipses are caused by shadows (the Earth's shadow on the Moon during a lunar eclipse, and the Moon's shadow on the Earth during a solar eclipse). However, this raised a fundamental question: if the Moon orbits the Earth every single month, why isn't there an eclipse every month? They realized that the Moon's orbital plane is slightly tilted (inclined) relative to the Earth's orbital plane (the ecliptic). Eclipses can only occur when both the Sun and Moon are near the points where their orbits intersect—the nodes. Ptolemy measured this inclination angle (β) at Alexandria during a solstice meridian transit.",
+        question: "Calculate Ptolemy's lunar inclination angle β (in degrees) by subtracting the obliquity of the ecliptic (ε = 23;51° ≈ 23.85°) from the Moon's peak declination (δ = 28;50,30° ≈ 28.85°): β = δ - ε. Round to the nearest degree.",
+        placeholder: "e.g. 5.0",
+        answer: 5.0
+      },
+      lunar: {
+        title: "2. Lunar Eclipse Alignment",
+        desc: "A lunar eclipse occurs when the Earth passes directly between the Sun and the Moon, casting its shadow (umbra) onto the lunar surface. This only happens during a full moon when the Moon is aligned close to one of the orbital nodes. Ancient civilizations, such as the Babylonians, predicted lunar eclipses using the Saros cycle—a period of approximately 18 years, 11 days, and 8 hours after which eclipses repeat with very similar geometry. Globally, there are at least two lunar eclipses every year.",
+        question: "To verify, adjust the celestial sliders at the bottom: Sun to one node (e.g. 90° or 270°) and Moon to the opposite node (opposition, e.g. 270° or 90°). Then click Verify Alignment.",
+        placeholder: "",
+        answer: null
+      },
+      solar: {
+        title: "3. Solar Eclipse Alignment",
+        desc: "A solar eclipse occurs when the Moon passes directly between the Sun and the Earth, blocking the Sun's light. Total solar eclipses are rare at any specific location because the Moon's shadow cone (umbra) is very narrow on Earth's surface. Ancient civilizations predicted them using the Saros cycle and meticulous astronomical tables. They happen 2 to 5 times a year globally, but are seen only as partial eclipses for most of the path.",
+        question: "To verify, adjust the celestial sliders at the bottom: Sun and Moon aligned at the same node (conjunction, e.g. both at 90° or both at 270°). Then click Verify Alignment.",
+        placeholder: "",
+        answer: null
+      }
+    };
+
+    let activeTab = 'inclination';
+
+    const formatLocalTime = (deg) => {
+      const d = parseFloat(deg);
+      const totalMinutes = Math.round((12 * 60 + d * 4) % 1440);
+      let hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      let dispHours = hours % 12;
+      if (dispHours === 0) dispHours = 12;
+      const dispMins = minutes.toString().padStart(2, '0');
+      
+      if (Math.abs(d - 0) < 0.1 || Math.abs(d - 360) < 0.1) return '12:00 PM (Noon)';
+      if (Math.abs(d - 90) < 0.1) return '6:00 PM (Sunset)';
+      if (Math.abs(d - 180) < 0.1) return '12:00 AM (Midnight)';
+      if (Math.abs(d - 270) < 0.1) return '6:00 AM (Sunrise)';
+      
+      return `${dispHours}:${dispMins} ${ampm}`;
+    };
+
+    this.container.innerHTML = `
+      <div class="level-panel" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-cyan-400">Eclipse & Lunar Inclination</h2>
+          <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
+        </div>
+        
+        <!-- Tabs Header -->
+        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1">
+          <button id="tab-inclination" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: rgb(6, 182, 212); color: black;">Inclination</button>
+          <button id="tab-lunar" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Lunar Eclipse</button>
+          <button id="tab-solar" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Solar Eclipse</button>
+        </div>
+
+        <!-- Tab Contents Card -->
+        <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+          <h3 id="tab-title" class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Lunar Inclination</h3>
+          <p id="tab-desc" class="text-[11px] leading-relaxed text-slate-300">...</p>
+          
+          <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1.5">
+            <span class="text-[11px] font-semibold text-slate-300" id="tab-question">...</span>
+            <div class="flex gap-2" id="input-area">
+              <!-- Dynamically updated -->
+            </div>
+            <div id="tab-feedback" class="text-[11px] font-semibold hidden"></div>
+          </div>
+        </div>
+
+        <!-- Sub-tasks Checklist -->
+        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Sub-tasks:</span>
+          <div id="check-inclination" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check text-red-500">❌</span>
+            <span>Inclination Angle β Verified</span>
+          </div>
+          <div id="check-lunar" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check text-red-500">❌</span>
+            <span>Lunar Eclipse Alignment Verified</span>
+          </div>
+          <div id="check-solar" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check text-red-500">❌</span>
+            <span>Solar Eclipse Alignment Verified</span>
+          </div>
+        </div>
+
+        <!-- Sliders & Toggles (always visible) -->
+        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-2 text-slate-200">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Interactive Model Parameters:</span>
+          
+          <div class="flex flex-col gap-0.5">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>Moon Position (Longitude):</span>
+              <span id="moon-long-val" class="text-cyan-400 font-semibold">90°</span>
+            </div>
+            <input type="range" id="moon-long-slider" min="-90" max="270" step="1" value="90" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+          </div>
+
+          <div class="flex flex-col gap-0.5">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>Sun Position (Longitude):</span>
+              <span id="sun-long-val" class="text-cyan-400 font-semibold">90°</span>
+            </div>
+            <input type="range" id="sun-long-slider" min="0" max="360" step="1" value="90" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+          </div>
+
+          <div class="flex flex-col gap-0.5">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>Earth Self-Rotation:</span>
+              <span id="earth-rot-val" class="text-cyan-400 font-semibold">0° (12:00 PM Noon)</span>
+            </div>
+            <input type="range" id="earth-rot-slider" min="0" max="360" step="1" value="0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+          </div>
+
+          <div class="flex flex-col gap-0.5">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>Orbit Inclination (β):</span>
+              <span id="moon-inc-val" class="text-cyan-400 font-semibold">5.0°</span>
+            </div>
+            <input type="range" id="moon-inc-slider" min="0" max="10" step="0.1" value="5.0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+          </div>
+
+          <div class="flex justify-between items-center text-[10px] text-slate-400 mt-0.5">
+            <span>Reference Frame:</span>
+            <div class="flex gap-1 bg-slate-950 p-0.5 border border-slate-800 rounded-lg">
+              <button id="ref-rotate-earth-btn" class="px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition">Rotate Earth</button>
+              <button id="ref-fixed-horizon-btn" class="px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium">Fixed Horizon</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Final Unlock Button -->
+        <button id="final-submit-btn" disabled class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-1">Verify & Unlock Next Level</button>
+      </div>
+    `;
+
+    document.getElementById('exit-btn').addEventListener('click', () => {
+      gameState.activeLevel = null;
+      gameState.notify();
+    });
+
+    const longSlider = document.getElementById('moon-long-slider');
+    const longVal = document.getElementById('moon-long-val');
+    const sunSlider = document.getElementById('sun-long-slider');
+    const sunVal = document.getElementById('sun-long-val');
+    const rotSlider = document.getElementById('earth-rot-slider');
+    const rotVal = document.getElementById('earth-rot-val');
+    const incSlider = document.getElementById('moon-inc-slider');
+    const incVal = document.getElementById('moon-inc-val');
+    const rotateEarthBtn = document.getElementById('ref-rotate-earth-btn');
+    const fixedHorizonBtn = document.getElementById('ref-fixed-horizon-btn');
+
+    const updateToggleState = (rotateEarth) => {
+      if (rotateEarth) {
+        rotateEarthBtn.className = "px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition";
+        fixedHorizonBtn.className = "px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium";
+      } else {
+        rotateEarthBtn.className = "px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium";
+        fixedHorizonBtn.className = "px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition";
+      }
+    };
+
+    rotateEarthBtn.addEventListener('click', () => {
+      updateToggleState(true);
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setRotateEarth === 'function') {
+        window.activeLevelInstance.setRotateEarth(true);
+      }
+    });
+
+    fixedHorizonBtn.addEventListener('click', () => {
+      updateToggleState(false);
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setRotateEarth === 'function') {
+        window.activeLevelInstance.setRotateEarth(false);
+      }
+    });
+
+    const checkEclipseAlignment = () => {
+      const sunVal = parseFloat(sunSlider.value);
+      const moonVal = parseFloat(longSlider.value);
+      
+      const norm = (deg) => (deg % 360 + 360) % 360;
+      const sNorm = norm(sunVal);
+      const mNorm = norm(moonVal);
+
+      // Solar Eclipse: Conjunction at nodes (90 or 270)
+      const isSolarNode = Math.abs(sNorm - 90) < 4 || Math.abs(sNorm - 270) < 4;
+      const diff = Math.abs(sNorm - mNorm);
+      const isSolarAligned = diff < 4 || diff > 356;
+
+      // Lunar Eclipse: Opposition at nodes (90 and 270)
+      const isLunarNode = (Math.abs(sNorm - 90) < 4 && Math.abs(mNorm - 270) < 4) || 
+                          (Math.abs(sNorm - 270) < 4 && Math.abs(mNorm - 90) < 4);
+
+      if (isLunarNode) {
+        this.inclinationVerified.lunar = true;
+        updateChecklist();
+      }
+      if (isSolarNode && isSolarAligned) {
+        this.inclinationVerified.solar = true;
+        updateChecklist();
+      }
+    };
+
+    longSlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      longVal.textContent = val + '°';
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setMoonLongitude === 'function') {
+        window.activeLevelInstance.setMoonLongitude(val);
+      }
+      checkEclipseAlignment();
+    });
+
+    sunSlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      sunVal.textContent = val + '°';
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setSunLongitude === 'function') {
+        window.activeLevelInstance.setSunLongitude(val);
+      }
+      checkEclipseAlignment();
+    });
+
+    rotSlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      rotVal.textContent = `${val}° (${formatLocalTime(val)})`;
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setEarthRotation === 'function') {
+        window.activeLevelInstance.setEarthRotation(val);
+      }
+    });
+
+    incSlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      incVal.textContent = parseFloat(val).toFixed(1) + '°';
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setInclination === 'function') {
+        window.activeLevelInstance.setInclination(val);
+      }
+    });
+
+    const tabTitle = document.getElementById('tab-title');
+    const tabDesc = document.getElementById('tab-desc');
+    const tabQuestion = document.getElementById('tab-question');
+    const inputArea = document.getElementById('input-area');
+    const tabFeedback = document.getElementById('tab-feedback');
+    const finalSubmitBtn = document.getElementById('final-submit-btn');
+
+    const updateChecklist = () => {
+      let allVerified = true;
+      Object.keys(this.inclinationVerified).forEach(key => {
+        const itemEl = document.getElementById(`check-${key}`);
+        if (!itemEl) return;
+        const iconEl = itemEl.querySelector('.status-check');
+        if (this.inclinationVerified[key]) {
+          iconEl.textContent = '✅';
+          itemEl.classList.remove('text-slate-500');
+          itemEl.classList.add('text-green-500');
+        } else {
+          iconEl.textContent = '❌';
+          itemEl.classList.remove('text-green-500');
+          itemEl.classList.add('text-slate-500');
+          allVerified = false;
+        }
+      });
+
+      if (finalSubmitBtn) {
+        if (allVerified) {
+          finalSubmitBtn.disabled = false;
+          finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
+          finalSubmitBtn.style.color = 'white';
+          finalSubmitBtn.style.cursor = 'pointer';
+          finalSubmitBtn.classList.remove('bg-slate-800', 'text-slate-500', 'cursor-not-allowed');
+          finalSubmitBtn.classList.add('hover:bg-green-600');
+        } else {
+          finalSubmitBtn.disabled = true;
+          finalSubmitBtn.style.background = 'rgb(30, 41, 59)'; // slate-800
+          finalSubmitBtn.style.color = 'rgb(100, 116, 139)';
+          finalSubmitBtn.style.cursor = 'not-allowed';
+          finalSubmitBtn.classList.remove('hover:bg-green-600');
+        }
+      }
+    };
+
+    const updateTabContent = () => {
+      const data = tabData[activeTab];
+      tabTitle.textContent = data.title;
+      tabDesc.textContent = data.desc;
+      tabQuestion.textContent = data.question;
+      tabFeedback.classList.add('hidden');
+
+      if (activeTab === 'inclination') {
+        inputArea.innerHTML = `
+          <input type="number" id="calc-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-cyan-500 transition" placeholder="e.g. 5.0" step="0.1">
+          <button id="verify-tab-btn" class="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+        `;
+        const verifyBtn = document.getElementById('verify-tab-btn');
+        const calcInput = document.getElementById('calc-input');
+        if (this.inclinationVerified.inclination) {
+          calcInput.value = '5.0';
+          tabFeedback.textContent = "Correct! Ptolemy measured β to be ~5° (specifically 4;59,30°).";
+          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+          tabFeedback.classList.remove('hidden');
+        }
+        verifyBtn.addEventListener('click', () => {
+          const val = parseFloat(calcInput.value);
+          tabFeedback.classList.remove('hidden');
+          if (Math.abs(val - 5.0) < 0.15) {
+            tabFeedback.textContent = "Correct! Ptolemy measured β to be ~5° (specifically 4;59,30°).";
+            tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+            this.inclinationVerified.inclination = true;
+            updateChecklist();
+          } else {
+            tabFeedback.textContent = "Incorrect. Subtract: (30;58° - 2;7,30°) - 23;51° = 4;59,30° ≈ 5°.";
+            tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+          }
+        });
+      } else {
+        inputArea.innerHTML = `
+          <button id="verify-alignment-btn" class="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-2 rounded-lg text-xs transition">Verify Alignment</button>
+        `;
+        const verifyAlignmentBtn = document.getElementById('verify-alignment-btn');
+        if (this.inclinationVerified[activeTab]) {
+          tabFeedback.textContent = activeTab === 'lunar' ? "Correct! Lunar eclipse alignment achieved." : "Correct! Solar eclipse alignment achieved.";
+          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+          tabFeedback.classList.remove('hidden');
+        }
+        verifyAlignmentBtn.addEventListener('click', () => {
+          tabFeedback.classList.remove('hidden');
+          const sunVal = parseFloat(sunSlider.value);
+          const moonVal = parseFloat(longSlider.value);
+          
+          const norm = (deg) => (deg % 360 + 360) % 360;
+          const sNorm = norm(sunVal);
+          const mNorm = norm(moonVal);
+
+          if (activeTab === 'lunar') {
+            const isLunarNode = (Math.abs(sNorm - 90) < 4 && Math.abs(mNorm - 270) < 4) || 
+                                (Math.abs(sNorm - 270) < 4 && Math.abs(mNorm - 90) < 4);
+            if (isLunarNode) {
+              tabFeedback.textContent = "Correct! Lunar eclipse alignment achieved.";
+              tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+              this.inclinationVerified.lunar = true;
+              updateChecklist();
+            } else {
+              tabFeedback.textContent = "Incorrect. Adjust the Sun and Moon to opposite nodes (one at 90°, the other at 270°) to align the Earth's shadow.";
+              tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+            }
+          } else {
+            const isSolarNode = Math.abs(sNorm - 90) < 4 || Math.abs(sNorm - 270) < 4;
+            const diff = Math.abs(sNorm - mNorm);
+            const isSolarAligned = diff < 4 || diff > 356;
+            if (isSolarNode && isSolarAligned) {
+              tabFeedback.textContent = "Correct! Solar eclipse alignment achieved.";
+              tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+              this.inclinationVerified.solar = true;
+              updateChecklist();
+            } else {
+              tabFeedback.textContent = "Incorrect. Adjust both Sun and Moon to the same node (both at 90° or both at 270°) to align the Moon's shadow.";
+              tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+            }
+          }
+        });
+      }
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const tabId = btn.id.replace('tab-', '');
+        if (tabId === activeTab) {
+          btn.style.background = 'rgb(6, 182, 212)';
+          btn.style.color = 'black';
+        } else {
+          btn.style.background = 'transparent';
+          btn.style.color = 'rgb(148, 163, 184)';
+        }
+      });
+    };
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        activeTab = e.target.id.replace('tab-', '');
+        updateTabContent();
+      });
+    });
+
+    finalSubmitBtn.addEventListener('click', () => {
+      gameState.completeLevel(2);
+    });
+
+    updateTabContent();
+    updateChecklist();
+    checkEclipseAlignment();
+  }
+
+  renderLevel3() {
     this.container.innerHTML = `
       <div class="level-panel">
         <h2>Eratosthenes' Experiment</h2>
@@ -461,275 +860,10 @@ export class LevelUI {
         feedback.textContent = "Correct! The Earth's circumference is ~40,000 km.";
         feedback.className = "feedback-msg show success";
         setTimeout(() => {
-          gameState.completeLevel(1);
+          gameState.completeLevel(3);
         }, 2000);
       } else {
         feedback.textContent = "Incorrect. Remember: (360 / 7.2) * 800 = 50 * 800.";
-        feedback.className = "feedback-msg show error";
-      }
-    });
-  }
-
-  renderLevel3() {
-    const formatLocalTime = (deg) => {
-      const d = parseFloat(deg);
-      const totalMinutes = Math.round((12 * 60 + d * 4) % 1440);
-      let hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      let dispHours = hours % 12;
-      if (dispHours === 0) dispHours = 12;
-      const dispMins = minutes.toString().padStart(2, '0');
-      
-      if (Math.abs(d - 0) < 0.1 || Math.abs(d - 360) < 0.1) return '12:00 PM (Noon)';
-      if (Math.abs(d - 90) < 0.1) return '6:00 PM (Sunset)';
-      if (Math.abs(d - 180) < 0.1) return '12:00 AM (Midnight)';
-      if (Math.abs(d - 270) < 0.1) return '6:00 AM (Sunrise)';
-      
-      return `${dispHours}:${dispMins} ${ampm}`;
-    };
-
-    this.container.innerHTML = `
-      <div class="level-panel">
-        <h2>Lunar Orbit Inclination</h2>
-        <div class="story-container">
-          <p class="story-short">
-            Ptolemy measured the Moon's orbit inclination (β) relative to the ecliptic plane by observing its transit near the summer solstice.
-            <a href="https://jonvoisey.net/blog/2020/12/almagest-book-v-lunar-parallactic-observations/" target="_blank" class="story-link">Read reference</a>.
-            <span class="hover-tip">(Hover for details)</span>
-          </p>
-          <div class="story-details-tooltip">
-            <div class="story-tooltip-title">Detailed Mathematical Context</div>
-            <p>To measure inclination without complex spherical trigonometry, Ptolemy observed the Moon transiting the meridian at the summer solstice. In this position, the Moon's circle of latitude and the meridian coincide.</p>
-            <p>At Alexandria (observer latitude φ = 30;58°), the obliquity of the ecliptic is ε = 23;51°.</p>
-            <p>During the solstice, when the Moon was at its northernmost orbital peak, Ptolemy measured its minimum zenith distance to be z = 2;7,30° (2 1/8°).</p>
-            <p>Thus, the declination of the Moon was calculated as:<br>
-            δ = φ - z = 30;58° - 2;7,30° = 28;50,30°</p>
-            <p>Subtracting the ecliptic obliquity ε = 23;51° yields the inclination angle:<br>
-            β = δ - ε = 28;50,30° - 23;51° = 4;59,30° ≈ <strong>5°</strong>.</p>
-            <p>For context on Ptolemy's instruments and lunar distance scaling, see the <a href="https://jonvoisey.net/blog/2020/12/almagest-book-v-lunar-parallax/" target="_blank" class="story-link">Lunar Parallax overview</a>.</p>
-          </div>
-        </div>
-
-        <div class="instruction-box" style="display: flex; flex-direction: column; gap: 6px;">
-          <strong>Interactive Model Parameters:</strong>
-          
-          <div class="slider-group">
-            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px;">
-              <span style="color: var(--text-main);">Moon Position (Longitude):</span>
-              <span id="moon-long-val" style="color: var(--primary); font-weight: 600;">90°</span>
-            </div>
-            <input type="range" id="moon-long-slider" min="-90" max="270" step="1" value="90" class="observatory-slider" />
-          </div>
-
-          <div class="slider-group">
-            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px;">
-              <span style="color: var(--text-main);">Sun Position (Longitude):</span>
-              <span id="sun-long-val" style="color: var(--primary); font-weight: 600;">90°</span>
-            </div>
-            <input type="range" id="sun-long-slider" min="0" max="360" step="1" value="90" class="observatory-slider" />
-          </div>
-
-          <div class="slider-group">
-            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px;">
-              <span style="color: var(--text-main);">Earth Self-Rotation:</span>
-              <span id="earth-rot-val" style="color: var(--primary); font-weight: 600;">0° (12:00 PM Noon)</span>
-            </div>
-            <input type="range" id="earth-rot-slider" min="0" max="360" step="1" value="0" class="observatory-slider" />
-          </div>
-
-          <div class="slider-group">
-            <div class="slider-label-row" style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px;">
-              <span style="color: var(--text-main);">Orbit Inclination (β):</span>
-              <span id="moon-inc-val" style="color: var(--primary); font-weight: 600;">5.0°</span>
-            </div>
-            <input type="range" id="moon-inc-slider" min="0" max="10" step="0.1" value="5.0" class="observatory-slider" />
-          </div>
-
-          <div class="slider-group" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
-            <span style="color: var(--text-main); font-size: 0.72rem;">Reference Frame:</span>
-            <div class="reference-toggle-group" style="display: flex; gap: 4px; background: rgba(0,0,0,0.3); padding: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);">
-              <button id="ref-rotate-earth-btn" class="toggle-pill" style="padding: 3px 8px; font-size: 0.68rem; border-radius: 4px; border: none; background: var(--primary); color: #05050a; font-weight: bold; cursor: pointer; transition: all 0.2s;">Rotate Earth</button>
-              <button id="ref-fixed-horizon-btn" class="toggle-pill" style="padding: 3px 8px; font-size: 0.68rem; border-radius: 4px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Fixed Horizon</button>
-            </div>
-          </div>
-
-          <div style="margin-top: 4px; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
-            <div style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Eclipse Sub-tasks:</div>
-            <div id="solar-eclipse-task" style="display: flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-muted); transition: all 0.2s;">
-              <span class="status-icon" style="color: #ef4444; font-weight: bold;">\u2717</span>
-              <span>Solar Eclipse (Align at node, e.g. 90° & 90°)</span>
-            </div>
-            <div id="lunar-eclipse-task" style="display: flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-muted); transition: all 0.2s;">
-              <span class="status-icon" style="color: #ef4444; font-weight: bold;">\u2717</span>
-              <span>Lunar Eclipse (Align at nodes, e.g. 90° & 270°)</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="instruction-box">
-          <strong>Instructions:</strong><br>
-          <div id="step-1" style="margin-top: 4px; transition: all 0.3s; font-size: 0.75rem;">• Drag the 3D canvas to rotate the celestial sphere.</div>
-          <div id="step-2" style="margin-top: 4px; transition: all 0.3s; font-size: 0.75rem;">• Adjust sliders to compare reference frames.</div>
-          <div id="step-3" style="margin-top: 4px; transition: all 0.3s; font-size: 0.75rem;">• Align for Solar and Lunar Eclipses in checklist.</div>
-          <div id="step-4" style="margin-top: 4px; transition: all 0.3s; font-size: 0.75rem;">• Enter Ptolemy's calculated inclination angle β.</div>
-        </div>
-
-        <div class="input-group">
-          <label style="font-size: 0.75rem;">Orbital Inclination Angle β (degrees)</label>
-          <div class="input-row">
-            <input type="number" id="inclination-input" placeholder="e.g. 5.0" step="0.1" />
-            <button id="submit-btn">Verify</button>
-          </div>
-          <div id="feedback" class="feedback-msg"></div>
-        </div>
-      </div>
-      
-      <button class="back-btn" id="back-btn">Exit to Solar System</button>
-    `;
-
-    document.getElementById('back-btn').addEventListener('click', () => {
-      gameState.activeLevel = null;
-      gameState.notify();
-    });
-
-    const longSlider = document.getElementById('moon-long-slider');
-    const longVal = document.getElementById('moon-long-val');
-    const sunSlider = document.getElementById('sun-long-slider');
-    const sunVal = document.getElementById('sun-long-val');
-    const rotSlider = document.getElementById('earth-rot-slider');
-    const rotVal = document.getElementById('earth-rot-val');
-    const incSlider = document.getElementById('moon-inc-slider');
-    const incVal = document.getElementById('moon-inc-val');
-    const rotateEarthBtn = document.getElementById('ref-rotate-earth-btn');
-    const fixedHorizonBtn = document.getElementById('ref-fixed-horizon-btn');
-
-    const updateToggleState = (rotateEarth) => {
-      if (rotateEarth) {
-        rotateEarthBtn.style.background = 'var(--primary)';
-        rotateEarthBtn.style.color = '#05050a';
-        rotateEarthBtn.style.fontWeight = 'bold';
-        
-        fixedHorizonBtn.style.background = 'transparent';
-        fixedHorizonBtn.style.color = 'var(--text-muted)';
-        fixedHorizonBtn.style.fontWeight = 'normal';
-      } else {
-        rotateEarthBtn.style.background = 'transparent';
-        rotateEarthBtn.style.color = 'var(--text-muted)';
-        rotateEarthBtn.style.fontWeight = 'normal';
-        
-        fixedHorizonBtn.style.background = 'var(--primary)';
-        fixedHorizonBtn.style.color = '#05050a';
-        fixedHorizonBtn.style.fontWeight = 'bold';
-      }
-    };
-
-    rotateEarthBtn.addEventListener('click', () => {
-      updateToggleState(true);
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setRotateEarth === 'function') {
-        window.activeLevelInstance.setRotateEarth(true);
-      }
-    });
-
-    fixedHorizonBtn.addEventListener('click', () => {
-      updateToggleState(false);
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setRotateEarth === 'function') {
-        window.activeLevelInstance.setRotateEarth(false);
-      }
-    });
-
-    const checkEclipseAlignment = () => {
-      const sunVal = parseFloat(sunSlider.value);
-      const moonVal = parseFloat(longSlider.value);
-      
-      const solarEl = document.getElementById('solar-eclipse-task');
-      const lunarEl = document.getElementById('lunar-eclipse-task');
-      if (!solarEl || !lunarEl) return;
-      
-      // Helper to normalize angle to [0, 360)
-      const norm = (deg) => (deg % 360 + 360) % 360;
-      const sNorm = norm(sunVal);
-      const mNorm = norm(moonVal);
-      
-      // Solar Eclipse: Conjunction at nodes (90 or 270)
-      const isSolarNode = Math.abs(sNorm - 90) < 4 || Math.abs(sNorm - 270) < 4;
-      const diff = Math.abs(sNorm - mNorm);
-      const isSolarAligned = diff < 4 || diff > 356;
-      
-      if (isSolarNode && isSolarAligned) {
-        solarEl.style.color = 'var(--primary)';
-        solarEl.querySelector('.status-icon').textContent = '\u2713';
-        solarEl.querySelector('.status-icon').style.color = 'var(--primary)';
-      } else {
-        solarEl.style.color = 'var(--text-muted)';
-        solarEl.querySelector('.status-icon').textContent = '\u2717';
-        solarEl.querySelector('.status-icon').style.color = '#ef4444';
-      }
-      
-      // Lunar Eclipse: Opposition at nodes (90 and 270)
-      const isLunarNode = (Math.abs(sNorm - 90) < 4 && Math.abs(mNorm - 270) < 4) || 
-                          (Math.abs(sNorm - 270) < 4 && Math.abs(mNorm - 90) < 4);
-      
-      if (isLunarNode) {
-        lunarEl.style.color = 'var(--primary)';
-        lunarEl.querySelector('.status-icon').textContent = '\u2713';
-        lunarEl.querySelector('.status-icon').style.color = 'var(--primary)';
-      } else {
-        lunarEl.style.color = 'var(--text-muted)';
-        lunarEl.querySelector('.status-icon').textContent = '\u2717';
-        lunarEl.querySelector('.status-icon').style.color = '#ef4444';
-      }
-    };
-
-    longSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
-      longVal.textContent = val + '°';
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setMoonLongitude === 'function') {
-        window.activeLevelInstance.setMoonLongitude(val);
-      }
-      checkEclipseAlignment();
-    });
-
-    sunSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
-      sunVal.textContent = val + '°';
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setSunLongitude === 'function') {
-        window.activeLevelInstance.setSunLongitude(val);
-      }
-      checkEclipseAlignment();
-    });
-
-    rotSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
-      rotVal.textContent = `${val}° (${formatLocalTime(val)})`;
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setEarthRotation === 'function') {
-        window.activeLevelInstance.setEarthRotation(val);
-      }
-    });
-
-    incSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
-      incVal.textContent = parseFloat(val).toFixed(1) + '°';
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setInclination === 'function') {
-        window.activeLevelInstance.setInclination(val);
-      }
-    });
-
-    // Run once at start to check initial alignment
-    checkEclipseAlignment();
-
-    document.getElementById('submit-btn').addEventListener('click', () => {
-      const val = parseFloat(document.getElementById('inclination-input').value);
-      const feedback = document.getElementById('feedback');
-      
-      if (Math.abs(val - 5.0) < 0.15) {
-        feedback.textContent = "Correct! Ptolemy measured β to be ~5° (specifically 4;59,30°).";
-        feedback.className = "feedback-msg show success";
-        setTimeout(() => {
-          gameState.completeLevel(2);
-        }, 2000);
-      } else {
-        feedback.textContent = "Incorrect. Subtract: (30;58° - 2;7,30°) - 23;51° = 4;59,30°.";
         feedback.className = "feedback-msg show error";
       }
     });

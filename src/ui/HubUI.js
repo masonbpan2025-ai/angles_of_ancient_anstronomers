@@ -32,19 +32,19 @@ export class HubUI {
       },
       { 
         id: 2, 
-        title: 'Level 2: Eratosthenes', 
+        title: 'Level 2: Eclipse and Lunar Inclination', 
+        target: 'earth-moon', 
+        desc: 'Orbit inclination & eclipse geometries', 
+        briefingTitle: 'Eclipse & Lunar Inclination', 
+        briefingText: 'Explore how shadows cause solar and lunar eclipses, determine why they do not occur every month, and calculate the tilt (inclination) of the Moon\'s orbit relative to the ecliptic plane.' 
+      },
+      { 
+        id: 3, 
+        title: 'Level 3: Eratosthenes', 
         target: 'earth', 
         desc: 'Measure the Earth\'s size', 
         briefingTitle: 'Eratosthenes\' Circumference', 
         briefingText: 'In 240 BC, Eratosthenes calculated the Earth\'s circumference using shadow geometry in Alexandria and Syene. Place an obelisk at Alexandria, measure the shadow angle (7.2°), and calculate the circumference.' 
-      },
-      { 
-        id: 3, 
-        title: 'Level 3: Lunar Inclination', 
-        target: 'earth-moon', 
-        desc: 'Measure Moon\'s orbit inclination', 
-        briefingTitle: 'Lunar Orbit Inclination', 
-        briefingText: 'Determine the 5° inclination of the Moon\'s orbit relative to the ecliptic by measuring the Moon\'s zenith distance at meridian transit during the summer solstice.' 
       },
       { 
         id: 4, 
