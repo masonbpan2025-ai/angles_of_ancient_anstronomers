@@ -37,32 +37,35 @@ export class Level2 {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     
-    // Left margin to avoid overlap with the task panel (which is 380px wide + 20px left = 400px)
-    const leftMargin = 400;
-    const availWidth = Math.max(300, this.canvas.width - leftMargin);
+    // Width of the task panel on the left (380px wide + 20px left = 400px)
+    const taskPanelWidth = 400;
     
-    // Center of the available width
-    const centerX = leftMargin + availWidth * 0.5;
+    // We want the spheres to start shortly after the task panel
+    const startX = taskPanelWidth + 30; // 430px
     
-    // Base radii for the two spheres (make them smaller to fit side-by-side)
-    const baseRadius = 85;
-    const baseRadiusSky = 120;
+    // The available width to the right of the task panel
+    const availWidth = Math.max(300, this.canvas.width - taskPanelWidth);
+    
+    // Base radii when space is plentiful
+    const baseRadius = 110;     // 3D Celestial Sphere
+    const baseRadiusSky = 140;  // Local Sky Dome
+    let baseGap = 50;
     
     // Scale factor to adjust radii for smaller screens/heights
-    const scaleFactor = Math.min(1, availWidth / 550, (this.canvas.height - 120) / 380);
+    // Base footprint width required: 2 * (110 + 140) + 50 = 550px
+    const scaleWidth = (availWidth - 40) / 550;
+    const scaleHeight = (this.canvas.height - 120) / 380;
+    const scaleFactor = Math.max(0.65, Math.min(1.0, Math.min(scaleWidth, scaleHeight)));
+    
     this.radius = Math.round(baseRadius * scaleFactor);
     this.radiusSky = Math.round(baseRadiusSky * scaleFactor);
+    const gap = Math.round(baseGap * scaleFactor);
     
-    if (this.radius < 70) this.radius = 70;
-    if (this.radiusSky < 95) this.radiusSky = 95;
+    // Center of first sphere (anchored relative to startX)
+    this.cx1 = startX + this.radius;
     
-    // Spacing between centers: radius + radiusSky + gap
-    const gap = Math.round(45 * scaleFactor);
-    const centerDist = this.radius + this.radiusSky + gap;
-    
-    // Position them close to each other, centered in available space
-    this.cx1 = Math.round(centerX - centerDist * 0.45);
-    this.cx2 = Math.round(centerX + centerDist * 0.55);
+    // Center of second sphere (placed close to the first sphere)
+    this.cx2 = this.cx1 + this.radius + this.radiusSky + gap;
     
     // Vertically center both spheres
     this.cy1 = Math.round(this.canvas.height * 0.5);
