@@ -200,9 +200,9 @@ export class LevelUI {
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[9px] font-bold text-slate-500">
                 <span>Play Speed:</span>
-                <span id="speed-val" class="text-blue-600 font-semibold">1.0x</span>
+                <span id="speed-val" class="text-blue-600 font-semibold">15.0x</span>
               </div>
-              <input type="range" id="slider-speed" min="0.1" max="12.0" step="0.1" value="1.0" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+              <input type="range" id="slider-speed" min="0.1" max="30.0" step="0.1" value="15.0" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
           </div>
         </div>

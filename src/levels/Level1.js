@@ -15,7 +15,7 @@ export class Level1 {
     this.time = 12;
     this.latitude = 30; // default to 30 degrees
     this.isPlaying = false;
-    this.playSpeed = 1.0;
+    this.playSpeed = 15.0;
     this.lastPlayTime = null;
 
     this.sunPeakAlt = 72.4;
