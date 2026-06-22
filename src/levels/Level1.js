@@ -11,15 +11,16 @@ export class Level1 {
     this.levelContainer.style.height = '100%';
     this.levelContainer.style.position = 'relative';
     this.container.appendChild(this.levelContainer);
-
     this.day = 172;
     this.time = 12;
-    this.latitude = 41;
+    this.latitude = 30; // default to 30 degrees
+    this.isPlaying = false;
+    this.playSpeed = 1.0;
+    this.lastPlayTime = null;
 
     this.sunPeakAlt = 72.4;
     this.moonPeakAlt = 40.1;
     this.moonPathStatus = "Within boundaries";
-
     this.initThree();
     this.initScene();
     this.createLabels();
@@ -223,6 +224,30 @@ export class Level1 {
   }
 
   updatePhysics() {
+    if (this.isPlaying) {
+      const now = performance.now();
+      if (!this.lastPlayTime) this.lastPlayTime = now;
+      const dt = (now - this.lastPlayTime) / 1000;
+      this.lastPlayTime = now;
+
+      // Increment time (playSpeed is in simulated hours per real second)
+      this.time += this.playSpeed * dt;
+      if (this.time >= 24) {
+        const extraHours = this.time - 24;
+        this.time = extraHours % 24;
+        this.day += 1 + Math.floor(extraHours / 24);
+      }
+      if (this.day > 365) {
+        this.day = this.day % 365;
+      }
+
+      if (typeof this.onTimeUpdate === 'function') {
+        this.onTimeUpdate(this.day, this.time);
+      }
+    } else {
+      this.lastPlayTime = null;
+    }
+
     // 1. Tilt universe pivot based on latitude
     const tiltRad = (90 - this.latitude) * Math.PI / 180;
     this.universePivot.rotation.set(0, 0, 0); // reset

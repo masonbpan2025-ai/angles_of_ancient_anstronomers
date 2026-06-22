@@ -122,10 +122,10 @@ export class LevelUI {
       <!-- Right parameter panel (horizontal, placed bottom-right below the canvas) -->
       <div class="absolute bottom-6 right-6 left-[460px] bg-white/95 backdrop-blur-md border border-slate-200/80 p-4 rounded-2xl shadow-xl pointer-events-auto flex flex-col gap-3 text-slate-800" style="z-index: 100;">
         <div class="flex gap-4">
-          <!-- Left side of parameter panel: Legend & Dashboard -->
-          <div class="w-[45%] flex flex-col gap-2.5">
+          <!-- Column 1: Legend & Dashboard (w-32%) -->
+          <div class="w-[32%] flex flex-col gap-2">
             <!-- Legend -->
-            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex justify-around items-center text-[10px] gap-1.5">
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2 flex justify-around items-center text-[10px] gap-1.5">
               <div class="flex items-center gap-1">
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                 <span class="font-medium text-slate-600">Sun Path</span>
@@ -141,29 +141,29 @@ export class LevelUI {
             </div>
 
             <!-- Dashboard 2x2 Grid -->
-            <div class="grid grid-cols-2 gap-2">
-              <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
+            <div class="grid grid-cols-2 gap-1.5">
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-1.5 flex flex-col justify-center">
                 <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Day of Year</span>
                 <span id="dash-day" class="text-xs font-bold text-slate-800 mt-0.5">172.0</span>
               </div>
-              <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-1.5 flex flex-col justify-center">
                 <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Sun Peak Alt</span>
                 <span id="dash-sun-alt" class="text-xs font-bold text-slate-800 mt-0.5">72.4°</span>
               </div>
-              <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-1.5 flex flex-col justify-center">
                 <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Moon Peak Alt</span>
                 <span id="dash-moon-alt" class="text-xs font-bold text-slate-800 mt-0.5">40.1°</span>
               </div>
-              <div class="bg-slate-50 border border-slate-100 rounded-lg p-2 flex flex-col justify-center">
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-1.5 flex flex-col justify-center">
                 <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Moon Boundary</span>
                 <span id="dash-moon-path" class="text-[10px] font-bold text-slate-600 mt-0.5 truncate">Within boundaries</span>
               </div>
             </div>
           </div>
 
-          <!-- Right side of parameter panel: Sliders -->
-          <div class="w-[55%] flex flex-col justify-between py-1 gap-2">
-            <div class="flex flex-col gap-1">
+          <!-- Column 2: Sliders (w-46%) -->
+          <div class="w-[46%] flex flex-col justify-between py-0.5 gap-2">
+            <div class="flex flex-col gap-0.5">
               <div class="flex justify-between text-[10px] font-bold text-slate-600">
                 <span>Day of Year:</span>
                 <span id="slider-day-val" class="text-blue-600">172.0</span>
@@ -171,7 +171,7 @@ export class LevelUI {
               <input type="range" id="slider-day" min="0" max="365" step="0.1" value="172" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
 
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-0.5">
               <div class="flex justify-between text-[10px] font-bold text-slate-600">
                 <span>Time of Day (Hours):</span>
                 <span id="slider-time-val" class="text-blue-600">12.0</span>
@@ -179,12 +179,30 @@ export class LevelUI {
               <input type="range" id="slider-time" min="0" max="24" step="0.1" value="12" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
 
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-0.5">
               <div class="flex justify-between text-[10px] font-bold text-slate-600">
                 <span>Latitude:</span>
-                <span id="slider-lat-val" class="text-blue-600">41°</span>
+                <span id="slider-lat-val" class="text-blue-600">30°</span>
               </div>
-              <input type="range" id="slider-lat" min="0" max="90" step="1" value="41" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+              <input type="range" id="slider-lat" min="0" max="90" step="1" value="30" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+          </div>
+
+          <!-- Column 3: Play Controls (w-22%) -->
+          <div class="w-[22%] border-l border-slate-200/60 pl-4 flex flex-col justify-between py-1 gap-2">
+            <!-- Play/Pause Button -->
+            <button id="play-btn" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-[0.98]">
+              <span id="play-icon">▶</span>
+              <span id="play-text">Play</span>
+            </button>
+
+            <!-- Play Speed Slider -->
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between text-[9px] font-bold text-slate-500">
+                <span>Play Speed:</span>
+                <span id="speed-val" class="text-blue-600 font-semibold">1.0x</span>
+              </div>
+              <input type="range" id="slider-speed" min="0.1" max="12.0" step="0.1" value="1.0" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
           </div>
         </div>
@@ -306,10 +324,29 @@ export class LevelUI {
     const dashMoonAlt = document.getElementById('dash-moon-alt');
     const dashMoonPath = document.getElementById('dash-moon-path');
 
-    const updateDashboard = () => {
-      const day = parseFloat(sliderDay.value);
-      const time = parseFloat(sliderTime.value);
-      const lat = parseFloat(sliderLat.value);
+    // Play controls DOM elements
+    const playBtn = document.getElementById('play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const playText = document.getElementById('play-text');
+    const sliderSpeed = document.getElementById('slider-speed');
+    const valSpeed = document.getElementById('speed-val');
+
+    this.updateDashboard = (fromPlay = false) => {
+      let day, time, lat;
+      const inst = window.activeLevelInstance;
+
+      if (fromPlay && inst) {
+        day = inst.day;
+        time = inst.time;
+        lat = inst.latitude;
+        
+        sliderDay.value = day;
+        sliderTime.value = time;
+      } else {
+        day = parseFloat(sliderDay.value);
+        time = parseFloat(sliderTime.value);
+        lat = parseFloat(sliderLat.value);
+      }
 
       valDay.textContent = day.toFixed(1);
       valTime.textContent = time.toFixed(1);
@@ -317,12 +354,11 @@ export class LevelUI {
 
       dashDay.textContent = day.toFixed(1);
 
-      // Trigger Three.js updates if instance exists
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.updateParameters === 'function') {
-        window.activeLevelInstance.updateParameters(day, time, lat);
+      if (inst && typeof inst.updateParameters === 'function') {
+        if (!fromPlay) {
+          inst.updateParameters(day, time, lat);
+        }
         
-        // Retrieve calculated variables from active instance
-        const inst = window.activeLevelInstance;
         dashSunAlt.textContent = inst.sunPeakAlt.toFixed(1) + '°';
         dashMoonAlt.textContent = inst.moonPeakAlt.toFixed(1) + '°';
         dashMoonPath.textContent = inst.moonPathStatus;
@@ -336,12 +372,41 @@ export class LevelUI {
       }
     };
 
-    sliderDay.addEventListener('input', updateDashboard);
-    sliderTime.addEventListener('input', updateDashboard);
-    sliderLat.addEventListener('input', updateDashboard);
+    sliderDay.addEventListener('input', () => this.updateDashboard(false));
+    sliderTime.addEventListener('input', () => this.updateDashboard(false));
+    sliderLat.addEventListener('input', () => this.updateDashboard(false));
+
+    if (playBtn) {
+      playBtn.addEventListener('click', () => {
+        const inst = window.activeLevelInstance;
+        if (inst) {
+          inst.isPlaying = !inst.isPlaying;
+          if (inst.isPlaying) {
+            playBtn.className = "w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition-all active:scale-[0.98]";
+            playIcon.textContent = "❚❚";
+            playText.textContent = "Pause";
+          } else {
+            playBtn.className = "w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-[0.98]";
+            playIcon.textContent = "▶";
+            playText.textContent = "Play";
+          }
+        }
+      });
+    }
+
+    if (sliderSpeed) {
+      sliderSpeed.addEventListener('input', () => {
+        const speed = parseFloat(sliderSpeed.value);
+        valSpeed.textContent = speed.toFixed(1) + 'x';
+        const inst = window.activeLevelInstance;
+        if (inst) {
+          inst.playSpeed = speed;
+        }
+      });
+    }
 
     // Initial trigger
-    setTimeout(updateDashboard, 50);
+    setTimeout(() => this.updateDashboard(false), 50);
   }
 
   renderLevel2() {
@@ -677,5 +742,45 @@ export class LevelUI {
 
   show() {
     this.container.classList.add('active');
+
+    // Bind active level callbacks if they exist
+    if (gameState.activeLevel === 1 && window.activeLevelInstance) {
+      const inst = window.activeLevelInstance;
+      const sliderDay = document.getElementById('slider-day');
+      const sliderTime = document.getElementById('slider-time');
+      const playBtn = document.getElementById('play-btn');
+      const playIcon = document.getElementById('play-icon');
+      const playText = document.getElementById('play-text');
+      const sliderSpeed = document.getElementById('slider-speed');
+      const valSpeed = document.getElementById('speed-val');
+      
+      inst.onTimeUpdate = (day, time) => {
+        if (sliderDay && sliderTime) {
+          sliderDay.value = day;
+          sliderTime.value = time;
+          if (this.updateDashboard) {
+            this.updateDashboard(true);
+          }
+        }
+      };
+      
+      // Update play button & speed state in UI from instance state
+      if (playBtn && playIcon && playText) {
+        if (inst.isPlaying) {
+          playBtn.className = "w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition-all active:scale-[0.98]";
+          playIcon.textContent = "❚❚";
+          playText.textContent = "Pause";
+        } else {
+          playBtn.className = "w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-[0.98]";
+          playIcon.textContent = "▶";
+          playText.textContent = "Play";
+        }
+      }
+
+      if (sliderSpeed && valSpeed) {
+        sliderSpeed.value = inst.playSpeed;
+        valSpeed.textContent = inst.playSpeed.toFixed(1) + 'x';
+      }
+    }
   }
 }
