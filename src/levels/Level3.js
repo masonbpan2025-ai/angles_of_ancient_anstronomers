@@ -28,7 +28,8 @@ export class Level3 {
     const taskPanelWidth = 400;
     const availWidth = Math.max(300, this.canvas.width - taskPanelWidth);
     const cx = taskPanelWidth + availWidth * 0.5;
-    const cy = this.canvas.height * 0.5;
+    // Shifted upwards to make room for bottom parameter panel
+    const cy = (this.canvas.height - 130) * 0.5 + 20;
     
     // Base radii
     const dMoon = 85;
@@ -47,6 +48,11 @@ export class Level3 {
     // Perpendicular direction (counter-clockwise)
     const sx = mx - dMoonSun * Math.sin(rotationAngle);
     const sy = my + dMoonSun * Math.cos(rotationAngle);
+    
+    // Calculate Sun's vertical position relative to Earth center (cy)
+    // Positive when Sun is above Earth (dy > 0), causing day. Negative when below.
+    const dy = cy - sy;
+    this.daylightFactor = Math.max(0, Math.min(1, (dy + 80) / 160)); // smooth day/night factor
     
     // 1. Draw Sun rays / light cone towards Earth and Moon
     ctx.save();
@@ -146,6 +152,41 @@ export class Level3 {
     ctx.fillText('Earth', cx, cy + 34);
     ctx.restore();
     
+    // Draw observer standing on top of Earth (feet at top of Earth circle)
+    const obsX = cx;
+    const obsY = cy - 22;
+    ctx.save();
+    ctx.strokeStyle = '#38bdf8'; // Sky blue observer
+    ctx.lineWidth = 1.5;
+    // Legs (V-shape)
+    ctx.beginPath();
+    ctx.moveTo(obsX - 3, obsY);
+    ctx.lineTo(obsX, obsY - 6);
+    ctx.lineTo(obsX + 3, obsY);
+    ctx.stroke();
+    // Torso
+    ctx.beginPath();
+    ctx.moveTo(obsX, obsY - 6);
+    ctx.lineTo(obsX, obsY - 14);
+    ctx.stroke();
+    // Arms
+    ctx.beginPath();
+    ctx.moveTo(obsX - 4, obsY - 11);
+    ctx.lineTo(obsX + 4, obsY - 11);
+    ctx.stroke();
+    // Head
+    ctx.beginPath();
+    ctx.arc(obsX, obsY - 17, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#bae6fd';
+    ctx.fill();
+    ctx.stroke();
+    
+    // Label observer
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = '600 9px Outfit';
+    ctx.fillText('Observer', obsX + 8, obsY - 14);
+    ctx.restore();
+    
     // 6. Draw Sun
     ctx.save();
     const sunGlow = ctx.createRadialGradient(sx, sy, 3, sx, sy, 30);
@@ -162,7 +203,7 @@ export class Level3 {
     ctx.fillStyle = '#fbbf24';
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
     
     ctx.fillStyle = '#fbbf24';
@@ -212,26 +253,71 @@ export class Level3 {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.font = 'italic 10px Outfit';
     ctx.textAlign = 'center';
-    ctx.fillText('*Illustrative scale: Sun distance (S) is exaggeratedly short to fit screen', cx, this.canvas.height - 30);
+    ctx.fillText('*Illustrative scale: Sun distance (S) is exaggeratedly short to fit screen', cx, this.canvas.height - 145);
   }
   
   animate() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
+    // Interpolate background lighting based on Sun position (daylightFactor)
+    const t = this.daylightFactor !== undefined ? this.daylightFactor : 0.5;
+    
+    // 3-way color interpolation to capture sunset/sunrise at t ~ 0.5
+    const interpolateColor = (c0, c05, c1, tVal) => {
+      if (tVal < 0.5) {
+        const u = tVal * 2;
+        return {
+          r: Math.round(c0.r + (c05.r - c0.r) * u),
+          g: Math.round(c0.g + (c05.g - c0.g) * u),
+          b: Math.round(c0.b + (c05.b - c0.b) * u)
+        };
+      } else {
+        const u = (tVal - 0.5) * 2;
+        return {
+          r: Math.round(c05.r + (c1.r - c05.r) * u),
+          g: Math.round(c05.g + (c1.g - c05.g) * u),
+          b: Math.round(c05.b + (c1.b - c05.b) * u)
+        };
+      }
+    };
+
+    // Color definitions for Night (t=0), Twilight/Sunset (t=0.5), and Day (t=1)
+    const topNight = { r: 2, g: 2, b: 12 };
+    const topSunset = { r: 24, g: 18, b: 46 }; // Deep twilight purple/indigo
+    const topDay = { r: 2, g: 132, b: 199 };    // Deep sky blue
+
+    const midNight = { r: 5, g: 7, b: 22 };
+    const midSunset = { r: 194, g: 65, b: 12 }; // Deep warm orange-red
+    const midDay = { r: 56, g: 189, b: 248 };   // Light sky blue
+
+    const botNight = { r: 9, g: 12, b: 36 };
+    const botSunset = { r: 251, g: 191, b: 36 }; // Bright golden horizon glow
+    const botDay = { r: 186, g: 230, b: 253 };   // Pale cyan/white daylight horizon
+
+    const top = interpolateColor(topNight, topSunset, topDay, t);
+    const mid = interpolateColor(midNight, midSunset, midDay, t);
+    const bot = interpolateColor(botNight, botSunset, botDay, t);
+    
     const bgGrad = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-    bgGrad.addColorStop(0, '#020208');
-    bgGrad.addColorStop(0.5, '#050711');
-    bgGrad.addColorStop(1, '#090c1e');
+    bgGrad.addColorStop(0, `rgb(${top.r}, ${top.g}, ${top.b})`);
+    bgGrad.addColorStop(0.6, `rgb(${mid.r}, ${mid.g}, ${mid.b})`);
+    bgGrad.addColorStop(1, `rgb(${bot.r}, ${bot.g}, ${bot.b})`);
     this.ctx.fillStyle = bgGrad;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-    for (let i = 0; i < 40; i++) {
-      let x = (Math.sin(i * 12345) * 0.5 + 0.5) * this.canvas.width;
-      let y = (Math.cos(i * 54321) * 0.5 + 0.5) * this.canvas.height;
-      if (x > 400) {
-        this.ctx.fillRect(x, y, 1.2, 1.2);
+    // Draw stars with opacity based on nightness (1 - t)
+    if (t < 0.95) {
+      this.ctx.save();
+      this.ctx.globalAlpha = 1 - t;
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      for (let i = 0; i < 40; i++) {
+        let x = (Math.sin(i * 12345) * 0.5 + 0.5) * this.canvas.width;
+        let y = (Math.cos(i * 54321) * 0.5 + 0.5) * this.canvas.height;
+        if (x > 400) {
+          this.ctx.fillRect(x, y, 1.2, 1.2);
+        }
       }
+      this.ctx.restore();
     }
     
     this.drawModel();

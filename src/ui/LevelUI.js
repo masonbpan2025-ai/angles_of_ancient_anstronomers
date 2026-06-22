@@ -845,21 +845,20 @@ export class LevelUI {
           <div id="feedback" class="text-[11px] mt-1"></div>
         </div>
 
-        <!-- Slider for Time of Day -->
-        <div class="border-t border-slate-800/80 pt-2.5 flex flex-col gap-2 text-slate-200 mt-2">
-          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Interactive Model Parameters:</span>
-          
-          <div class="flex flex-col gap-0.5">
-            <div class="flex justify-between text-[10px] text-slate-400">
-              <span>Time of Day (Orbit Rotation):</span>
-              <span id="time-val" class="text-sky-400 font-semibold">12.0h</span>
-            </div>
-            <input type="range" id="time-slider" min="0" max="24" step="0.1" value="12.0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400">
-          </div>
-        </div>
-
         <!-- Final Unlock Button -->
         <button id="final-submit-btn" disabled class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-3">Verify & Unlock Next Level</button>
+      </div>
+
+      <!-- Parameter panel positioned at bottom right below the illustration -->
+      <div class="absolute bottom-6 right-6 left-[420px] bg-slate-900/90 backdrop-blur-md border border-slate-800 p-4 rounded-xl shadow-xl flex flex-col gap-2 text-slate-200 pointer-events-auto shadow-2xl" style="z-index: 100;">
+        <div class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          <span>Interactive Model Parameters</span>
+          <span id="time-val" class="text-sky-400 font-semibold text-xs">12.0h</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-[10px] text-slate-400 font-semibold w-20">Time of Day:</span>
+          <input type="range" id="time-slider" min="0" max="24" step="0.1" value="12.0" class="flex-1 h-1 bg-slate-750 rounded appearance-none cursor-pointer accent-sky-400">
+        </div>
       </div>
     `;
 
