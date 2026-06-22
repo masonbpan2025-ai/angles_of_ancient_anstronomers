@@ -214,7 +214,7 @@ export class Level3 {
     // 7. Draw Moon (Exactly Half-Lit as seen from Earth)
     ctx.save();
     ctx.translate(mx, my);
-    const angleToSun = rotationAngle + Math.PI/2 + Math.PI; 
+    const angleToSun = Math.atan2(sy - my, sx - mx);
     ctx.rotate(angleToSun);
     
     ctx.beginPath();
