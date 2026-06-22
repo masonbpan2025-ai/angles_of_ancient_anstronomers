@@ -37,27 +37,39 @@ export class Level2 {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     
-    // The divider is at 410px. Left of 410px is the left panel (above) + parameter panel (below).
-    // Right of 410px is the right Alt-Az Sky Dome.
-    this.dividerX = 410;
+    // Left margin to avoid overlap with the task panel (which is 380px wide + 20px left = 400px)
+    const leftMargin = 400;
+    const availWidth = Math.max(300, this.canvas.width - leftMargin);
     
-    // Left Celestial Sphere center (centered in the 410px wide column, in the top half)
-    this.cx1 = 210;
-    this.cy1 = this.canvas.height * 0.28;
+    // Center of the available width
+    const centerX = leftMargin + availWidth * 0.5;
     
-    // Left Celestial Sphere radius: make it smaller (e.g., 105px) so it sits above the parameter panel (which is at the bottom)
-    this.radius = Math.min(105, (this.canvas.height * 0.28) - 30);
-    if (this.radius < 90) this.radius = 90;
+    // Base radii for the two spheres (make them smaller to fit side-by-side)
+    const baseRadius = 85;
+    const baseRadiusSky = 120;
     
-    // Right Alt-Az Sky Dome center (centered in the remaining right half, vertically centered)
-    const rightWidth = Math.max(300, this.canvas.width - this.dividerX - 30);
-    this.cx2 = this.dividerX + rightWidth * 0.5;
-    this.cy2 = this.canvas.height / 2;
+    // Scale factor to adjust radii for smaller screens/heights
+    const scaleFactor = Math.min(1, availWidth / 550, (this.canvas.height - 120) / 380);
+    this.radius = Math.round(baseRadius * scaleFactor);
+    this.radiusSky = Math.round(baseRadiusSky * scaleFactor);
     
-    // Right Alt-Az Sky Dome radius: can be larger as it has the whole height/width of the right side
-    this.radiusSky = Math.min(rightWidth * 0.42, (this.canvas.height - 80) * 0.42);
-    if (this.radiusSky < 120) this.radiusSky = 120;
-    if (this.radiusSky > 250) this.radiusSky = 250;
+    if (this.radius < 70) this.radius = 70;
+    if (this.radiusSky < 95) this.radiusSky = 95;
+    
+    // Spacing between centers: radius + radiusSky + gap
+    const gap = Math.round(45 * scaleFactor);
+    const centerDist = this.radius + this.radiusSky + gap;
+    
+    // Position them close to each other, centered in available space
+    this.cx1 = Math.round(centerX - centerDist * 0.45);
+    this.cx2 = Math.round(centerX + centerDist * 0.55);
+    
+    // Vertically center both spheres
+    this.cy1 = Math.round(this.canvas.height * 0.5);
+    this.cy2 = Math.round(this.canvas.height * 0.5);
+    
+    // Divider is halfway between the two centers
+    this.dividerX = Math.round((this.cx1 + this.cx2) / 2);
   }
   onPointerDown(e) {
     // Only drag to rotate if clicking on the left 3D panel
@@ -627,7 +639,7 @@ export class Level2 {
     // Topocentric positions for local observer view (with parallax shift)
     // We use a virtual equator observer (latitude = 0) for parallax vectors to eliminate
     // North-South separation at transit while retaining East-West self-rotation parallax.
-    const obsRE = 45; // virtual Earth radius for topocentric parallax
+    const obsRE = this.radius * 0.32; // virtual Earth radius for topocentric parallax, scaled dynamically
     const zenithPara_0 = { x: 1, y: 0, z: 0 };
     const zenithPara = this.rotateY(zenithPara_0, radRot);
     const obsPos = {
@@ -754,11 +766,13 @@ export class Level2 {
     ctx.stroke();
 
     // Divider Line
+    const dividerStart = Math.min(this.cy1 - this.radius, this.cy2 - this.radiusSky) - 35;
+    const dividerEnd = Math.max(this.cy1 + this.radius, this.cy2 + this.radiusSky) + 35;
     ctx.beginPath();
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     ctx.setLineDash([6, 6]);
-    ctx.moveTo(this.dividerX, 20);
-    ctx.lineTo(this.dividerX, this.canvas.height - 20);
+    ctx.moveTo(this.dividerX, dividerStart);
+    ctx.lineTo(this.dividerX, dividerEnd);
     ctx.stroke();
     ctx.setLineDash([]); // reset
 
@@ -1018,11 +1032,12 @@ export class Level2 {
     }
 
     // Titles
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.font = '600 13px Outfit';
+    const titleY = Math.min(this.cy1 - this.radius, this.cy2 - this.radiusSky) - 25;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = '600 12.5px Outfit';
     ctx.textAlign = 'center';
-    ctx.fillText('3D Celestial Sphere (Heliocentric Reference)', this.cx1, 20);
-    ctx.fillText('Observer\'s Local Sky View (Alexandria)', cx2, 20);
+    ctx.fillText('3D Celestial Sphere (Heliocentric Reference)', this.cx1, titleY);
+    ctx.fillText('Observer\'s Local Sky View (Alexandria)', cx2, titleY);
   }
 
   animate() {
