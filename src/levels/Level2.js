@@ -40,32 +40,30 @@ export class Level2 {
     // Width of the task panel on the left (380px wide + 20px left = 400px)
     const taskPanelWidth = 400;
     
-    // We want the spheres to start shortly after the task panel
-    const startX = taskPanelWidth + 30; // 430px
-    
     // The available width to the right of the task panel
     const availWidth = Math.max(300, this.canvas.width - taskPanelWidth);
     
-    // Base radii when space is plentiful
-    const baseRadius = 110;     // 3D Celestial Sphere
-    const baseRadiusSky = 140;  // Local Sky Dome
-    let baseGap = 50;
+    // Divide the available space into two equal columns
+    const colWidth = availWidth / 2;
     
-    // Scale factor to adjust radii for smaller screens/heights
-    // Base footprint width required: 2 * (110 + 140) + 50 = 550px
-    const scaleWidth = (availWidth - 40) / 550;
-    const scaleHeight = (this.canvas.height - 120) / 380;
-    const scaleFactor = Math.max(0.65, Math.min(1.0, Math.min(scaleWidth, scaleHeight)));
+    // Determine the maximum base size that fits both horizontally and vertically
+    // Horizontal limit: colWidth * 0.5 - 25 (margin for labels and borders)
+    const maxR_horizontal = colWidth * 0.5 - 25;
+    // Vertical limit: (canvas.height - 120) * 0.5 (leaving room for titles and margins)
+    const maxR_vertical = (this.canvas.height - 120) * 0.5;
     
-    this.radius = Math.round(baseRadius * scaleFactor);
-    this.radiusSky = Math.round(baseRadiusSky * scaleFactor);
-    const gap = Math.round(baseGap * scaleFactor);
+    // Determine target size, capping at a maximum of 230px to maintain crisp layout on massive monitors
+    const baseSize = Math.max(80, Math.min(230, Math.min(maxR_horizontal, maxR_vertical)));
     
-    // Center of first sphere (anchored relative to startX)
-    this.cx1 = startX + this.radius;
+    // Size the spheres proportionally to fill the space beautifully
+    this.radius = Math.round(baseSize * 0.85);     // 3D Celestial Sphere (leave room for projected labels)
+    this.radiusSky = Math.round(baseSize * 0.95);   // Local Sky Dome
     
-    // Center of second sphere (placed close to the first sphere)
-    this.cx2 = this.cx1 + this.radius + this.radiusSky + gap;
+    // Center of first sphere (centered in column 1)
+    this.cx1 = Math.round(taskPanelWidth + colWidth * 0.5);
+    
+    // Center of second sphere (centered in column 2)
+    this.cx2 = Math.round(taskPanelWidth + colWidth * 1.5);
     
     // Vertically center both spheres
     this.cy1 = Math.round(this.canvas.height * 0.5);
