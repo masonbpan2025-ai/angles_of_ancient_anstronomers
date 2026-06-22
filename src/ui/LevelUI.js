@@ -19,6 +19,8 @@ export class LevelUI {
       solar: false
     };
 
+    this.distanceVerified = false;
+
     gameState.subscribe((state) => {
       if (state.activeLevel === 1) {
         this.renderLevel1();
@@ -28,6 +30,9 @@ export class LevelUI {
         this.show();
       } else if (state.activeLevel === 3) {
         this.renderLevel3();
+        this.show();
+      } else if (state.activeLevel === 4) {
+        this.renderLevel4();
         this.show();
       } else {
         this.hide();
@@ -810,8 +815,129 @@ export class LevelUI {
 
   renderLevel3() {
     this.container.innerHTML = `
+      <div class="level-panel" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-sky-400">Level 3: Aristarchus 1</h2>
+          <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
+        </div>
+        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">How he measured relative Sun & Moon distance</p>
+        
+        <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2 mt-2">
+          <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">The Half-Moon Geometry</h3>
+          <p class="text-[11px] leading-relaxed text-slate-300">
+            Aristarchus of Samos (c. 310–230 BC) realized that when the Moon is exactly half-lit (dichotomy), the angle between the Earth-Moon line and the Moon-Sun line is exactly <strong>90°</strong>. 
+            This forms a right-angled triangle with the Earth, Moon, and Sun.
+          </p>
+          <p class="text-[11px] leading-relaxed text-slate-300">
+            By measuring the angle <strong>ψ</strong> (psi) between the Sun and Moon from Earth, we can calculate the ratio of the Earth-Sun distance (S) to the Earth-Moon distance (L):
+            <br><span class="block text-center font-mono my-1.5 text-sky-400 text-xs">S / L = 1 / cos(ψ)</span>
+          </p>
+        </div>
+
+        <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2 mt-2">
+          <span class="text-[11px] font-semibold text-slate-300">
+            Aristarchus measured the angle ψ to be <strong>87°</strong>. Based on this measurement, how many times further away is the Sun compared to the Moon?
+          </span>
+          <div class="flex gap-2 mt-1">
+            <input type="number" id="distance-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-sky-500 transition" placeholder="e.g. 19" step="0.1">
+            <button id="verify-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+          </div>
+          <div id="feedback" class="text-[11px] mt-1"></div>
+        </div>
+
+        <!-- Slider for Time of Day -->
+        <div class="border-t border-slate-800/80 pt-2.5 flex flex-col gap-2 text-slate-200 mt-2">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Interactive Model Parameters:</span>
+          
+          <div class="flex flex-col gap-0.5">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>Time of Day (Orbit Rotation):</span>
+              <span id="time-val" class="text-sky-400 font-semibold">12.0h</span>
+            </div>
+            <input type="range" id="time-slider" min="0" max="24" step="0.1" value="12.0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400">
+          </div>
+        </div>
+
+        <!-- Final Unlock Button -->
+        <button id="final-submit-btn" disabled class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-3">Verify & Unlock Next Level</button>
+      </div>
+    `;
+
+    document.getElementById('exit-btn').addEventListener('click', () => {
+      gameState.activeLevel = null;
+      gameState.notify();
+    });
+
+    const timeSlider = document.getElementById('time-slider');
+    const timeVal = document.getElementById('time-val');
+    
+    timeSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      timeVal.textContent = val.toFixed(1) + 'h';
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setTimeOfDay === 'function') {
+        window.activeLevelInstance.setTimeOfDay(val);
+      }
+    });
+
+    const distanceInput = document.getElementById('distance-input');
+    const verifyBtn = document.getElementById('verify-btn');
+    const feedback = document.getElementById('feedback');
+    const finalSubmitBtn = document.getElementById('final-submit-btn');
+
+    if (this.distanceVerified) {
+      distanceInput.value = '19';
+      feedback.innerHTML = `
+        <div class="text-green-500 font-semibold mb-2">Correct! The Sun is ~19 times further away than the Moon according to Aristarchus' measurement of 87°.</div>
+        <div class="text-slate-300 text-[11px] leading-relaxed mt-2 p-2 bg-slate-900/60 border border-slate-800 rounded">
+          <strong>The Reality:</strong> The true angle is <strong>89.85°</strong>, which means the Sun is actually <strong>~400 times</strong> further away.<br><br>
+          <strong>Why is it so hard to measure?</strong><br>
+          1. <em>Terminator Uncertainty:</em> Determining the exact moment the Moon is exactly half-lit is very difficult because the lunar surface is covered in mountains and craters, making the shadow line jagged.<br>
+          2. <em>Sensitivity:</em> Because 87° is so close to 90°, a tiny error of just 3° leads to a massive 20-fold difference in the calculated distance ratio.
+        </div>
+      `;
+      finalSubmitBtn.disabled = false;
+      finalSubmitBtn.style.background = 'rgb(34, 197, 94)';
+      finalSubmitBtn.style.color = 'white';
+      finalSubmitBtn.style.cursor = 'pointer';
+      finalSubmitBtn.classList.remove('bg-slate-800', 'text-slate-500', 'cursor-not-allowed');
+      finalSubmitBtn.classList.add('hover:bg-green-600');
+    }
+
+    verifyBtn.addEventListener('click', () => {
+      const val = parseFloat(distanceInput.value);
+      if (isNaN(val)) return;
+
+      if (Math.abs(val - 19.1) < 1.15) {
+        feedback.innerHTML = `
+          <div class="text-green-500 font-semibold mb-2">Correct! The Sun is ~19 times further away than the Moon according to Aristarchus' measurement of 87°.</div>
+          <div class="text-slate-300 text-[11px] leading-relaxed mt-2 p-2 bg-slate-900/60 border border-slate-800 rounded">
+            <strong>The Reality:</strong> The true angle is <strong>89.85°</strong>, which means the Sun is actually <strong>~400 times</strong> further away.<br><br>
+            <strong>Why is it so hard to measure?</strong><br>
+            1. <em>Terminator Uncertainty:</em> Determining the exact moment the Moon is exactly half-lit is very difficult because the lunar surface is covered in mountains and craters, making the shadow line jagged.<br>
+            2. <em>Sensitivity:</em> Because 87° is so close to 90°, a tiny error of just 3° leads to a massive 20-fold difference in the calculated distance ratio.
+          </div>
+        `;
+        this.distanceVerified = true;
+        finalSubmitBtn.disabled = false;
+        finalSubmitBtn.style.background = 'rgb(34, 197, 94)';
+        finalSubmitBtn.style.color = 'white';
+        finalSubmitBtn.style.cursor = 'pointer';
+        finalSubmitBtn.classList.remove('bg-slate-800', 'text-slate-500', 'cursor-not-allowed');
+        finalSubmitBtn.classList.add('hover:bg-green-600');
+      } else {
+        feedback.innerHTML = `<span class="text-red-500 font-semibold">Incorrect. Compute 1 / cos(87°). Hint: cos(87°) ≈ 0.0523. Try 19.</span>`;
+      }
+    });
+
+    finalSubmitBtn.addEventListener('click', () => {
+      gameState.completeLevel(3);
+    });
+  }
+
+  renderLevel4() {
+    this.container.innerHTML = `
       <div class="level-panel">
-        <h2>Eratosthenes' Experiment</h2>
+        <h2>Level 4: Eratosthenes' Experiment</h2>
         <div class="story-container">
           <p class="story-short">
             In 240 BC, Eratosthenes calculated the Earth's circumference by comparing the Sun's angles at Alexandria and Syene. 
@@ -860,7 +986,7 @@ export class LevelUI {
         feedback.textContent = "Correct! The Earth's circumference is ~40,000 km.";
         feedback.className = "feedback-msg show success";
         setTimeout(() => {
-          gameState.completeLevel(3);
+          gameState.completeLevel(4);
         }, 2000);
       } else {
         feedback.textContent = "Incorrect. Remember: (360 / 7.2) * 800 = 50 * 800.";

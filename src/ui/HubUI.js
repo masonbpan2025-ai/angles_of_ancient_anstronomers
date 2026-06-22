@@ -40,19 +40,19 @@ export class HubUI {
       },
       { 
         id: 3, 
-        title: 'Level 3: Eratosthenes', 
+        title: 'Level 3: Aristarchus 1', 
+        target: 'earth-moon', 
+        desc: 'How he measured relative Sun & Moon distance', 
+        briefingTitle: 'Aristarchus\' Relative Distance', 
+        briefingText: 'Aristarchus estimated the relative distance to the Sun by measuring the angle between the Sun and Moon when the Moon is exactly half lit.' 
+      },
+      { 
+        id: 4, 
+        title: 'Level 4: Eratosthenes', 
         target: 'earth', 
         desc: 'Measure the Earth\'s size', 
         briefingTitle: 'Eratosthenes\' Circumference', 
         briefingText: 'In 240 BC, Eratosthenes calculated the Earth\'s circumference using shadow geometry in Alexandria and Syene. Place an obelisk at Alexandria, measure the shadow angle (7.2°), and calculate the circumference.' 
-      },
-      { 
-        id: 4, 
-        title: 'Level 4: Aristarchus', 
-        target: 'earth-moon', 
-        desc: 'Lunar eclipse alignment', 
-        briefingTitle: 'Aristarchus\' Lunar Ratio', 
-        briefingText: 'Measure the curvature of Earth\'s shadow during a lunar eclipse to deduce the relative size of the Moon and the distance to the Sun. Observe the Moon orbiting through the Earth\'s dark umbra shadow cone.' 
       },
       { 
         id: 5, 

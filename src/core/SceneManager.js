@@ -2,6 +2,7 @@ import { gameState } from './GameState.js';
 import { Level1 } from '../levels/Level1.js';
 import { Level2 } from '../levels/Level2.js';
 import { Level3 } from '../levels/Level3.js';
+import { Level4 } from '../levels/Level4.js';
 
 export class SceneManager {
   constructor(hub, hubUI, levelUI) {
@@ -47,6 +48,8 @@ export class SceneManager {
         this.activeLevelInstance = new Level2(this.spokeContainer);
       } else if (levelId === 3) {
         this.activeLevelInstance = new Level3(this.spokeContainer);
+      } else if (levelId === 4) {
+        this.activeLevelInstance = new Level4(this.spokeContainer);
       }
       window.activeLevelInstance = this.activeLevelInstance;
       this.levelUI.show();
