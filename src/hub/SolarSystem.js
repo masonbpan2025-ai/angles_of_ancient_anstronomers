@@ -492,13 +492,17 @@ export class SolarSystem {
     }
   }
 
+
   focusOnPlanet(planetId, onComplete) {
-    if (planetId === 1) this.setFocusTarget('earth');
+    if (planetId === 1) this.setFocusTarget('earth-moon');
     else if (planetId === 2) this.setFocusTarget('earth-moon');
     else if (planetId === 3) this.setFocusTarget('earth-moon');
-    else if (planetId === 4) this.setFocusTarget('earth-polar');
-    else if (planetId === 5) this.setFocusTarget('system-inner');
-    else if (planetId === 6) this.setFocusTarget('venus-transit');
+    else if (planetId === 4) this.setFocusTarget('earth-moon');
+    else if (planetId === 5) this.setFocusTarget('earth');
+    else if (planetId === 6) this.setFocusTarget('earth-polar');
+    else if (planetId === 7) this.setFocusTarget('system-inner');
+    else if (planetId === 8) this.setFocusTarget('system-inner');
+    else if (planetId === 9) this.setFocusTarget('venus-transit');
     
     if (onComplete) {
       setTimeout(onComplete, 1200);

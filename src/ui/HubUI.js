@@ -66,25 +66,33 @@ export class HubUI {
         id: 6, 
         title: 'Level 6: Ptolemy', 
         target: 'earth-polar', 
-        desc: 'Diurnal polar parallax', 
-        briefingTitle: 'Ptolemy\'s Parallax Angle', 
-        briefingText: 'Leverage Earth\'s structural rotation to calculate the parallax angle of the Moon relative to the absolute center of the Earth. Observe the Earth\'s rotation from a polar perspective.' 
+        desc: 'The Geocentric Model', 
+        briefingTitle: 'The Geocentric Model & Stellar Parallax', 
+        briefingText: 'Explore the geocentric model. Under a heliocentric hypothesis, Earth\'s orbit should cause stars to shift position (stellar parallax). Since ancient astronomers observed no parallax, they rejected heliocentrism and refined the geocentric model using epicycles to explain retrograde motion.' 
       },
       { 
         id: 7, 
-        title: 'Level 7: Kepler\'s Law', 
+        title: 'Level 7: Copernicus', 
+        target: 'system-inner', 
+        desc: 'The Heliocentric model', 
+        briefingTitle: 'Copernicus\' Heliocentric Model', 
+        briefingText: 'Understand how Nicolaus Copernicus shifted the center of the cosmos to the Sun. Compare the geometric equivalence of geocentric epicycles and heliocentric concentric orbits, and learn why perfect circles limited his model\'s accuracy.' 
+      },
+      { 
+        id: 8, 
+        title: 'Level 8: Kepler\'s Law', 
         target: 'system-inner', 
         desc: 'Empirical orbital scales', 
         briefingTitle: 'Kepler\'s Empirical Orbits', 
         briefingText: 'Analyze Tycho Brahe\'s raw observational positional markers to verify that planetary orbits are elliptical and adhere to Kepler\'s third ratio: P² ∝ a³.' 
       },
       { 
-        id: 8, 
-        title: 'Level 8: Transit of Venus', 
-        target: 'venus-transit', 
-        desc: 'Determine the AU distance', 
-        briefingTitle: 'The Transit of Venus', 
-        briefingText: 'Cross-reference transit observation recordings across global stations to deduce the true distance of 1 Astronomical Unit (the Sun-Earth distance) in kilometers.' 
+        id: 9, 
+        title: 'Level 9: Newton', 
+        target: 'earth-moon', 
+        desc: 'Universal Gravitation', 
+        briefingTitle: 'Newton\'s Universal Gravitation', 
+        briefingText: 'Explore Newton\'s Cannonball thought experiment to see how gravity governs orbits, and visualise the mathematical derivation of the Universal Law of Gravity.' 
       }
     ];
 

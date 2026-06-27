@@ -4,6 +4,10 @@ import { Level2 } from '../levels/Level2.js';
 import { Level3 } from '../levels/Level3.js';
 import { Level4 } from '../levels/Level4.js';
 import { Level5 } from '../levels/Level5.js';
+import { Level6 } from '../levels/Level6.js';
+import { Level7 } from '../levels/Level7.js';
+import { Level8 } from '../levels/Level8.js';
+import { Level9 } from '../levels/Level9.js';
 
 export class SceneManager {
   constructor(hub, hubUI, levelUI) {
@@ -41,8 +45,14 @@ export class SceneManager {
     this.hub.pause();
     this.spokeContainer.classList.add('active');
     
+    // Clear any existing active level instance to avoid duplicate loops / canvas leaks
+    this.unmountLevel();
+
     // Tiny delay to let CSS opacity transition happen
     setTimeout(() => {
+      // Clear again just in case another mount happened in between
+      this.unmountLevel();
+
       if (levelId === 1) {
         this.activeLevelInstance = new Level1(this.spokeContainer);
       } else if (levelId === 2) {
@@ -53,6 +63,14 @@ export class SceneManager {
         this.activeLevelInstance = new Level4(this.spokeContainer);
       } else if (levelId === 5) {
         this.activeLevelInstance = new Level5(this.spokeContainer);
+      } else if (levelId === 6) {
+        this.activeLevelInstance = new Level6(this.spokeContainer);
+      } else if (levelId === 7) {
+        this.activeLevelInstance = new Level7(this.spokeContainer);
+      } else if (levelId === 8) {
+        this.activeLevelInstance = new Level8(this.spokeContainer);
+      } else if (levelId === 9) {
+        this.activeLevelInstance = new Level9(this.spokeContainer);
       }
       window.activeLevelInstance = this.activeLevelInstance;
       this.levelUI.show();

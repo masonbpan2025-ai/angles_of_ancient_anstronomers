@@ -1,8 +1,9 @@
 class GameState {
   constructor() {
-    this.unlockedLevels = [1, 2, 3, 4, 5, 6, 7, 8];
+    this.unlockedLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     this.activeLevel = null;
     this.listeners = [];
+    this.derivationStep = 0;
   }
 
   subscribe(listener) {
@@ -26,6 +27,7 @@ class GameState {
   }
 
   startLevel(id) {
+    if (this.activeLevel === id) return;
     this.activeLevel = id;
     this.notify();
   }
