@@ -90,12 +90,12 @@ canvas:active {
 }
 
 .hub-sidebar, .hub-briefing {
-  background: rgba(10, 10, 25, 0.85);
+  background: linear-gradient(135deg, rgba(18, 12, 38, 0.9) 0%, rgba(8, 5, 20, 0.96) 100%);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.3);
   border-radius: var(--border-radius);
   padding: 30px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(139, 92, 246, 0.15);
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -269,18 +269,18 @@ canvas:active {
   bottom: 30px;
   left: 30px;
   width: 360px;
-  max-height: 48%;
+  max-height: calc(100% - 60px);
   overflow-y: auto;
-  background: rgba(10, 10, 25, 0.85);
+  background: linear-gradient(135deg, rgba(18, 12, 38, 0.9) 0%, rgba(8, 5, 20, 0.96) 100%);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 16px 20px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 18px 22px;
   border-radius: var(--border-radius);
   pointer-events: auto;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(139, 92, 246, 0.15);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .level-panel::-webkit-scrollbar {
@@ -298,9 +298,11 @@ canvas:active {
 }
 
 .level-panel h2 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a78bfa 0%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin: 0;
 }
 
@@ -313,13 +315,13 @@ canvas:active {
 }
 
 .instruction-box {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 0.78rem;
   line-height: 1.4;
-  color: var(--text-muted);
+  color: #d8b4fe;
 }
 
 .input-group {
@@ -697,3 +699,4 @@ button:active {
 .story-details-tooltip p:last-child {
   margin-bottom: 0;
 }
+
