@@ -113,8 +113,34 @@ export class HubUI {
     const header = document.createElement('div');
     header.className = 'hub-header';
     header.innerHTML = `
-      <h1>Angles of Ancient Astronomers</h1>
-      <p>solve the puzzles of the universe with ancient astronomers</p>
+      <div class="hub-title-container" style="position: relative; display: flex; flex-direction: column; gap: 6px;">
+        <!-- SVGs/decorations -->
+        <div class="header-decorations" style="display: flex; gap: 8px; margin-bottom: 2px; align-items: center; color: #a78bfa;">
+          <!-- Telescope SVG -->
+          <svg class="header-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(167, 139, 250, 0.45));">
+            <path d="M10 8l9-5 1.5 2.5-9 5z"/>
+            <path d="M11.5 10.5l-2 1.2-2-.6-.8-1.5.5-2 2-1.2"/>
+            <path d="M8 12l-4 7"/>
+            <path d="M12 12l4 7"/>
+            <path d="M10 12v7"/>
+          </svg>
+          <!-- Astrolabe/Sextant SVG -->
+          <svg class="header-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(167, 139, 250, 0.45));">
+            <circle cx="12" cy="12" r="10" stroke-dasharray="3,3"/>
+            <path d="M12 2v20M2 12h20"/>
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 12l6-6"/>
+            <path d="M12 12l-5 5"/>
+          </svg>
+          <!-- Sparkle/Star SVG -->
+          <svg class="header-icon animate-pulse" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="1" style="color: #38bdf8;">
+            <path d="M12 3l2.5 6.5 6.5 2.5-6.5 2.5-2.5 6.5-2.5-6.5-6.5-2.5 6.5-2.5z"/>
+          </svg>
+        </div>
+        <h1 class="fancy-title">Angles of Ancient Astronomers</h1>
+        <p>solve the puzzles of the universe with ancient astronomers</p>
+        <div style="width: 100%; height: 1.5px; background: linear-gradient(90deg, transparent 0%, rgba(167, 139, 250, 0.4) 30%, rgba(56, 189, 248, 0.4) 70%, transparent 100%); margin-top: 4px;"></div>
+      </div>
     `;
     sidebar.appendChild(header);
 
@@ -350,4 +376,5 @@ export class HubUI {
     }
   }
 }
+
 

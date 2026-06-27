@@ -116,14 +116,17 @@ canvas:active {
   justify-content: space-between;
 }
 
-.hub-header h1 {
-  font-size: 1.8rem;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #ffffff 50%, #94a3b8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 4px;
+.hub-header h1, .fancy-title {
+  font-family: 'Cinzel', serif !important;
+  font-weight: 800 !important;
+  font-size: 1.65rem !important;
+  letter-spacing: 0.5px !important;
+  background: linear-gradient(135deg, #ffffff 20%, #c084fc 65%, #38bdf8 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: 0 0 20px rgba(167, 139, 250, 0.25) !important;
+  margin-top: 4px;
+  line-height: 1.25 !important;
 }
 
 .hub-header p {
@@ -785,5 +788,6 @@ button:disabled, .level-panel button:disabled {
   border-color: rgba(139, 92, 246, 0.45) !important;
   color: #fff !important;
 }
+
 
 
