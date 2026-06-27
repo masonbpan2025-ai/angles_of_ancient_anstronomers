@@ -113,8 +113,8 @@ export class HubUI {
     const header = document.createElement('div');
     header.className = 'hub-header';
     header.innerHTML = `
-      <h1>AAA</h1>
-      <p>Angles of the Ancient Astronomers</p>
+      <h1>Angles of Ancient Astronomers</h1>
+      <p>solve the puzzles of the universe with ancient astronomers</p>
     `;
     sidebar.appendChild(header);
 
@@ -123,11 +123,14 @@ export class HubUI {
     sidebar.appendChild(listContainer);
 
     this.levels.forEach(level => {
+      if (level.id === 0) return; // Hide Overview Screen button from the level list
+      
       const btn = document.createElement('button');
       btn.className = `level-btn ${this.selectedLevelId === level.id ? 'active' : ''}`;
+      btn.dataset.levelId = level.id;
       
-      // Level 0 is Overview, others unlocked programmatically in gameState
-      const isUnlocked = gameState.unlockedLevels.includes(level.id) || level.id === 0;
+      // others unlocked programmatically in gameState
+      const isUnlocked = gameState.unlockedLevels.includes(level.id);
       if (!isUnlocked) {
         btn.setAttribute('disabled', 'true');
       }
@@ -143,8 +146,8 @@ export class HubUI {
         
         // Update active class on buttons
         const btns = listContainer.querySelectorAll('.level-btn');
-        btns.forEach((b, idx) => {
-          if (idx === level.id) b.classList.add('active');
+        btns.forEach((b) => {
+          if (parseInt(b.dataset.levelId) === level.id) b.classList.add('active');
           else b.classList.remove('active');
         });
 
@@ -297,11 +300,8 @@ export class HubUI {
     if (state.activeLevel !== null) {
       this.hide();
     } else {
-      // Set selected level as the highest unlocked if current is locked or invalid
-      const isUnlocked = gameState.unlockedLevels.includes(this.selectedLevelId) || this.selectedLevelId === 0;
-      if (!isUnlocked) {
-        this.selectedLevelId = Math.max(...gameState.unlockedLevels);
-      }
+      // If returning to the hub, default to no level selected (Overview screen)
+      this.selectedLevelId = 0;
 
       // Synchronize 3D camera target with current selection when returning to hub
       const info = this.levels.find(l => l.id === this.selectedLevelId);
@@ -350,3 +350,4 @@ export class HubUI {
     }
   }
 }
+
