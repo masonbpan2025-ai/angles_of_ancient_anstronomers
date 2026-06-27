@@ -165,20 +165,23 @@ export class LevelUI {
         <div class="flex gap-4">
           <!-- Column 1: Legend & Dashboard (w-32%) -->
           <div class="w-[32%] flex flex-col gap-2">
-            <!-- Legend -->
-            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2 flex justify-around items-center text-[10px] gap-1.5">
-              <div class="flex items-center gap-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                <span class="font-medium text-slate-600">Sun Path</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <span class="w-2.5 h-2.5 rounded-full border border-slate-300" style="background: linear-gradient(90deg, #ffffff 50%, #1e293b 50%);"></span>
-                <span class="font-medium text-slate-600">Moon Path</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-                <span class="font-medium text-slate-600">Equator</span>
-              </div>
+            <!-- Legend (Toggles) -->
+            <div class="bg-slate-950/40 border border-slate-800/80 rounded-xl p-2 flex justify-around items-center text-[10px] gap-1.5 pointer-events-auto">
+              <label class="flex items-center cursor-pointer gap-1.5 text-[10px] font-semibold text-slate-300 hover:text-white transition">
+                <input type="checkbox" id="toggle-sun" checked class="hidden">
+                <span id="indicator-sun" class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
+                Sun Path
+              </label>
+              <label class="flex items-center cursor-pointer gap-1.5 text-[10px] font-semibold text-slate-300 hover:text-white transition">
+                <input type="checkbox" id="toggle-moon" checked class="hidden">
+                <span id="indicator-moon" class="w-2.5 h-2.5 rounded-full bg-slate-300 border border-slate-500"></span>
+                Moon Path
+              </label>
+              <label class="flex items-center cursor-pointer gap-1.5 text-[10px] font-semibold text-slate-300 hover:text-white transition">
+                <input type="checkbox" id="toggle-equator" checked class="hidden">
+                <span id="indicator-equator" class="w-2.5 h-2.5 rounded-full bg-blue-500/50 border border-blue-500"></span>
+                Equator
+              </label>
             </div>
 
             <!-- Dashboard 2x2 Grid -->
@@ -445,6 +448,34 @@ export class LevelUI {
         }
       });
     }
+
+    // Bind path toggles
+    const toggleSun = document.getElementById('toggle-sun');
+    const indicatorSun = document.getElementById('indicator-sun');
+    const toggleMoon = document.getElementById('toggle-moon');
+    const indicatorMoon = document.getElementById('indicator-moon');
+    const toggleEquator = document.getElementById('toggle-equator');
+    const indicatorEquator = document.getElementById('indicator-equator');
+
+    const bindToggle = (input, indicator, stateKey, activeClass) => {
+      if (!input || !indicator) return;
+      input.addEventListener('change', (e) => {
+        const inst = window.activeLevelInstance;
+        if (inst) {
+          inst[stateKey] = e.target.checked;
+          inst.updatePhysics();
+        }
+        if (e.target.checked) {
+          indicator.className = `w-2.5 h-2.5 rounded-full ${activeClass}`;
+        } else {
+          indicator.className = 'w-2.5 h-2.5 rounded-full bg-transparent border border-slate-600';
+        }
+      });
+    };
+
+    bindToggle(toggleSun, indicatorSun, 'showSun', 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]');
+    bindToggle(toggleMoon, indicatorMoon, 'showMoon', 'bg-slate-300 border border-slate-500');
+    bindToggle(toggleEquator, indicatorEquator, 'showEquator', 'bg-blue-500/50 border border-blue-500');
 
     // Initial trigger
     setTimeout(() => this.updateDashboard(false), 50);
@@ -2478,4 +2509,5 @@ export class LevelUI {
     switchTab('cannonball');
   }
 }
+
 

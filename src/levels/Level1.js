@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { gameState } from '../core/GameState.js';
 
 export class Level1 {
@@ -11,16 +12,22 @@ export class Level1 {
     this.levelContainer.style.height = '100%';
     this.levelContainer.style.position = 'relative';
     this.container.appendChild(this.levelContainer);
+
     this.day = 172;
-    this.time = 12;
-    this.latitude = 30; // default to 30 degrees
+    this.time = 12.0;
+    this.latitude = 40; // default to 40 degrees
     this.isPlaying = false;
     this.playSpeed = 15.0;
     this.lastPlayTime = null;
 
+    this.showSun = true;
+    this.showMoon = true;
+    this.showEquator = true;
+
     this.sunPeakAlt = 72.4;
     this.moonPeakAlt = 40.1;
     this.moonPathStatus = "Within boundaries";
+
     this.initThree();
     this.initScene();
     this.createLabels();
@@ -30,173 +37,214 @@ export class Level1 {
 
     window.addEventListener('resize', this.onWindowResize.bind(this));
   }
+
   initThree() {
     this.width = this.levelContainer.clientWidth || window.innerWidth;
     this.height = this.levelContainer.clientHeight || window.innerHeight;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xffffff);
+    this.scene.background = new THREE.Color('#0b1121'); // Premium space dark blue
 
     // Left sidebar is 440px, canvas is to the right
     const canvasWidth = Math.max(300, this.width - 440 - 40);
     const canvasHeight = Math.max(200, this.height - 230);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(canvasWidth, canvasHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
     this.renderer.domElement.style.position = 'absolute';
     this.renderer.domElement.style.right = '20px';
     this.renderer.domElement.style.top = '20px';
     this.renderer.domElement.style.borderRadius = '16px';
-    this.renderer.domElement.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.15)';
+    this.renderer.domElement.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.35)';
     this.levelContainer.appendChild(this.renderer.domElement);
 
-    // Perspective camera, static position
-    this.camera = new THREE.PerspectiveCamera(25, canvasWidth / canvasHeight, 0.1, 1000);
-    this.camera.position.set(65, 28, 95);
-    this.camera.lookAt(0, 8, 0);
+    // Perspective camera, looking at scene center
+    this.camera = new THREE.PerspectiveCamera(45, canvasWidth / canvasHeight, 0.1, 1000);
+    this.camera.position.set(18, 12, 18);
+
+    // OrbitControls for interactive camera manipulation
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.maxDistance = 45;
+    this.controls.minDistance = 5;
+    this.controls.maxPolarAngle = Math.PI / 2 + 0.15; // Prevent user from clipping too far below the horizon plane
+    this.controls.target.set(0, 0.5, 0);
+    this.controls.update();
   }
+
   initScene() {
-    // Ambient light and directional light for observer meshes
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
-    this.scene.add(this.ambientLight);
+    const R = 10; // Celestial radius scale
 
-    this.dirLight = new THREE.DirectionalLight(0xffffff, 1.25);
-    this.dirLight.position.set(20, 50, 20);
-    this.scene.add(this.dirLight);
+    // 1. Base Environment Group
+    this.envGroup = new THREE.Group();
+    this.scene.add(this.envGroup);
 
-    // The Ground: CircleGeometry flat (radius 32). Slate-100 (0xf1f5f9)
-    const groundGeo = new THREE.CircleGeometry(32, 64);
-    const groundMat = new THREE.MeshBasicMaterial({ color: 0xf1f5f9, depthWrite: true });
+    // Ground Plane (Observer Horizon)
+    const groundGeo = new THREE.CircleGeometry(R * 1.1, 64);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b, // Slate-800
+      roughness: 0.85,
+      side: THREE.DoubleSide
+    });
     this.ground = new THREE.Mesh(groundGeo, groundMat);
     this.ground.rotation.x = -Math.PI / 2;
-    this.scene.add(this.ground);
+    this.ground.receiveShadow = true;
+    this.envGroup.add(this.ground);
 
-    // Faint grey line border around ground
-    const borderGeo = new THREE.RingGeometry(31.9, 32, 64);
-    const borderMat = new THREE.MeshBasicMaterial({ color: 0xcbd5e1, side: THREE.DoubleSide });
-    const border = new THREE.Mesh(borderGeo, borderMat);
-    border.rotation.x = -Math.PI / 2;
-    this.scene.add(border);
+    // Horizon outer decorative ring
+    const horizonEdgeGeo = new THREE.RingGeometry(R * 1.1, R * 1.1 + 0.08, 64);
+    const horizonEdgeMat = new THREE.MeshBasicMaterial({ color: 0x334155, side: THREE.DoubleSide });
+    const horizonEdge = new THREE.Mesh(horizonEdgeGeo, horizonEdgeMat);
+    horizonEdge.rotation.x = -Math.PI / 2;
+    this.envGroup.add(horizonEdge);
 
-    // Observer: body (cylinder) & head (sphere) at (0,0,0)
-    const observerGroup = new THREE.Group();
-    
-    const bodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 16);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x475569 }); // Slate-600
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 0.9;
-    observerGroup.add(body);
+    // Observer at center (Human figure)
+    this.observerGroup = new THREE.Group();
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xfcb7a0, roughness: 0.6 });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.8 }); // vibrant blue
 
-    const headGeo = new THREE.SphereGeometry(0.35, 16, 16);
-    const headMat = new THREE.MeshStandardMaterial({ color: 0x334155 }); // Slate-700
-    const head = new THREE.Mesh(headGeo, headMat);
-    head.position.y = 1.95;
-    observerGroup.add(head);
-    
-    this.scene.add(observerGroup);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), headMat);
+    head.position.y = 0.55;
+    head.castShadow = true;
 
-    // Axes: Solid black line across ground for North-South (-X to +X)
-    const nsGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-32, 0.01, 0),
-      new THREE.Vector3(32, 0.01, 0)
-    ]);
-    const nsMat = new THREE.LineBasicMaterial({ color: 0x000000 });
-    const nsLine = new THREE.Line(nsGeo, nsMat);
-    this.scene.add(nsLine);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.4, 16), bodyMat);
+    body.position.y = 0.2;
+    body.castShadow = true;
 
-    // Faint line for East-West (-Z to +Z)
-    const ewGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0.01, -32),
-      new THREE.Vector3(0, 0.01, 32)
-    ]);
-    const ewMat = new THREE.LineBasicMaterial({ color: 0xcbd5e1 });
-    const ewLine = new THREE.Line(ewGeo, ewMat);
-    this.scene.add(ewLine);
+    this.observerGroup.add(head);
+    this.observerGroup.add(body);
+    this.envGroup.add(this.observerGroup);
 
-    // Vertical dashed line from center to Y=36 (Zenith)
+    // 2. Dome Environment & Sphere
+    // Celestial Sphere (Wireframe)
+    const sphereGeo = new THREE.SphereGeometry(R, 32, 16);
+    const sphereMat = new THREE.MeshBasicMaterial({
+      color: 0x1e3a8a,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.18
+    });
+    this.celestialSphere = new THREE.Mesh(sphereGeo, sphereMat);
+    this.envGroup.add(this.celestialSphere);
+
+    // Vertical dashed Zenith line
     const zenithPoints = [];
-    for (let y = 0; y <= 36; y += 1) {
+    for (let y = 0; y <= R; y += 0.5) {
       zenithPoints.push(new THREE.Vector3(0, y, 0));
     }
     const zenithGeo = new THREE.BufferGeometry().setFromPoints(zenithPoints);
-    const zenithMat = new THREE.LineDashedMaterial({ color: 0x64748b, dashSize: 1, gapSize: 1 });
+    const zenithMat = new THREE.LineDashedMaterial({ color: 0x475569, dashSize: 0.5, gapSize: 0.5 });
     this.zenithLine = new THREE.Line(zenithGeo, zenithMat);
     this.zenithLine.computeLineDistances();
-    this.scene.add(this.zenithLine);
+    this.envGroup.add(this.zenithLine);
 
-    // Solid arc from North (-X) over Zenith to South (+X) representing the Meridian
+    // Solid Meridian Arc (North to South through Zenith)
     const meridianPoints = [];
-    const meridianRadius = 32;
     for (let a = 0; a <= 180; a += 2) {
       const rad = a * Math.PI / 180;
-      meridianPoints.push(new THREE.Vector3(-meridianRadius * Math.cos(rad), meridianRadius * Math.sin(rad), 0));
+      meridianPoints.push(new THREE.Vector3(-R * Math.cos(rad), R * Math.sin(rad), 0));
     }
     const meridianGeo = new THREE.BufferGeometry().setFromPoints(meridianPoints);
-    const meridianMat = new THREE.LineBasicMaterial({ color: 0x0f172a });
+    const meridianMat = new THREE.LineBasicMaterial({ color: 0x334155 });
     const meridianLine = new THREE.Line(meridianGeo, meridianMat);
-    this.scene.add(meridianLine);
+    this.envGroup.add(meridianLine);
 
-    // UniversePivot Group (tilted based on latitude)
-    this.universePivot = new THREE.Group();
-    this.scene.add(this.universePivot);
+    // 3. Lighting System
+    this.ambientLight = new THREE.HemisphereLight(0xffffff, 0x0f172a, 0.5);
+    this.scene.add(this.ambientLight);
 
-    // Equator Path: dashed circle of radius 26
-    const eqPoints = [];
-    for (let a = 0; a <= 360; a += 3) {
-      const rad = a * Math.PI / 180;
-      eqPoints.push(new THREE.Vector3(26 * Math.cos(rad), 0, 26 * Math.sin(rad)));
-    }
-    const eqGeo = new THREE.BufferGeometry().setFromPoints(eqPoints);
-    const eqMat = new THREE.LineDashedMaterial({ color: 0x94a3b8, dashSize: 0.8, gapSize: 0.8 });
-    this.eqLine = new THREE.Line(eqGeo, eqMat);
-    this.eqLine.computeLineDistances();
-    this.universePivot.add(this.eqLine);
+    this.dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    this.dirLight.castShadow = true;
+    this.dirLight.shadow.mapSize.width = 1024;
+    this.dirLight.shadow.mapSize.height = 1024;
+    this.dirLight.shadow.camera.near = 0.1;
+    this.dirLight.shadow.camera.far = 40;
+    this.dirLight.shadow.camera.left = -15;
+    this.dirLight.shadow.camera.right = 15;
+    this.dirLight.shadow.camera.top = 15;
+    this.dirLight.shadow.camera.bottom = -15;
+    this.dirLight.shadow.bias = -0.001;
+    this.scene.add(this.dirLight);
 
-    // Sun Orbit Circle path: Amber/Golden color to match the Sun
-    const sunOrbPoints = [];
-    for (let a = 0; a <= 360; a += 2) {
-      const rad = a * Math.PI / 180;
-      sunOrbPoints.push(new THREE.Vector3(Math.cos(rad), 0, Math.sin(rad)));
-    }
-    const sunOrbGeo = new THREE.BufferGeometry().setFromPoints(sunOrbPoints);
-    const sunOrbMat = new THREE.LineBasicMaterial({ color: 0xf59e0b }); // amber-500
-    this.sunOrbitLine = new THREE.Line(sunOrbGeo, sunOrbMat);
-    this.universePivot.add(this.sunOrbitLine);
+    // 4. Equatorial System (tilted based on latitude)
+    this.equatorialGroup = new THREE.Group();
+    this.scene.add(this.equatorialGroup);
 
-    // Moon Orbit Circle path: White/Grey (will be dynamically updated in updatePhysics)
-    const moonOrbPoints = [];
-    for (let a = 0; a <= 360; a += 2) {
-      const rad = a * Math.PI / 180;
-      moonOrbPoints.push(new THREE.Vector3(Math.cos(rad), 0, Math.sin(rad)));
-    }
-    const moonOrbGeo = new THREE.BufferGeometry().setFromPoints(moonOrbPoints);
-    const moonOrbMat = new THREE.LineBasicMaterial({ color: 0xffffff });
-    this.moonOrbitLine = new THREE.Line(moonOrbGeo, moonOrbMat);
-    this.universePivot.add(this.moonOrbitLine);
+    // Helper function to build beautiful path toruses
+    const createPathTorus = (radius, color, thickness) => {
+      const geo = new THREE.TorusGeometry(radius, thickness, 8, 100);
+      const mat = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = Math.PI / 2; // Lie flat in parent XZ plane
+      return mesh;
+    };
 
-    // Sun Mesh: Yellow Sphere
-    const sunSphereGeo = new THREE.SphereGeometry(1.4, 32, 32);
-    const sunSphereMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b }); // amber-500
-    this.sunMesh = new THREE.Mesh(sunSphereGeo, sunSphereMat);
-    this.universePivot.add(this.sunMesh);
+    // Equator path
+    this.eqLine = createPathTorus(R, 0x3b82f6, 0.04); // Blue torus line
+    this.equatorialGroup.add(this.eqLine);
 
-    // Moon Mesh: Black & White (responsive standard material)
-    const moonSphereGeo = new THREE.SphereGeometry(0.9, 32, 32);
-    const moonSphereMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.9,
-      metalness: 0.1
-    });
-    this.moonMesh = new THREE.Mesh(moonSphereGeo, moonSphereMat);
-    this.universePivot.add(this.moonMesh);
+    // 5. Sun System
+    this.sunGroup = new THREE.Group();
+    this.equatorialGroup.add(this.sunGroup);
+
+    this.sunOrbitLine = createPathTorus(R, 0xf59e0b, 0.06); // Amber torus path
+    this.sunGroup.add(this.sunOrbitLine);
+
+    this.sunMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.7, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xfde047 }) // Bright Yellow sphere
+    );
+    // Glowing additive halo
+    const sunGlow = new THREE.Mesh(
+      new THREE.SphereGeometry(1.1, 16, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0xf59e0b,
+        transparent: true,
+        opacity: 0.45,
+        blending: THREE.AdditiveBlending
+      })
+    );
+    this.sunMesh.add(sunGlow);
+    this.sunGroup.add(this.sunMesh);
+
+    // 6. Moon System
+    this.moonGroup = new THREE.Group();
+    this.equatorialGroup.add(this.moonGroup);
+
+    this.moonOrbitLine = createPathTorus(R, 0xe2e8f0, 0.04); // Slate torus path
+    this.moonOrbitLine.material.transparent = true;
+    this.moonOrbitLine.material.opacity = 0.55;
+    this.moonGroup.add(this.moonOrbitLine);
+
+    this.moonMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.5, 16, 16),
+      new THREE.MeshStandardMaterial({
+        color: 0xcbd5e1, // Textured rough white/slate sphere
+        roughness: 0.85,
+        metalness: 0.15
+      })
+    );
+    // Local directional light specifically targeting the moon to simulate lunar phases
+    this.moonLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    this.moonLight.position.set(1, 0, 0);
+    this.moonGroup.add(this.moonLight);
+    this.moonGroup.add(this.moonMesh);
   }
+
   createLabels() {
     this.labelContainer = document.createElement('div');
     this.labelContainer.style.position = 'absolute';
     this.labelContainer.style.top = '20px';
-    this.labelContainer.style.left = '460px'; // Offset by sidebar + padding
+    this.labelContainer.style.left = '460px'; // Offset by sidebar
     this.labelContainer.style.width = 'calc(100% - 480px)';
-    this.labelContainer.style.height = 'calc(100% - 250px)';
+    
+    const canvasHeight = Math.max(200, (this.levelContainer.clientHeight || window.innerHeight) - 250);
+    this.labelContainer.style.height = `${canvasHeight}px`;
     this.labelContainer.style.pointerEvents = 'none';
     this.levelContainer.appendChild(this.labelContainer);
     this.labels = {};
@@ -204,17 +252,18 @@ export class Level1 {
     const labelNames = ['Sun', 'Moon', 'North', 'South', 'East', 'West', 'Zenith'];
     labelNames.forEach(name => {
       const div = document.createElement('div');
-      div.className = 'absolute bg-slate-900/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity duration-100';
+      div.className = 'absolute bg-slate-950/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-700/50 shadow pointer-events-none transition-opacity duration-100';
       div.style.transform = 'translate(-50%, -100%)';
+      div.style.textShadow = '0 1px 3px rgba(0, 0, 0, 0.8)';
       div.textContent = name;
       this.labelContainer.appendChild(div);
       this.labels[name] = div;
     });
 
-    // Custom classes for specific labels
+    // Custom coloring for specific celestial body labels
     this.labels['Sun'].className = 'absolute bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity duration-100';
-    this.labels['Moon'].className = 'absolute bg-slate-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-600 shadow pointer-events-none transition-opacity duration-100';
-    this.labels['Zenith'].className = 'absolute bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity duration-100';
+    this.labels['Moon'].className = 'absolute bg-slate-200 text-slate-800 text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-400 shadow pointer-events-none transition-opacity duration-100';
+    this.labels['Zenith'].className = 'absolute bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity duration-100';
   }
 
   updateParameters(day, time, latitude) {
@@ -224,13 +273,16 @@ export class Level1 {
   }
 
   updatePhysics() {
+    const R = 10; // Celestial radius scale
+    const DEG2RAD = Math.PI / 180;
+
     if (this.isPlaying) {
       const now = performance.now();
       if (!this.lastPlayTime) this.lastPlayTime = now;
       const dt = (now - this.lastPlayTime) / 1000;
       this.lastPlayTime = now;
 
-      // Increment time (playSpeed is in simulated hours per real second)
+      // Increment timeOfDay. playSpeed is in simulated hours per real-time second
       this.time += this.playSpeed * dt;
       if (this.time >= 24) {
         const extraHours = this.time - 24;
@@ -239,6 +291,7 @@ export class Level1 {
       }
       if (this.day > 365) {
         this.day = this.day % 365;
+        if (this.day === 0) this.day = 1;
       }
 
       if (typeof this.onTimeUpdate === 'function') {
@@ -248,115 +301,136 @@ export class Level1 {
       this.lastPlayTime = null;
     }
 
-    // 1. Tilt universe pivot based on latitude
-    const tiltRad = (90 - this.latitude) * Math.PI / 180;
-    this.universePivot.rotation.set(0, 0, 0); // reset
-    this.universePivot.rotateZ(tiltRad);
+    // 1. Tilt universe equator group based on latitude (rotates along X)
+    this.equatorialGroup.rotation.x = (this.latitude - 90) * DEG2RAD;
 
-    // 2. Calculate Declinations (in radians)
-    const sunDecDeg = Math.cos(((this.day - 172) / 365) * 2 * Math.PI) * 23.5;
-    const sunDec = sunDecDeg * Math.PI / 180;
+    // 2. Calculate Declinations (in degrees)
+    // obliquity = 23.44. Day 172 is Summer Solstice.
+    const sunDec = 23.44 * Math.cos(2 * Math.PI * (this.day - 172) / 365);
+    const moonDec = 28.5 * Math.sin(2 * Math.PI * (this.day / 27.3));
 
-    const moonDecDeg = Math.cos((this.day / 27.32) * 2 * Math.PI) * 28.5;
-    const moonDec = moonDecDeg * Math.PI / 180;
+    this.sunDecDeg = sunDec;
+    this.moonDecDeg = moonDec;
 
-    this.sunDecDeg = sunDecDeg;
-    this.moonDecDeg = moonDecDeg;
-    // 3. Orbit Adjustments
-    const sunRadius = 26;
-    const sunScale = sunRadius * Math.cos(sunDec);
-    this.sunOrbitLine.scale.set(sunScale, 1, sunScale);
-    this.sunOrbitLine.position.y = sunRadius * Math.sin(sunDec);
+    // 3. Scale and Position Paths relative to Equator plane
+    // Radius of path = R * cos(dec). Offset Y = R * sin(dec)
+    const sunR = R * Math.cos(sunDec * DEG2RAD);
+    const sunY = R * Math.sin(sunDec * DEG2RAD);
+    this.sunOrbitLine.scale.set(sunR / R, sunR / R, 1);
+    this.sunOrbitLine.position.y = sunY;
 
-    const moonRadius = 19;
-    const moonScale = moonRadius * Math.cos(moonDec);
-    this.moonOrbitLine.scale.set(moonScale, 1, moonScale);
-    this.moonOrbitLine.position.y = moonRadius * Math.sin(moonDec);
-    // 4. Body Placements
-    const timeAngle = ((12 - this.time) / 24) * 2 * Math.PI;
+    const moonR = R * Math.cos(moonDec * DEG2RAD);
+    const moonY = R * Math.sin(moonDec * DEG2RAD);
+    this.moonOrbitLine.scale.set(moonR / R, moonR / R, 1);
+    this.moonOrbitLine.position.y = moonY;
 
-    // Sun Position relative to tilted universe pivot
-    const sunScaledR = sunRadius * Math.cos(sunDec);
+    // 4. Calculate Hour Angle and Position Celestial Bodies
+    // HA = (Time - 12) * 15 degrees.
+    const hourAngleRad = (this.time - 12) * 15 * DEG2RAD;
+
+    // Sun placement
     this.sunMesh.position.set(
-      sunScaledR * Math.cos(timeAngle),
-      sunRadius * Math.sin(sunDec),
-      sunScaledR * -Math.sin(timeAngle)
+      -sunR * Math.sin(hourAngleRad),
+      sunY,
+      sunR * Math.cos(hourAngleRad)
     );
 
-    // Moon Position relative to tilted universe pivot (drift angle added)
-    const driftAngle = (this.day / 27.32) * 2 * Math.PI;
-    const moonScaledR = moonRadius * Math.cos(moonDec);
+    // Moon placement (offset by monthly phase angle)
+    const moonPhaseAngle = (this.day / 29.53) * Math.PI * 2;
+    const moonHourAngle = hourAngleRad - moonPhaseAngle;
+
     this.moonMesh.position.set(
-      moonScaledR * Math.cos(timeAngle + driftAngle),
-      moonRadius * Math.sin(moonDec),
-      moonScaledR * -Math.sin(timeAngle + driftAngle)
+      -moonR * Math.sin(moonHourAngle),
+      moonY,
+      moonR * Math.cos(moonHourAngle)
     );
 
-    // 5. Dashboard computations
-    let sPeak = 90 - this.latitude + sunDecDeg;
-    if (sPeak > 90) sPeak = 180 - sPeak;
-    this.sunPeakAlt = sPeak;
+    // Directional moon light faces the sun to simulate lunar phases
+    this.moonLight.position.copy(this.sunMesh.position).sub(this.moonMesh.position).normalize();
 
-    let mPeak = 90 - this.latitude + moonDecDeg;
-    if (mPeak > 90) mPeak = 180 - mPeak;
-    this.moonPeakAlt = mPeak;
+    // 5. Update Visibility states based on toggles
+    this.sunGroup.visible = this.showSun;
+    this.moonGroup.visible = this.showMoon;
+    this.eqLine.visible = this.showEquator;
 
-    if (moonDecDeg > 23.5) {
-      this.moonPathStatus = "Higher than Summer Sun";
-    } else if (moonDecDeg < -23.5) {
-      this.moonPathStatus = "Lower than Winter Sun";
-    } else {
-      this.moonPathStatus = "Within Sun's boundaries";
-    }
-
-    // 6. Update directional light position to match the Sun's world position
+    // 6. Day / Night Dynamic Background Color Transitions
+    // Get sun's absolute world position to find altitude Y
+    this.equatorialGroup.updateMatrixWorld(true);
     const sunWorldPos = new THREE.Vector3();
     this.sunMesh.getWorldPosition(sunWorldPos);
+
+    // Directional light position matches the sun's position
     this.dirLight.position.copy(sunWorldPos);
 
-    // 7. Day/Night Background Color Transition based on Sun's Y coordinate in World space
-    const sunWorldY = sunWorldPos.y;
+    // Sun altitude scaled from -1.0 to 1.0
+    const sunAltitude = sunWorldPos.y / R;
 
-    if (sunWorldY >= 5) {
-      // Full day sky: light blue
-      this.scene.background.setHex(0xe0f2fe); // sky-100
-      this.moonOrbitLine.material.color.setHex(0x334155); // Slate-700
-    } else if (sunWorldY > -2) {
-      // Twilight (sunset/sunrise): fade from orange to purple
-      const t = (sunWorldY + 2) / 7; // [0, 1]
-      const r = Math.round(15 + t * (254 - 15));
-      const g = Math.round(23 + t * (215 - 23));
-      const b = Math.round(42 + t * (170 - 42));
-      this.scene.background.setRGB(r / 255, g / 255, b / 255);
+    const nightColor = new THREE.Color('#0b1121'); // deep slate dark
+    const twilightColor = new THREE.Color('#f97316'); // twilight orange
+    const dayColor = new THREE.Color('#38bdf8'); // sky blue
 
-      // Interpolate moon orbit line color from white (night) to slate-700 (day)
+    let bgColor = new THREE.Color();
+    if (sunAltitude < -0.1) {
+      // Night
+      bgColor.copy(nightColor);
+      this.ambientLight.intensity = 0.12;
+      this.dirLight.intensity = 0.05;
+      this.moonOrbitLine.material.color.setHex(0xe2e8f0);
+    } else if (sunAltitude < 0.1) {
+      // Twilight transition
+      const t = (sunAltitude + 0.1) / 0.2; // 0.0 to 1.0
+      bgColor.lerpColors(nightColor, twilightColor, t);
+      this.ambientLight.intensity = 0.12 + 0.38 * t;
+      this.dirLight.intensity = 0.05 + 1.15 * t;
+      
       const c = new THREE.Color();
-      c.lerpColors(new THREE.Color(0xffffff), new THREE.Color(0x334155), t);
+      c.lerpColors(new THREE.Color(0xe2e8f0), new THREE.Color(0x475569), t);
       this.moonOrbitLine.material.color.copy(c);
     } else {
-      // Starry Night: dark slate
-      this.scene.background.setHex(0x020617); // slate-950
-      this.moonOrbitLine.material.color.setHex(0xffffff); // White
+      // Day
+      const t = Math.min((sunAltitude - 0.1) / 0.3, 1.0); // 0.0 to 1.0
+      bgColor.lerpColors(twilightColor, dayColor, t);
+      this.ambientLight.intensity = 0.5 + 0.5 * t;
+      this.dirLight.intensity = 1.2 + 0.8 * t;
+      this.moonOrbitLine.material.color.setHex(0x475569); // darker slate in day
+    }
+    this.scene.background = bgColor;
+
+    // 7. Calculate Dashboard peaks & boundaries
+    let sPeak = 90 - Math.abs(this.latitude - sunDec);
+    this.sunPeakAlt = sPeak;
+
+    let mPeak = 90 - Math.abs(this.latitude - moonDec);
+    this.moonPeakAlt = mPeak;
+
+    if (Math.abs(moonDec) > 23.44) {
+      this.moonPathStatus = "Outside Sun's boundaries";
+    } else {
+      this.moonPathStatus = "Within Sun's boundaries";
     }
   }
 
   updateLabels() {
+    const R = 10; // Celestial radius scale
+
     const project = (pos3D) => {
       const tempV = new THREE.Vector3().copy(pos3D);
       tempV.project(this.camera);
 
-      // Convert Normalized Device Coordinates [-1, 1] to CSS pixels
+      // Convert NDC [-1, 1] to CSS pixels inside the canvas overlay container
       const x = (tempV.x * 0.5 + 0.5) * this.labelContainer.clientWidth;
       const y = (-tempV.y * 0.5 + 0.5) * this.labelContainer.clientHeight;
       return { x, y, z: tempV.z };
     };
 
+    // Label points fixed in world coordinate space
+    // North is -Z, East is +X
     const targets = {
-      North: new THREE.Vector3(-32, 0.05, 0),
-      South: new THREE.Vector3(32, 0.05, 0),
-      East: new THREE.Vector3(0, 0.05, 32),
-      West: new THREE.Vector3(0, 0.05, -32),
-      Zenith: new THREE.Vector3(0, 36, 0)
+      North: new THREE.Vector3(0, 0.05, -R * 1.15),
+      South: new THREE.Vector3(0, 0.05, R * 1.15),
+      East: new THREE.Vector3(R * 1.15, 0.05, 0),
+      West: new THREE.Vector3(-R * 1.15, 0.05, 0),
+      Zenith: new THREE.Vector3(0, R, 0)
     };
 
     // Sun World Position
@@ -369,7 +443,7 @@ export class Level1 {
     this.moonMesh.getWorldPosition(moonWorld);
     targets['Moon'] = moonWorld;
 
-    // Update each label
+    // Sync labels positioning & visibility with screen space
     Object.keys(targets).forEach(name => {
       const pos = targets[name];
       const projPos = project(pos);
@@ -381,17 +455,20 @@ export class Level1 {
       el.style.top = projPos.y + 'px';
 
       const isBehindCamera = projPos.z > 1;
-      
+      const distFromCenter = Math.sqrt(projPos.x * projPos.x + projPos.y * projPos.y);
+
       if (isBehindCamera) {
         el.style.opacity = '0';
       } else {
         if (name === 'Sun' || name === 'Moon') {
-          if (pos.y < -0.5) {
+          // Hide if below the horizon plane
+          if (pos.y < -0.3) {
             el.style.opacity = '0';
           } else {
             el.style.opacity = '1';
           }
         } else {
+          // Fade out coordinate labels if too close to center
           el.style.opacity = '1';
         }
       }
@@ -401,18 +478,22 @@ export class Level1 {
   animate() {
     this.animationId = requestAnimationFrame(this.animate);
     this.updatePhysics();
+    this.controls.update();
     this.renderer.render(this.scene, this.camera);
     this.updateLabels();
   }
+
   onWindowResize() {
     this.width = this.levelContainer.clientWidth || window.innerWidth;
     this.height = this.levelContainer.clientHeight || window.innerHeight;
 
     const canvasWidth = Math.max(300, this.width - 440 - 40);
     const canvasHeight = Math.max(200, this.height - 250);
+    
     this.renderer.setSize(canvasWidth, canvasHeight);
     this.camera.aspect = canvasWidth / canvasHeight;
     this.camera.updateProjectionMatrix();
+    this.controls.update();
 
     if (this.labelContainer) {
       this.labelContainer.style.left = '460px';
@@ -420,9 +501,13 @@ export class Level1 {
       this.labelContainer.style.height = `${canvasHeight}px`;
     }
   }
+
   destroy() {
     cancelAnimationFrame(this.animationId);
     window.removeEventListener('resize', this.onWindowResize.bind(this));
+    if (this.controls) {
+      this.controls.dispose();
+    }
     if (this.renderer && this.renderer.domElement && this.renderer.domElement.parentNode) {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
     }
@@ -434,3 +519,4 @@ export class Level1 {
     }
   }
 }
+

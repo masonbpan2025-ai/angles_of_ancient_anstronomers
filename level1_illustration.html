@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Trajectories</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #0b1121;
+            /* Deep dark blue background */
+            color: #e2e8f0;
+        }
+
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #60a5fa;
+            cursor: pointer;
+            margin-top: -6px;
+            /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #1e293b;
+            border-radius: 2px;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        /* Style the filled part of the slider (hack for webkit) */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        .slider-progress {
+            position: absolute;
+            height: 4px;
+            background: #3b82f6;
+            border-radius: 2px;
+            pointer-events: none;
+            z-index: 0;
+            top: 10px;
+        }
+
+        input[type=range] {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 3D Label Styling */
+        .scene-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 1.25rem;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s;
+            will-change: transform;
+        }
+
+        /* Glassmorphism panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+    <!-- Import Maps for Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+
+<body class="flex flex-col h-screen select-none">
+
+    <!-- 3D Visualization Area -->
+    <div id="canvas-container" class="flex-grow relative overflow-hidden">
+        <!-- Labels overlay -->
+        <div id="label-N" class="scene-label text-blue-400">N</div>
+        <div id="label-S" class="scene-label text-blue-400">S</div>
+        <div id="label-E" class="scene-label text-blue-400">E</div>
+        <div id="label-W" class="scene-label text-blue-400">W</div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="h-auto md:h-72 glass-panel rounded-t-3xl border-t p-6 shadow-2xl flex flex-col z-10 shrink-0">
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 h-full">
+
+            <!-- Left Column: Toggles & Stats -->
+            <div class="col-span-1 md:col-span-4 flex flex-col gap-4">
+                <!-- Toggles -->
+                <div class="flex items-center justify-between bg-slate-900/50 rounded-xl p-3 border border-slate-700">
+                    <label
+                        class="flex items-center cursor-pointer gap-2 text-sm text-slate-300 hover:text-white transition-colors">
+                        <input type="checkbox" id="toggle-sun" checked class="hidden">
+                        <div id="indicator-sun"
+                            class="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></div>
+                        Sun Path
+                    </label>
+                    <label
+                        class="flex items-center cursor-pointer gap-2 text-sm text-slate-300 hover:text-white transition-colors">
+                        <input type="checkbox" id="toggle-moon" checked class="hidden">
+                        <div id="indicator-moon" class="w-3 h-3 rounded-full bg-slate-300 border border-slate-500">
+                        </div>
+                        Moon Path
+                    </label>
+                    <label
+                        class="flex items-center cursor-pointer gap-2 text-sm text-slate-300 hover:text-white transition-colors">
+                        <input type="checkbox" id="toggle-equator" checked class="hidden">
+                        <div id="indicator-equator" class="w-3 h-3 rounded-full bg-blue-500/50 border border-blue-500">
+                        </div>
+                        Equator
+                    </label>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-3 flex-grow">
+                    <div class="bg-slate-900/50 rounded-xl p-3 border border-slate-800 flex flex-col justify-center">
+                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Day of Year
+                        </div>
+                        <div id="stat-day" class="text-xl font-bold text-white">172</div>
+                    </div>
+                    <div class="bg-slate-900/50 rounded-xl p-3 border border-slate-800 flex flex-col justify-center">
+                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Sun Peak Alt
+                        </div>
+                        <div id="stat-sun-alt" class="text-xl font-bold text-amber-400">75.0°</div>
+                    </div>
+                    <div class="bg-slate-900/50 rounded-xl p-3 border border-slate-800 flex flex-col justify-center">
+                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Moon Peak
+                            Alt</div>
+                        <div id="stat-moon-alt" class="text-xl font-bold text-slate-200">25.0°</div>
+                    </div>
+                    <div class="bg-slate-900/50 rounded-xl p-3 border border-slate-800 flex flex-col justify-center">
+                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Moon
+                            Boundary</div>
+                        <div id="stat-moon-bound" class="text-xs font-medium text-slate-300 leading-tight">Within Sun's
+                            boundaries</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Column: Sliders -->
+            <div class="col-span-1 md:col-span-5 flex flex-col justify-between py-2 gap-4">
+
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-sm font-medium text-slate-300">
+                        <span>Day of Year:</span>
+                        <span id="val-day" class="text-blue-400">172</span>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-progress" id="prog-day"></div>
+                        <input type="range" id="slider-day" min="1" max="365" value="172">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-sm font-medium text-slate-300">
+                        <span>Time of Day (Hours):</span>
+                        <span id="val-time" class="text-blue-400">12.0</span>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-progress" id="prog-time"></div>
+                        <input type="range" id="slider-time" min="0" max="24" step="0.1" value="12">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-sm font-medium text-slate-300">
+                        <span>Latitude:</span>
+                        <span id="val-lat" class="text-blue-400">40°</span>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-progress" id="prog-lat"></div>
+                        <input type="range" id="slider-lat" min="-90" max="90" value="40">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Playback -->
+            <div
+                class="col-span-1 md:col-span-3 flex flex-col justify-center items-center gap-6 border-l border-slate-700/50 pl-6">
+                <button id="btn-play"
+                    class="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <svg id="icon-play" class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                    <svg id="icon-pause" class="w-6 h-6 fill-current hidden" viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                    </svg>
+                    <span id="text-play">Play</span>
+                </button>
+
+                <div class="w-full flex flex-col gap-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-400">
+                        <span>Play Speed:</span>
+                        <span id="val-speed">1.0x</span>
+                    </div>
+                    <div class="slider-container" style="height: 16px;">
+                        <div class="slider-progress" id="prog-speed" style="top: 6px;"></div>
+                        <input type="range" id="slider-speed" min="0.1" max="10" step="0.1" value="1">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Configuration & Constants ---
+        const R = 10; // Radius of celestial sphere
+        const OBLIQUITY = 23.44; // Earth's axial tilt in degrees
+        const DEG2RAD = Math.PI / 180;
+        const RAD2DEG = 180 / Math.PI;
+
+        // --- Application State ---
+        const state = {
+            dayOfYear: 172,     // Approx Summer Solstice
+            timeOfDay: 12.0,    // Noon
+            latitude: 40,       // Mid-northern latitude
+            speed: 1.0,
+            isPlaying: false,
+            showSun: true,
+            showMoon: true,
+            showEquator: true
+        };
+
+        // --- DOM Elements ---
+        const container = document.getElementById('canvas-container');
+        const labels = {
+            N: document.getElementById('label-N'),
+            S: document.getElementById('label-S'),
+            E: document.getElementById('label-E'),
+            W: document.getElementById('label-W')
+        };
+        const uis = {
+            day: document.getElementById('slider-day'), valDay: document.getElementById('val-day'), progDay: document.getElementById('prog-day'),
+            time: document.getElementById('slider-time'), valTime: document.getElementById('val-time'), progTime: document.getElementById('prog-time'),
+            lat: document.getElementById('slider-lat'), valLat: document.getElementById('val-lat'), progLat: document.getElementById('prog-lat'),
+            speed: document.getElementById('slider-speed'), valSpeed: document.getElementById('val-speed'), progSpeed: document.getElementById('prog-speed'),
+            btnPlay: document.getElementById('btn-play'), iconPlay: document.getElementById('icon-play'), iconPause: document.getElementById('icon-pause'), textPlay: document.getElementById('text-play'),
+            tglSun: document.getElementById('toggle-sun'), indSun: document.getElementById('indicator-sun'),
+            tglMoon: document.getElementById('toggle-moon'), indMoon: document.getElementById('indicator-moon'),
+            tglEq: document.getElementById('toggle-equator'), indEq: document.getElementById('indicator-equator'),
+            statDay: document.getElementById('stat-day'), statSunAlt: document.getElementById('stat-sun-alt'),
+            statMoonAlt: document.getElementById('stat-moon-alt'), statMoonBound: document.getElementById('stat-moon-bound')
+        };
+
+        // --- Utility Functions ---
+        function updateSliderProgress(slider, progressEl) {
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 100;
+            const val = parseFloat(slider.value);
+            const percent = ((val - min) / (max - min)) * 100;
+            progressEl.style.width = `${percent}%`;
+        }
+
+        // --- Three.js Setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#0b1121');
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(15, 10, 15);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 40;
+        controls.minDistance = 5;
+        // Restrict angle so user doesn't go completely under the ground easily
+        controls.maxPolarAngle = Math.PI / 2 + 0.2;
+
+        // --- Build Scene Objects ---
+
+        // 1. Base Environment
+        const envGroup = new THREE.Group();
+        scene.add(envGroup);
+
+        // Ground Plane (Observer Horizon)
+        const groundGeo = new THREE.CircleGeometry(R * 1.1, 64);
+        const groundMat = new THREE.MeshStandardMaterial({
+            color: 0x334155,
+            roughness: 0.8,
+            side: THREE.DoubleSide
+        });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        envGroup.add(ground);
+
+        // Horizon Ring
+        const horizonEdgeGeo = new THREE.RingGeometry(R * 1.1, R * 1.1 + 0.05, 64);
+        const horizonEdgeMat = new THREE.MeshBasicMaterial({ color: 0x334155, side: THREE.DoubleSide });
+        const horizonEdge = new THREE.Mesh(horizonEdgeGeo, horizonEdgeMat);
+        horizonEdge.rotation.x = -Math.PI / 2;
+        envGroup.add(horizonEdge);
+
+        // Observer (Human figure)
+        const observerGroup = new THREE.Group();
+
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xfcb7a0, roughness: 0.6 });
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.8 });
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), headMat);
+        head.position.y = 0.55;
+        head.castShadow = true;
+
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.4, 16), bodyMat);
+        body.position.y = 0.2;
+        body.castShadow = true;
+
+        observerGroup.add(head);
+        observerGroup.add(body);
+        envGroup.add(observerGroup);
+
+        // Lights for Day/Night effect
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x0f172a, 0.6);
+        hemiLight.position.set(0, 20, 0);
+        scene.add(hemiLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 2);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
+        sunLight.shadow.camera.near = 0.1;
+        sunLight.shadow.camera.far = 40;
+        sunLight.shadow.camera.left = -15;
+        sunLight.shadow.camera.right = 15;
+        sunLight.shadow.camera.top = 15;
+        sunLight.shadow.camera.bottom = -15;
+        sunLight.shadow.bias = -0.001;
+        scene.add(sunLight);
+
+        // Celestial Sphere (Wireframe)
+        const sphereGeo = new THREE.SphereGeometry(R, 32, 16);
+        const sphereMat = new THREE.MeshBasicMaterial({
+            color: 0x1e3a8a,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15
+        });
+        const celestialSphere = new THREE.Mesh(sphereGeo, sphereMat);
+        envGroup.add(celestialSphere);
+
+        // Points for Labels (Fixed in world space relative to horizon)
+        // World: -Z is North, +X is East
+        const labelPoints = {
+            N: new THREE.Vector3(0, 0, -R * 1.15),
+            S: new THREE.Vector3(0, 0, R * 1.15),
+            E: new THREE.Vector3(R * 1.15, 0, 0),
+            W: new THREE.Vector3(-R * 1.15, 0, 0)
+        };
+
+        // 2. Equatorial System
+        // This group rotates based on latitude
+        const equatorialGroup = new THREE.Group();
+        scene.add(equatorialGroup);
+
+        // Helper function to create a solid line ring
+        function createPathRing(radius, color, thickness = 0.04) {
+            const geo = new THREE.TorusGeometry(radius, thickness, 8, 100);
+            const mat = new THREE.MeshBasicMaterial({ color: color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.rotation.x = Math.PI / 2; // Flat in XZ plane of its parent
+            return mesh;
+        }
+
+        // Equator Path
+        const equatorPath = createPathRing(R, 0x3b82f6, 0.03); // Blue
+        equatorialGroup.add(equatorPath);
+
+        // 3. Sun System
+        const sunGroup = new THREE.Group();
+        equatorialGroup.add(sunGroup); // Sun is relative to equator
+
+        const sunPath = createPathRing(R, 0xf59e0b, 0.06); // Amber
+        sunGroup.add(sunPath);
+
+        const sunMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.4, 16, 16),
+            new THREE.MeshBasicMaterial({ color: 0xfde047 }) // Bright Yellow
+        );
+        // Add a glow/halo to sun
+        const sunGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(0.6, 16, 16),
+            new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending })
+        );
+        sunMesh.add(sunGlow);
+        sunGroup.add(sunMesh);
+
+        // 4. Moon System
+        const moonGroup = new THREE.Group();
+        equatorialGroup.add(moonGroup);
+
+        const moonPath = createPathRing(R, 0xe2e8f0, 0.04); // Slate/White
+        // Path shadow/trail effect
+        moonPath.material.transparent = true;
+        moonPath.material.opacity = 0.5;
+        moonGroup.add(moonPath);
+
+        const moonMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.3, 16, 16),
+            new THREE.MeshStandardMaterial({
+                color: 0xcbd5e1,
+                roughness: 0.8,
+                metalness: 0.2
+            })
+        );
+        // Add simple directional light specifically for the moon to give it phases/texture
+        const moonLight = new THREE.DirectionalLight(0xffffff, 2);
+        moonLight.position.set(1, 0, 0); // Lighting from the side relative to moon group
+        moonGroup.add(moonLight);
+        moonGroup.add(moonMesh);
+
+        // --- Logic & Updates ---
+
+        function calculateDeclinations() {
+            // Simplified Sun Declination based on day of year
+            // Max declination (~23.44) at summer solstice (day 172)
+            const sunDec = OBLIQUITY * Math.cos(2 * Math.PI * (state.dayOfYear - 172) / 365);
+
+            // Simplified Moon Declination
+            // Moon's orbit is tilted ~5.1 deg to ecliptic. Total variation ~28.5 deg.
+            // Cycles every ~27.3 days.
+            const moonMaxDec = 28.5;
+            const moonDec = moonMaxDec * Math.sin(2 * Math.PI * (state.dayOfYear / 27.3));
+
+            return { sunDec, moonDec };
+        }
+
+        function updateScene() {
+            // 1. Update Latitude (Rotate Equatorial Group)
+            // If Lat=90, Equator is flat on horizon (rotation=0 around X... wait.
+            // Let's standardise: Equatorial plane is XZ. Polar axis is Y.
+            // When Lat=90 (North Pole), Polar axis points straight up (+Y in world). Rotation = 0.
+            // When Lat=0 (Equator), Polar axis points North (-Z in world). Rotation = -90 deg around X.
+            equatorialGroup.rotation.x = (state.latitude - 90) * DEG2RAD;
+
+            // 2. Calculate Declinations
+            const { sunDec, moonDec } = calculateDeclinations();
+
+            // 3. Update Paths (Position relative to Equator)
+            // Radius of path = R * cos(dec). Offset along polar axis (Y) = R * sin(dec).
+
+            // Sun Path Update
+            const sunR = R * Math.cos(sunDec * DEG2RAD);
+            const sunY = R * Math.sin(sunDec * DEG2RAD);
+            sunPath.scale.set(sunR / R, sunR / R, 1); // Scale X and Y of the Torus (which is rotated to lie in XZ)
+            sunPath.position.y = sunY;
+
+            // Moon Path Update
+            const moonR = R * Math.cos(moonDec * DEG2RAD);
+            const moonY = R * Math.sin(moonDec * DEG2RAD);
+            moonPath.scale.set(moonR / R, moonR / R, 1);
+            moonPath.position.y = moonY;
+
+            // 4. Position Objects on Paths based on Time
+            // Time 12:00 = Noon (Highest point, generally South).
+            // In Equatorial group: Y is Pole. XZ is Equator plane.
+            // If we look down from North Pole (+Y), Earth rotates Counter-Clockwise.
+            // So celestial objects appear to move Clockwise.
+            // Let Noon be when object crosses meridian (Positive Z axis in Equatorial group, since -Z is North Pole direction when lat=0).
+            // Hour Angle (HA) = (Time - 12) * 15 degrees.
+
+            const hourAngleRad = (state.timeOfDay - 12) * 15 * DEG2RAD;
+
+            // Sun Position
+            // HA = 0 -> Noon -> Z = sunR, X = 0
+            // HA > 0 (Afternoon) -> Moves West. In world, West is -X. 
+            // Since Equatorial group is rotated around X, its X axis is same as world X (East).
+            // So object should move towards -X as time increases.
+            sunMesh.position.set(
+                -sunR * Math.sin(hourAngleRad),
+                sunY,
+                sunR * Math.cos(hourAngleRad)
+            );
+
+            // Moon Position (Simplified)
+            // Moon moves roughly 12 degrees/day eastward relative to sun.
+            // This is a complex calculation for a simple demo, so we'll approximate a phase offset.
+            const moonPhaseAngle = (state.dayOfYear / 29.5) * Math.PI * 2;
+            const moonHourAngle = hourAngleRad - moonPhaseAngle;
+
+            moonMesh.position.set(
+                -moonR * Math.sin(moonHourAngle),
+                moonY,
+                moonR * Math.cos(moonHourAngle)
+            );
+
+            // Point the moon's light source roughly at the sun to simulate phases
+            moonLight.position.copy(sunMesh.position).sub(moonMesh.position).normalize();
+
+            // --- Day / Night Effect ---
+            equatorialGroup.updateMatrixWorld(true);
+            const sunWorldPos = new THREE.Vector3();
+            sunMesh.getWorldPosition(sunWorldPos);
+
+            // Update Sun Light Position
+            sunLight.position.copy(sunWorldPos);
+
+            // Calculate altitude (-1 to 1 roughly)
+            const sunAltitude = sunWorldPos.y / R;
+
+            const nightColor = new THREE.Color('#0b1121');
+            const dayColor = new THREE.Color('#38bdf8'); // Sky blue
+            const twilightColor = new THREE.Color('#f97316'); // Sunset orange
+
+            let bgColor = new THREE.Color();
+            if (sunAltitude < -0.1) {
+                bgColor.copy(nightColor);
+                hemiLight.intensity = 0.1;
+                sunLight.intensity = 0;
+            } else if (sunAltitude < 0.1) {
+                const t = (sunAltitude + 0.1) / 0.2; // 0.0 to 1.0
+                bgColor.lerpColors(nightColor, twilightColor, t);
+                hemiLight.intensity = 0.1 + (0.4 * t);
+                sunLight.intensity = 1.0 * t;
+            } else {
+                const t = Math.min((sunAltitude - 0.1) / 0.3, 1.0); // 0.0 to 1.0
+                bgColor.lerpColors(twilightColor, dayColor, t);
+                hemiLight.intensity = 0.5 + (0.5 * t);
+                sunLight.intensity = 1.0 + (1.0 * t);
+            }
+            scene.background = bgColor;
+
+            // 5. Update Visibility
+            sunGroup.visible = state.showSun;
+            moonGroup.visible = state.showMoon;
+            equatorPath.visible = state.showEquator;
+
+            // 6. Update UI Stats
+            uis.statDay.innerText = Math.floor(state.dayOfYear);
+
+            const sunPeak = 90 - Math.abs(state.latitude - sunDec);
+            uis.statSunAlt.innerText = sunPeak.toFixed(1) + '°';
+
+            const moonPeak = 90 - Math.abs(state.latitude - moonDec);
+            uis.statMoonAlt.innerText = moonPeak.toFixed(1) + '°';
+
+            if (Math.abs(moonDec) > 23.44) {
+                uis.statMoonBound.innerText = "Outside Sun's boundaries";
+                uis.statMoonBound.className = "text-xs font-medium text-pink-400 leading-tight";
+            } else {
+                uis.statMoonBound.innerText = "Within Sun's boundaries";
+                uis.statMoonBound.className = "text-xs font-medium text-slate-300 leading-tight";
+            }
+        }
+
+        // --- Interaction & Rendering ---
+
+        function updateLabels() {
+            const halfW = container.clientWidth / 2;
+            const halfH = container.clientHeight / 2;
+            const tempV = new THREE.Vector3();
+
+            for (const [key, element] of Object.entries(labels)) {
+                tempV.copy(labelPoints[key]);
+                tempV.project(camera);
+
+                // Hide if behind camera
+                if (tempV.z > 1) {
+                    element.style.opacity = 0;
+                    continue;
+                }
+
+                const x = (tempV.x * halfW) + halfW;
+                const y = -(tempV.y * halfH) + halfH;
+
+                element.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+
+                // Fade out if it gets too close to center (under observer plane)
+                // Basic distance check from center of screen
+                const dist = Math.sqrt(Math.pow(tempV.x, 2) + Math.pow(tempV.y, 2));
+                element.style.opacity = dist < 0.2 ? 0 : 1;
+            }
+        }
+
+        // UI Event Listeners
+        function bindSlider(sliderObj, stateKey, formatFn = (v) => v) {
+            sliderObj.slider.addEventListener('input', (e) => {
+                state[stateKey] = parseFloat(e.target.value);
+                sliderObj.val.innerText = formatFn(state[stateKey]);
+                updateSliderProgress(e.target, sliderObj.prog);
+                updateScene();
+            });
+            // Initial progress set
+            updateSliderProgress(sliderObj.slider, sliderObj.prog);
+        }
+
+        bindSlider({ slider: uis.day, val: uis.valDay, prog: uis.progDay }, 'dayOfYear', Math.floor);
+        bindSlider({ slider: uis.time, val: uis.valTime, prog: uis.progTime }, 'timeOfDay', (v) => v.toFixed(1));
+        bindSlider({ slider: uis.lat, val: uis.valLat, prog: uis.progLat }, 'latitude', (v) => v + '°');
+        bindSlider({ slider: uis.speed, val: uis.valSpeed, prog: uis.progSpeed }, 'speed', (v) => v.toFixed(1) + 'x');
+
+        // Toggles
+        function bindToggle(input, indicator, stateKey, activeColor) {
+            input.addEventListener('change', (e) => {
+                state[stateKey] = e.target.checked;
+                if (state[stateKey]) {
+                    indicator.className = `w-3 h-3 rounded-full ${activeColor}`;
+                } else {
+                    indicator.className = 'w-3 h-3 rounded-full bg-transparent border border-slate-600';
+                }
+                updateScene();
+            });
+        }
+        bindToggle(uis.tglSun, uis.indSun, 'showSun', 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]');
+        bindToggle(uis.tglMoon, uis.indMoon, 'showMoon', 'bg-slate-300 shadow-[0_0_8px_rgba(203,213,225,0.5)]');
+        bindToggle(uis.tglEq, uis.indEq, 'showEquator', 'bg-blue-500/80 border border-blue-400');
+
+        // Play Button
+        uis.btnPlay.addEventListener('click', () => {
+            state.isPlaying = !state.isPlaying;
+            if (state.isPlaying) {
+                uis.iconPlay.classList.add('hidden');
+                uis.iconPause.classList.remove('hidden');
+                uis.textPlay.innerText = 'Pause';
+                uis.btnPlay.classList.replace('from-indigo-500', 'from-rose-500');
+                uis.btnPlay.classList.replace('to-blue-600', 'to-red-600');
+            } else {
+                uis.iconPause.classList.add('hidden');
+                uis.iconPlay.classList.remove('hidden');
+                uis.textPlay.innerText = 'Play';
+                uis.btnPlay.classList.replace('from-rose-500', 'from-indigo-500');
+                uis.btnPlay.classList.replace('to-red-600', 'to-blue-600');
+            }
+        });
+
+        // Resize Handler
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // Initial Setup
+        updateScene();
+
+        // Animation Loop
+        let lastTime = performance.now();
+
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+
+            const deltaTime = (currentTime - lastTime) / 1000; // in seconds
+            lastTime = currentTime;
+
+            if (state.isPlaying) {
+                // Increment time. speed=1 means 1 hour per second real-time
+                state.timeOfDay += state.speed * deltaTime;
+
+                if (state.timeOfDay >= 24) {
+                    state.timeOfDay -= 24;
+                    state.dayOfYear += 1;
+                    if (state.dayOfYear > 365) state.dayOfYear = 1;
+
+                    // Update Day slider UI
+                    uis.day.value = state.dayOfYear;
+                    uis.valDay.innerText = Math.floor(state.dayOfYear);
+                    updateSliderProgress(uis.day, uis.progDay);
+                }
+
+                // Update Time slider UI
+                uis.time.value = state.timeOfDay;
+                uis.valTime.innerText = state.timeOfDay.toFixed(1);
+                updateSliderProgress(uis.time, uis.progTime);
+
+                updateScene();
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+            updateLabels(); // Sync HTML labels with 3D positions
+        }
+
+        animate(performance.now());
+
+    </script>
+</body>
+
+</html>
