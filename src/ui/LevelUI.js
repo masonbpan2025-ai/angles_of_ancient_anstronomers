@@ -111,6 +111,9 @@ export class LevelUI {
           <h2 class="text-xl font-bold text-slate-900 tracking-tight">Calendar Systems</h2>
           <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition" id="exit-btn">Exit to Orbit</button>
         </div>
+        <p class="text-[11px] leading-relaxed text-slate-500">
+          Calendar systems were crucial to ancient civilizations for agriculture, tracking seasons, and religious organization. Lacking any modern understanding of how the solar system is physically structured, early astronomers could only rely on direct observations of the Sun and the Moon's rise and fall across the sky to structure time.
+        </p>
         
         <!-- Tabs Header -->
         <div class="flex border-b border-slate-200 gap-1 pb-1">
@@ -2509,5 +2512,6 @@ export class LevelUI {
     switchTab('cannonball');
   }
 }
+
 
 
