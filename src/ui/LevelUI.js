@@ -74,17 +74,17 @@ export class LevelUI {
     const tabData = {
       babylonian: {
         title: "Babylonian Calendar",
-        desc: "The Babylonian calendar was lunisolar, meaning months were defined by the Moon's phase (~29.53 days) while the year was kept in sync with the Sun's seasons (~365.24 days). Because 12 lunar months are ~11 days shorter than a solar year, they added an extra intercalary month (Adaru or Elulu) 7 times within a 19-year cycle (the Metonic Cycle) to prevent seasonal drift.",
+        desc: "The Babylonian calendar was a lunisolar system. Early astronomers relied on the True Lunar Month (Synodic Month) of 29.53059 days to define months, while aligning the year with the True Solar Year (Tropical Year) of 365.24219 days. Because 12 lunar months fall ~11 days short of the solar year, they added intercalary months periodically using the Metonic cycle.",
         question: "A Metonic cycle contains 19 solar years and 235 lunar months. If a regular year has 12 lunar months, how many intercalary months must be added to align the calendar over a full 19-year cycle?",
         placeholder: "e.g. 5",
         answer: 7
       },
       chinese: {
         title: "Daming Calendar Accuracy",
-        desc: "The traditional Chinese calendar is lunisolar. In 462 CE, Zu Chongzhi introduced the Daming Calendar. By using a 391-year cycle with 144 leap months, he achieved an average year of 365.2428 days (compared to the Babylonian year of 365.2468 days). Decoupled from fixed stars, this anchored civil dates strictly to solstices, correcting precession.",
-        question: "With a true solar year of 365.2422 days, the Babylonian year drifts by 0.0046 days/year and the Daming year by 0.0006 days/year. What is the difference in their yearly drifts in days (Babylonian minus Daming)?",
-        placeholder: "e.g. 0.002",
-        answer: 0.004
+        desc: "In 462 CE, Zu Chongzhi introduced the Daming Calendar (averaging 365.2428 days per year, derived by distributing 144 leap months across a 391-year cycle). This was a major leap from the Babylonian Calendar (averaging 365.24677 days per year, derived by distributing 7 leap months across a 19-year cycle).",
+        question: "Using the True Solar Year of 365.24219 days, calculate the yearly drift in days/year for both calendars (Year Length minus True Solar Year). Enter both values below.",
+        answerBab: 0.00458,
+        answerChi: 0.00061
       },
       julian: {
         title: "Julian Calendar Drift",
@@ -130,8 +130,10 @@ export class LevelUI {
           
           <div class="border-t border-slate-100 pt-3 flex flex-col gap-2">
             <span class="text-[11px] font-semibold text-slate-700" id="tab-question">...</span>
-            <div class="flex gap-2">
-              <input type="number" id="calc-input" class="flex-1 bg-white border border-slate-200 text-slate-800 text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="e.g. 7">
+            <div id="tab-inputs-container" class="flex flex-col gap-2 pointer-events-auto">
+              <!-- Dynamically populated inputs -->
+            </div>
+            <div class="flex justify-end mt-1">
               <button id="verify-tab-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
             </div>
             <div id="tab-feedback" class="text-[11px] font-semibold hidden"></div>
@@ -265,7 +267,6 @@ export class LevelUI {
     const tabTitle = document.getElementById('tab-title');
     const tabDesc = document.getElementById('tab-desc');
     const tabQuestion = document.getElementById('tab-question');
-    const calcInput = document.getElementById('calc-input');
     const verifyTabBtn = document.getElementById('verify-tab-btn');
     const tabFeedback = document.getElementById('tab-feedback');
     const finalSubmitBtn = document.getElementById('final-submit-btn');
@@ -276,9 +277,25 @@ export class LevelUI {
       tabTitle.textContent = data.title;
       tabDesc.textContent = data.desc;
       tabQuestion.textContent = data.question;
-      calcInput.placeholder = data.placeholder;
-      calcInput.value = '';
       tabFeedback.classList.add('hidden');
+
+      const inputsContainer = document.getElementById('tab-inputs-container');
+      if (activeTab === 'chinese') {
+        inputsContainer.innerHTML = `
+          <div class="flex flex-col gap-1">
+            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Babylonian Yearly Drift (days)</span>
+            <input type="number" id="calc-input-bab" class="bg-white border border-slate-200 text-slate-800 text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="e.g. 0.003" step="0.00001">
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Chinese Daming Yearly Drift (days)</span>
+            <input type="number" id="calc-input-chi" class="bg-white border border-slate-200 text-slate-800 text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="e.g. 0.0005" step="0.00001">
+          </div>
+        `;
+      } else {
+        inputsContainer.innerHTML = `
+          <input type="number" id="calc-input" class="w-full bg-white border border-slate-200 text-slate-800 text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="${data.placeholder}">
+        `;
+      }
       
       // Update tab buttons visual
       document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -335,17 +352,34 @@ export class LevelUI {
 
     // Verify button event listener
     verifyTabBtn.addEventListener('click', () => {
-      const val = parseFloat(calcInput.value);
-      const data = tabData[activeTab];
       tabFeedback.classList.remove('hidden');
-      if (Math.abs(val - data.answer) < 0.0001) {
-        tabFeedback.textContent = "Correct!";
-        tabFeedback.className = "text-[11px] font-semibold text-green-600 mt-1";
-        this.calendarVerified[activeTab] = true;
-        updateChecklist();
+      if (activeTab === 'chinese') {
+        const valBab = parseFloat(document.getElementById('calc-input-bab').value);
+        const valChi = parseFloat(document.getElementById('calc-input-chi').value);
+        const ansBab = tabData.chinese.answerBab;
+        const ansChi = tabData.chinese.answerChi;
+        if (Math.abs(valBab - ansBab) < 0.0001 && Math.abs(valChi - ansChi) < 0.0001) {
+          tabFeedback.textContent = "Correct! Both drift calculations are accurate.";
+          tabFeedback.className = "text-[11px] font-semibold text-green-600 mt-1";
+          this.calendarVerified[activeTab] = true;
+          updateChecklist();
+        } else {
+          tabFeedback.textContent = "Incorrect calculations. Try again!";
+          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+        }
       } else {
-        tabFeedback.textContent = "Incorrect. Try again!";
-        tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+        const calcInput = document.getElementById('calc-input');
+        const val = parseFloat(calcInput.value);
+        const data = tabData[activeTab];
+        if (Math.abs(val - data.answer) < 0.0001) {
+          tabFeedback.textContent = "Correct!";
+          tabFeedback.className = "text-[11px] font-semibold text-green-600 mt-1";
+          this.calendarVerified[activeTab] = true;
+          updateChecklist();
+        } else {
+          tabFeedback.textContent = "Incorrect. Try again!";
+          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+        }
       }
     });
 
@@ -2512,6 +2546,7 @@ export class LevelUI {
     switchTab('cannonball');
   }
 }
+
 
 
 
