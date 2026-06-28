@@ -95,7 +95,7 @@ export class LevelUI {
       },
       modern: {
         title: "Modern Gregorian Rule",
-        desc: "The Gregorian calendar, introduced in 1582, corrected the Julian drift by skipping leap days in centurial years that are not divisible by 400 (e.g. 1700, 1800, 1900 were not leap years, but 2000 was). This yields an average year of 365.2425 days, reducing the drift to just 1 day every 3,200 years.",
+        desc: "Introduced in 1582 by Pope Gregory XIII to correct Julian drift, the modern Gregorian calendar is a solar calendar. Every year divisible by 4 is a leap year, except centurial years (e.g. 1700, 1900) which must be divisible by 400 (like 2000) to have a leap day. This yields an average year of 365.2425 days, drifting by just 1 day every 7,700 years.",
         question: "In the modern Gregorian system, how many leap years occur in a span of 400 years?",
         placeholder: "e.g. 90",
         answer: 97
@@ -2512,6 +2512,7 @@ export class LevelUI {
     switchTab('cannonball');
   }
 }
+
 
 
 
