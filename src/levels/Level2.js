@@ -39,6 +39,7 @@ export class Level2 {
     
     // Width of the task panel on the left (380px wide + 20px left = 400px)
     const taskPanelWidth = 400;
+    const bottomPanelHeight = 210; // Height reserved for bottom parameter panel
     
     // The available width to the right of the task panel
     const availWidth = Math.max(300, this.canvas.width - taskPanelWidth);
@@ -49,8 +50,8 @@ export class Level2 {
     // Determine the maximum base size that fits both horizontally and vertically
     // Horizontal limit: colWidth * 0.5 - 25 (margin for labels and borders)
     const maxR_horizontal = colWidth * 0.5 - 25;
-    // Vertical limit: (canvas.height - 120) * 0.5 (leaving room for titles and margins)
-    const maxR_vertical = (this.canvas.height - 120) * 0.5;
+    // Vertical limit: (canvas.height - bottomPanelHeight - 100) * 0.5 (leaving room for titles and margins)
+    const maxR_vertical = (this.canvas.height - bottomPanelHeight - 100) * 0.5;
     
     // Determine target size, capping at a maximum of 230px to maintain crisp layout on massive monitors
     const baseSize = Math.max(80, Math.min(230, Math.min(maxR_horizontal, maxR_vertical)));
@@ -65,9 +66,9 @@ export class Level2 {
     // Center of second sphere (centered in column 2)
     this.cx2 = Math.round(taskPanelWidth + colWidth * 1.5);
     
-    // Vertically center both spheres
-    this.cy1 = Math.round(this.canvas.height * 0.5);
-    this.cy2 = Math.round(this.canvas.height * 0.5);
+    // Vertically center both spheres in the space above the bottom panel
+    this.cy1 = Math.round((this.canvas.height - bottomPanelHeight) * 0.5 + 20);
+    this.cy2 = Math.round((this.canvas.height - bottomPanelHeight) * 0.5 + 20);
     
     // Divider is halfway between the two centers
     this.dividerX = Math.round((this.cx1 + this.cx2) / 2);

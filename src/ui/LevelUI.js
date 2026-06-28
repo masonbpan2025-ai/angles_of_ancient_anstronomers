@@ -564,7 +564,7 @@ export class LevelUI {
     };
 
     this.container.innerHTML = `
-      <div class="level-panel" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
+      <div class="level-panel" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px; z-index: 100;">
         <div class="flex justify-between items-center">
           <h2 class="text-base font-bold text-cyan-400">Eclipse & Lunar Inclination</h2>
           <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
@@ -578,7 +578,7 @@ export class LevelUI {
         </div>
 
         <!-- Tab Contents Card -->
-        <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+        <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2 mt-2">
           <h3 id="tab-title" class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Lunar Inclination</h3>
           <p id="tab-desc" class="text-[11px] leading-relaxed text-slate-300">...</p>
           
@@ -592,7 +592,7 @@ export class LevelUI {
         </div>
 
         <!-- Sub-tasks Checklist -->
-        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1">
+        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 mt-2">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Sub-tasks:</span>
           <div id="check-inclination" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check text-red-500">❌</span>
@@ -608,10 +608,15 @@ export class LevelUI {
           </div>
         </div>
 
-        <!-- Sliders & Toggles (always visible) -->
-        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-2 text-slate-200">
-          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Interactive Model Parameters:</span>
-          
+        <!-- Final Unlock Button -->
+        <button id="final-submit-btn" disabled class="w-full py-2.5 rounded-xl bg-slate-950/30 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-800/80 mt-auto">Verify & Unlock Next Level</button>
+      </div>
+
+      <!-- Parameter panel (placed bottom-right below the canvas) -->
+      <div class="level-panel flex flex-col gap-3 pointer-events-auto" style="position: absolute; bottom: 20px; right: 20px; left: 420px; width: auto; z-index: 100;">
+        <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Interactive Model Parameters</span>
+        
+        <div class="grid grid-cols-2 gap-x-6 gap-y-3">
           <div class="flex flex-col gap-0.5">
             <div class="flex justify-between text-[10px] text-slate-400">
               <span>Moon Position (Longitude):</span>
@@ -643,18 +648,15 @@ export class LevelUI {
             </div>
             <input type="range" id="moon-inc-slider" min="0" max="10" step="0.1" value="5.0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
           </div>
-
-          <div class="flex justify-between items-center text-[10px] text-slate-400 mt-0.5">
-            <span>Reference Frame:</span>
-            <div class="flex gap-1 bg-slate-950 p-0.5 border border-slate-800 rounded-lg">
-              <button id="ref-rotate-earth-btn" class="px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition">Rotate Earth</button>
-              <button id="ref-fixed-horizon-btn" class="px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium">Fixed Horizon</button>
-            </div>
-          </div>
         </div>
 
-        <!-- Final Unlock Button -->
-        <button id="final-submit-btn" disabled class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-1">Verify & Unlock Next Level</button>
+        <div class="flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-800/80 pt-2 mt-1">
+          <span>Reference Frame:</span>
+          <div class="flex gap-1 bg-slate-950 p-0.5 border border-slate-800 rounded-lg">
+            <button id="ref-rotate-earth-btn" class="px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition">Rotate Earth</button>
+            <button id="ref-fixed-horizon-btn" class="px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium">Fixed Horizon</button>
+          </div>
+        </div>
       </div>
     `;
 
