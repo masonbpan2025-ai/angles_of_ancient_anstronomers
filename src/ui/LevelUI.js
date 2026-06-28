@@ -80,11 +80,11 @@ export class LevelUI {
         answer: 7
       },
       chinese: {
-        title: "Traditional Chinese Calendar",
-        desc: "The traditional Chinese calendar divides the solar year into 24 solar terms (Jieqi), starting with the spring equinox. It integrates lunar months beginning on the day of the new moon. To align the lunar cycles with solar years, a leap month (Runyue) is inserted roughly every 3 years. This alignment follows the same 19-year cycle math.",
-        question: "Using the Metonic alignment of 19 solar years (235 lunar months), how many years out of the 19 years will contain a leap month (Runyue)?",
-        placeholder: "e.g. 6",
-        answer: 7
+        title: "Daming Calendar Accuracy",
+        desc: "The traditional Chinese calendar is lunisolar. In 462 CE, Zu Chongzhi introduced the Daming Calendar. By using a 391-year cycle with 144 leap months, he achieved an average year of 365.2428 days (compared to the Babylonian year of 365.2468 days). Decoupled from fixed stars, this anchored civil dates strictly to solstices, correcting precession.",
+        question: "With a true solar year of 365.2422 days, the Babylonian year drifts by 0.0046 days/year and the Daming year by 0.0006 days/year. What is the difference in their yearly drifts in days (Babylonian minus Daming)?",
+        placeholder: "e.g. 0.002",
+        answer: 0.004
       },
       julian: {
         title: "Julian Calendar Drift",
@@ -335,10 +335,10 @@ export class LevelUI {
 
     // Verify button event listener
     verifyTabBtn.addEventListener('click', () => {
-      const val = parseInt(calcInput.value, 10);
+      const val = parseFloat(calcInput.value);
       const data = tabData[activeTab];
       tabFeedback.classList.remove('hidden');
-      if (val === data.answer) {
+      if (Math.abs(val - data.answer) < 0.0001) {
         tabFeedback.textContent = "Correct!";
         tabFeedback.className = "text-[11px] font-semibold text-green-600 mt-1";
         this.calendarVerified[activeTab] = true;
@@ -2512,6 +2512,7 @@ export class LevelUI {
     switchTab('cannonball');
   }
 }
+
 
 
 
