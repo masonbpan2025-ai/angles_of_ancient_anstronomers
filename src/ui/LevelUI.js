@@ -76,28 +76,28 @@ export class LevelUI {
         title: "Babylonian Calendar",
         desc: "The Babylonian calendar was lunisolar, meaning months were defined by the Moon's phase (~29.53 days) while the year was kept in sync with the Sun's seasons (~365.24 days). Because 12 lunar months are ~11 days shorter than a solar year, they added an extra intercalary month (Adaru or Elulu) 7 times within a 19-year cycle (the Metonic Cycle) to prevent seasonal drift.",
         question: "A Metonic cycle contains 19 solar years and 235 lunar months. If a regular year has 12 lunar months, how many intercalary months must be added to align the calendar over a full 19-year cycle?",
-        placeholder: "e.g. 7",
+        placeholder: "e.g. 5",
         answer: 7
       },
       chinese: {
         title: "Traditional Chinese Calendar",
         desc: "The traditional Chinese calendar divides the solar year into 24 solar terms (Jieqi), starting with the spring equinox. It integrates lunar months beginning on the day of the new moon. To align the lunar cycles with solar years, a leap month (Runyue) is inserted roughly every 3 years. This alignment follows the same 19-year cycle math.",
         question: "Using the Metonic alignment of 19 solar years (235 lunar months), how many years out of the 19 years will contain a leap month (Runyue)?",
-        placeholder: "e.g. 7",
+        placeholder: "e.g. 6",
         answer: 7
       },
       julian: {
         title: "Julian Calendar Drift",
         desc: "Proposed by Julius Caesar in 46 BC, the Julian calendar was a solar calendar defining the year as 365.25 days, adding a leap day every 4 years. However, the true solar year is ~365.2422 days, meaning the Julian year was too long by ~11.25 minutes. Over centuries, this causes the solar date of the equinox to shift earlier.",
         question: "If the Julian calendar year drifts by 11.25 minutes (0.1875 hours) per year, how many years will it take for the calendar to drift backward by exactly 1 full day (24 hours) relative to the sun?",
-        placeholder: "e.g. 128",
+        placeholder: "e.g. 100",
         answer: 128
       },
       modern: {
         title: "Modern Gregorian Rule",
         desc: "The Gregorian calendar, introduced in 1582, corrected the Julian drift by skipping leap days in centurial years that are not divisible by 400 (e.g. 1700, 1800, 1900 were not leap years, but 2000 was). This yields an average year of 365.2425 days, reducing the drift to just 1 day every 3,200 years.",
         question: "In the modern Gregorian system, how many leap years occur in a span of 400 years?",
-        placeholder: "e.g. 97",
+        placeholder: "e.g. 90",
         answer: 97
       }
     };
@@ -490,7 +490,7 @@ export class LevelUI {
         title: "1. Lunar Inclination",
         desc: "Ancient Greek astronomers realized that eclipses are caused by shadows (the Earth's shadow on the Moon during a lunar eclipse, and the Moon's shadow on the Earth during a solar eclipse). However, this raised a fundamental question: if the Moon orbits the Earth every single month, why isn't there an eclipse every month? They realized that the Moon's orbital plane is slightly tilted (inclined) relative to the Earth's orbital plane (the ecliptic). Eclipses can only occur when both the Sun and Moon are near the points where their orbits intersect—the nodes. Ptolemy measured this inclination angle (β) at Alexandria during a solstice meridian transit.",
         question: "Calculate Ptolemy's lunar inclination angle β (in degrees) by subtracting the obliquity of the ecliptic (ε = 23;51° ≈ 23.85°) from the Moon's peak declination (δ = 28;50,30° ≈ 28.85°): β = δ - ε. Round to the nearest degree.",
-        placeholder: "e.g. 5.0",
+        placeholder: "e.g. 4.5",
         answer: 5.0
       },
       lunar: {
@@ -1002,7 +1002,7 @@ export class LevelUI {
               "• <strong>Movie 1 (Entering Shadow)</strong> shows the Moon taking <strong>1.0 hour</strong> to move from first contact to being fully eclipsed (traveling exactly 1.0 Moon diameter).<br>" +
               "• <strong>Movie 2 (Total Eclipse)</strong> shows the Moon spending <strong>2.7 hours</strong> completely inside the Earth's shadow umbra (traveling the inner width of the shadow).",
         question: "Based on these timings (2.7h / 1.0h), what is the ratio of Earth's shadow diameter to the Moon's diameter (d<sub>shadow</sub> / d<sub>M</sub>)?",
-        placeholder: "e.g. 2.7",
+        placeholder: "e.g. 3.0",
         answer: 2.7
       },
       taper: {
@@ -1020,7 +1020,7 @@ export class LevelUI {
               "</div>" +
               "<p class='text-[10px] text-slate-400 mt-2'>Refer to the Bucknell experiment details: <a href='https://www.eg.bucknell.edu/physics/astronomy/astr101/specials/aristarchus.html' target='_blank' class='text-sky-400 underline hover:text-sky-300'>Aristarchus and the Size of the Moon</a>.</p>",
         question: "What is the relative size of the Earth to the Moon (d<sub>E</sub> / d<sub>M</sub>) based on this tapering shadow calculation?",
-        placeholder: "e.g. 3.7",
+        placeholder: "e.g. 3.5",
         answer: 3.7
       },
       distance: {
@@ -1031,7 +1031,7 @@ export class LevelUI {
               "D<sub>EM</sub> = R<sub>M</sub> / sin(0.25°) = 0.270 R<sub>E</sub> / sin(0.25°)" +
               "</div>",
         question: "What is the Earth-Moon distance in units of Earth's radius (D<sub>EM</sub> / R<sub>E</sub>)? Round to 1 decimal place.",
-        placeholder: "e.g. 61.9",
+        placeholder: "e.g. 60.0",
         answer: 61.9
       }
     };
@@ -1339,7 +1339,7 @@ export class LevelUI {
               "<div class='math-block text-center bg-slate-950/60 border border-slate-800/80 p-2 py-1.5 rounded my-1.5 font-mono text-[11px] text-sky-400'>p_deg = p / 3600 = 1 / (d × 3600)</div>" +
               "<p class='text-[10px] text-slate-400 mt-2'>Refer to the LCO page: <a href='https://lco.global/spacebook/distance/parallax-and-distance-measurement/' target='_blank' class='text-sky-400 underline hover:text-sky-300'>Stellar Parallax and Distance Measurement</a>.</p>",
         question: "Using the realistic distance to the closest star, Proxima Centauri (1.30 pc), calculate what is the parallax angle in degrees. Round to 6 decimal places.",
-        placeholder: "e.g. 0.000214",
+        placeholder: "e.g. 0.00015",
         answer: 0.000214
       },
       epicycles: {
@@ -2512,6 +2512,7 @@ export class LevelUI {
     switchTab('cannonball');
   }
 }
+
 
 
 
