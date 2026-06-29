@@ -333,9 +333,14 @@ export class Level2 {
     this.equatorialGroup.add(this.moonMinDecMesh);
 
     const arcGeom = new THREE.BufferGeometry();
-    const arcMat = new THREE.LineDashedMaterial({ color: 0xf472b6, dashSize: 0.4, gapSize: 0.2 });
+    const arcMat = new THREE.LineBasicMaterial({ color: 0xf472b6 });
     this.decDiffLine = new THREE.Line(arcGeom, arcMat);
     this.equatorialGroup.add(this.decDiffLine);
+
+    // Min declination line & label
+    const arcGeomMin = new THREE.BufferGeometry();
+    this.decDiffLineMin = new THREE.Line(arcGeomMin, arcMat);
+    this.equatorialGroup.add(this.decDiffLineMin);
 
     // Peak declination labels
     this.createEclipticLabel('Sun Max', new THREE.Vector3(), 'marker-label', this.equatorialGroup, 'showDecMarkers');
@@ -346,6 +351,20 @@ export class Level2 {
 
     this.createEclipticLabel('β', new THREE.Vector3(), 'marker-label', this.equatorialGroup, 'showDecMarkers');
     this.decDiffLabelIdx = this.labelsData3D.length - 1;
+
+    this.createEclipticLabel('β_min', new THREE.Vector3(), 'marker-label', this.equatorialGroup, 'showDecMarkers');
+    this.decDiffLabelIdxMin = this.labelsData3D.length - 1;
+
+    // --- Max and Min Path Rings (Tori parallel to Celestial Equator) ---
+    this.sunMaxPathRing = createRingHelper(R_ce, 0xf59e0b, 0.02);
+    this.sunMinPathRing = createRingHelper(R_ce, 0xf59e0b, 0.02);
+    this.moonMaxPathRing = createRingHelper(R_ce, 0x22d3ee, 0.02);
+    this.moonMinPathRing = createRingHelper(R_ce, 0x22d3ee, 0.02);
+
+    this.equatorialGroup.add(this.sunMaxPathRing);
+    this.equatorialGroup.add(this.sunMinPathRing);
+    this.equatorialGroup.add(this.moonMaxPathRing);
+    this.equatorialGroup.add(this.moonMinPathRing);
 
     this.updateEclipticScene();
 
@@ -1462,6 +1481,27 @@ export class Level2 {
       const epsRad = OBLIQUITY * DEG2RAD;
       const betaRad = this.inclination * DEG2RAD;
 
+      // Position the Sun and Moon Max/Min Path Rings parallel to Equator
+      this.sunMaxPathRing.position.y = R_ce * Math.sin(epsRad);
+      const sunMaxR = R_ce * Math.cos(epsRad);
+      this.sunMaxPathRing.scale.set(sunMaxR / R_ce, sunMaxR / R_ce, 1);
+      this.sunMaxPathRing.visible = true;
+
+      this.sunMinPathRing.position.y = -R_ce * Math.sin(epsRad);
+      const sunMinR = R_ce * Math.cos(epsRad);
+      this.sunMinPathRing.scale.set(sunMinR / R_ce, sunMinR / R_ce, 1);
+      this.sunMinPathRing.visible = true;
+
+      this.moonMaxPathRing.position.y = R_ce * Math.sin(epsRad + betaRad);
+      const moonMaxR = R_ce * Math.cos(epsRad + betaRad);
+      this.moonMaxPathRing.scale.set(moonMaxR / R_ce, moonMaxR / R_ce, 1);
+      this.moonMaxPathRing.visible = true;
+
+      this.moonMinPathRing.position.y = -R_ce * Math.sin(epsRad + betaRad);
+      const moonMinR = R_ce * Math.cos(epsRad + betaRad);
+      this.moonMinPathRing.scale.set(moonMinR / R_ce, moonMinR / R_ce, 1);
+      this.moonMinPathRing.visible = true;
+
       const sunMaxPos = new THREE.Vector3(0, R_ce * Math.sin(epsRad), -R_ce * Math.cos(epsRad));
       const sunMinPos = new THREE.Vector3(0, -R_ce * Math.sin(epsRad), -R_ce * Math.cos(epsRad));
       const moonMaxPos = new THREE.Vector3(0, R_ce * Math.sin(epsRad + betaRad), -R_ce * Math.cos(epsRad + betaRad));
@@ -1490,18 +1530,45 @@ export class Level2 {
       this.decDiffLine.computeLineDistances();
       this.decDiffLine.visible = true;
 
+      // Draw arc/line between Sun Min and Moon Min
+      const arcPtsMin = [];
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const angle = -epsRad - t * betaRad;
+        arcPtsMin.push(new THREE.Vector3(0, R_ce * Math.sin(angle), -R_ce * Math.cos(angle)));
+      }
+      this.decDiffLineMin.geometry.dispose();
+      this.decDiffLineMin.geometry = new THREE.BufferGeometry().setFromPoints(arcPtsMin);
+      this.decDiffLineMin.computeLineDistances();
+      this.decDiffLineMin.visible = true;
+
       // Update label texts & positions
       this.labelsData3D[this.sunMaxLabelIdx].el.style.display = 'none';
       this.labelsData3D[this.moonMaxLabelIdx].el.style.display = 'none';
 
+      // Max HUD Tooltip Card
       const midAngle = epsRad + 0.5 * betaRad;
       const midPos = new THREE.Vector3(0, R_ce * Math.sin(midAngle), -R_ce * Math.cos(midAngle)).multiplyScalar(1.05);
-      this.labelsData3D[this.decDiffLabelIdx].position.copy(midPos);
+      this.labelsData3D[this.decDiffLabelIdx].dummy.position.copy(midPos);
       this.labelsData3D[this.decDiffLabelIdx].el.style.display = 'block';
       this.labelsData3D[this.decDiffLabelIdx].el.innerHTML = `
         <div class="space-y-1 font-sans text-right" style="min-width: 130px; line-height: 1.3;">
           <div style="color: #fbbf24; font-weight: 600;">Sun Max Dec (ε): +${OBLIQUITY.toFixed(1)}°</div>
           <div style="color: #22d3ee; font-weight: 600;">Moon Max Dec (δ): +${(OBLIQUITY + this.inclination).toFixed(1)}°</div>
+          <div style="border-top: 1px solid rgba(255,255,255,0.15); margin: 3px 0; padding-top: 3px;"></div>
+          <div style="color: #f472b6; font-weight: 700;">Inclination (β): ${this.inclination.toFixed(1)}°</div>
+        </div>
+      `;
+
+      // Min HUD Tooltip Card
+      const midAngleMin = -epsRad - 0.5 * betaRad;
+      const midPosMin = new THREE.Vector3(0, R_ce * Math.sin(midAngleMin), -R_ce * Math.cos(midAngleMin)).multiplyScalar(1.05);
+      this.labelsData3D[this.decDiffLabelIdxMin].dummy.position.copy(midPosMin);
+      this.labelsData3D[this.decDiffLabelIdxMin].el.style.display = 'block';
+      this.labelsData3D[this.decDiffLabelIdxMin].el.innerHTML = `
+        <div class="space-y-1 font-sans text-right" style="min-width: 130px; line-height: 1.3;">
+          <div style="color: #fbbf24; font-weight: 600;">Sun Min Dec (ε): -${OBLIQUITY.toFixed(1)}°</div>
+          <div style="color: #22d3ee; font-weight: 600;">Moon Min Dec (δ): -${(OBLIQUITY + this.inclination).toFixed(1)}°</div>
           <div style="border-top: 1px solid rgba(255,255,255,0.15); margin: 3px 0; padding-top: 3px;"></div>
           <div style="color: #f472b6; font-weight: 700;">Inclination (β): ${this.inclination.toFixed(1)}°</div>
         </div>
@@ -1514,9 +1581,15 @@ export class Level2 {
       this.moonMaxDecMesh.visible = false;
       this.moonMinDecMesh.visible = false;
       this.decDiffLine.visible = false;
+      this.decDiffLineMin.visible = false;
       
       this.moonMesh.visible = false;
       this.moonOrbitRing.visible = false;
+
+      this.sunMaxPathRing.visible = false;
+      this.sunMinPathRing.visible = false;
+      this.moonMaxPathRing.visible = false;
+      this.moonMinPathRing.visible = false;
 
       // Default Ecliptic logic
       const sunAngle = ((this.eclipticState.dayOfYear - 80) / 365) * Math.PI * 2;
@@ -1597,7 +1670,8 @@ export class Level2 {
         const x = (tempV.x * halfW) + halfW;
         const y = -(tempV.y * halfH) + halfH;
         item.el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
-        item.el.style.opacity = item.position.y < -0.5 ? 0.2 : 1;
+        const isMarker = item.el.classList.contains('marker-label');
+        item.el.style.opacity = (item.position.y < -0.5 && !isMarker) ? 0.2 : 1;
       }
     });
   }
