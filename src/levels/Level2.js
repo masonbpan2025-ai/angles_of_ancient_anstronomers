@@ -308,6 +308,45 @@ export class Level2 {
       this.createEclipticLabel(sign, new THREE.Vector3(x * 1.1, 0, z * 1.1), 'zodiac-label', this.eclipticGroup, 'showZodiacs');
     });
 
+    // --- Moon Orbit Setup (Teal) ---
+    this.moonOrbitGroup = new THREE.Group();
+    this.eclipticGroup.add(this.moonOrbitGroup);
+
+    this.moonOrbitRing = createRingHelper(R_ce, 0x22d3ee, 0.04);
+    this.moonOrbitGroup.add(this.moonOrbitRing);
+
+    this.moonMesh = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), new THREE.MeshBasicMaterial({ color: 0xe2e8f0 }));
+    this.moonOrbitGroup.add(this.moonMesh);
+
+    // --- Declination Markers & Lines (Meridian track) ---
+    const markerMatSun = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+    const markerMatMoon = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+
+    this.sunMaxDecMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), markerMatSun);
+    this.sunMinDecMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), markerMatSun);
+    this.moonMaxDecMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), markerMatMoon);
+    this.moonMinDecMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), markerMatMoon);
+
+    this.equatorialGroup.add(this.sunMaxDecMesh);
+    this.equatorialGroup.add(this.sunMinDecMesh);
+    this.equatorialGroup.add(this.moonMaxDecMesh);
+    this.equatorialGroup.add(this.moonMinDecMesh);
+
+    const arcGeom = new THREE.BufferGeometry();
+    const arcMat = new THREE.LineDashedMaterial({ color: 0xf472b6, dashSize: 0.4, gapSize: 0.2 });
+    this.decDiffLine = new THREE.Line(arcGeom, arcMat);
+    this.equatorialGroup.add(this.decDiffLine);
+
+    // Peak declination labels
+    this.createEclipticLabel('Sun Max', new THREE.Vector3(), 'marker-label', this.equatorialGroup, 'showDecMarkers');
+    this.sunMaxLabelIdx = this.labelsData3D.length - 1;
+
+    this.createEclipticLabel('Moon Max', new THREE.Vector3(), 'marker-label', this.equatorialGroup, 'showDecMarkers');
+    this.moonMaxLabelIdx = this.labelsData3D.length - 1;
+
+    this.createEclipticLabel('β', new THREE.Vector3(), 'marker-label', this.equatorialGroup, 'showDecMarkers');
+    this.decDiffLabelIdx = this.labelsData3D.length - 1;
+
     this.updateEclipticScene();
 
     // Event listener bounds & setup
@@ -403,22 +442,27 @@ export class Level2 {
 
   setMoonLongitude(val) {
     this.moonLongitude = parseFloat(val);
+    if (this.isThreeActive) this.updateEclipticScene();
   }
 
   setSunLongitude(val) {
     this.sunLongitude = parseFloat(val);
+    if (this.isThreeActive) this.updateEclipticScene();
   }
 
   setEarthRotation(val) {
     this.earthRotation = parseFloat(val);
+    if (this.isThreeActive) this.updateEclipticScene();
   }
 
   setInclination(val) {
     this.inclination = parseFloat(val);
+    if (this.isThreeActive) this.updateEclipticScene();
   }
 
   setRotateEarth(val) {
     this.rotateEarth = val === true || val === 'true';
+    if (this.isThreeActive) this.updateEclipticScene();
   }
 
   transformPoint(P) {
@@ -1349,7 +1393,7 @@ export class Level2 {
 
   setTab(tabName) {
     this.activeTab = tabName;
-    if (tabName === 'ecliptic') {
+    if (tabName === 'ecliptic' || tabName === 'inclination') {
       this.canvas.style.display = 'none';
       this.threeContainer.style.display = 'block';
       this.isThreeActive = true;
@@ -1370,61 +1414,166 @@ export class Level2 {
     // 0. Update equatorial tilt based on Latitude
     this.equatorialGroup.rotation.x = (this.eclipticState.latitude - 90) * DEG2RAD;
     
-    // 1. Position Sun based on Day of Year
-    const sunAngle = ((this.eclipticState.dayOfYear - 80) / 365) * Math.PI * 2;
-    const sunLocalPos = new THREE.Vector3(Math.cos(sunAngle) * R_ce, 0, -Math.sin(sunAngle) * R_ce);
-    this.sunMesh.position.copy(sunLocalPos);
+    if (this.activeTab === 'inclination') {
+      this.eclipticState.showDecMarkers = true;
+      this.eclipticState.showZodiacs = true;
+      this.eclipticState.showEquator = true;
+      this.eclipticState.showEcliptic = true;
 
-    // 2. Adjust daily path based on declination
-    const sunEqPos = sunLocalPos.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), -OBLIQUITY * DEG2RAD);
-    this.sunPathRing.position.y = sunEqPos.y;
-    const sunPathRadius = Math.sqrt(sunEqPos.x ** 2 + sunEqPos.z ** 2);
-    this.sunPathRing.scale.set(sunPathRadius / R_ce, sunPathRadius / R_ce, 1);
+      // Update Moon's orbital inclination relative to Ecliptic
+      this.moonOrbitGroup.rotation.x = this.inclination * DEG2RAD;
 
-    // 3. Rotate Celestial Sphere
-    const sunRA = Math.atan2(-sunEqPos.z, sunEqPos.x);
-    const rotationAtNoon = -Math.PI / 2 - sunRA;
-    const timeOffset = (this.eclipticState.timeOfDay - 12) * (Math.PI / 12);
-    this.celestialSphere.rotation.y = rotationAtNoon - timeOffset;
+      // Position Sun based on sunLongitude
+      const sunAngle = this.sunLongitude * DEG2RAD;
+      const sunLocalPos = new THREE.Vector3(Math.cos(sunAngle) * R_ce, 0, -Math.sin(sunAngle) * R_ce);
+      this.sunMesh.position.copy(sunLocalPos);
 
-    // 4. Lighting & Background
-    this.sunMesh.updateMatrixWorld(true);
-    const sunWorldPos = new THREE.Vector3();
-    this.sunMesh.getWorldPosition(sunWorldPos);
-    this.sunLight.position.copy(sunWorldPos);
+      // Position Moon based on moonLongitude
+      const moonAngle = this.moonLongitude * DEG2RAD;
+      const moonLocalPos = new THREE.Vector3(Math.cos(moonAngle) * R_ce, 0, -Math.sin(moonAngle) * R_ce);
+      this.moonMesh.position.copy(moonLocalPos);
 
-    const altitude = sunWorldPos.y / R_ce;
-    const nightColor = new THREE.Color(0x050505);
-    const twilightColor = new THREE.Color(0x170c2a);
-    const dayColor = new THREE.Color(0x38bdf8);
-    let bgColor = new THREE.Color();
+      // Daily path of the Sun
+      const sunEqPos = sunLocalPos.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), -OBLIQUITY * DEG2RAD);
+      this.sunPathRing.position.y = sunEqPos.y;
+      const sunPathRadius = Math.sqrt(sunEqPos.x ** 2 + sunEqPos.z ** 2);
+      this.sunPathRing.scale.set(sunPathRadius / R_ce, sunPathRadius / R_ce, 1);
 
-    if (altitude < -0.1) {
-      bgColor.copy(nightColor);
-      this.hemiLight.intensity = 0.2;
-      this.sunLight.intensity = 0;
+      // Rotate Celestial Sphere based on earthRotation
+      this.celestialSphere.rotation.y = this.earthRotation * DEG2RAD;
+
+      // Visibility
+      this.sunMesh.visible = true;
+      this.moonMesh.visible = true;
+      this.moonOrbitRing.visible = true;
+      this.sunPathRing.visible = true;
+      this.equatorRing.visible = true;
+      this.eclipticRing.visible = true;
+      this.gridGroup.visible = true;
+      this.zodiacConstellations.visible = true;
+
+      // Lights & Fixed Dark space Background
+      this.scene3D.background = new THREE.Color(0x050505);
+      this.hemiLight.intensity = 0.8;
+      this.sunLight.intensity = 1.0;
       this.starMaterial.opacity = 0.8;
-    } else if (altitude < 0.1) {
-      const t = (altitude + 0.1) / 0.2;
-      bgColor.lerpColors(nightColor, twilightColor, t);
-      this.hemiLight.intensity = 0.2 + (0.3 * t);
-      this.sunLight.intensity = 2.0 * t;
-      this.starMaterial.opacity = 0.8 * (1 - t);
-    } else {
-      const t = Math.min((altitude - 0.1) / 0.3, 1.0);
-      bgColor.lerpColors(twilightColor, dayColor, t);
-      this.hemiLight.intensity = 0.5 + (0.5 * t);
-      this.sunLight.intensity = 2.0;
-      this.starMaterial.opacity = 0;
-    }
-    this.scene3D.background = bgColor;
 
-    // 5. Visibility Toggles
-    this.sunPathRing.visible = this.eclipticState.showSunPath;
-    this.equatorRing.visible = this.eclipticState.showEquator;
-    this.eclipticRing.visible = this.eclipticState.showEcliptic;
-    this.gridGroup.visible = this.eclipticState.showEquator;
-    this.zodiacConstellations.visible = this.eclipticState.showZodiacs;
+      // Update max/min declination positions
+      const epsRad = OBLIQUITY * DEG2RAD;
+      const betaRad = this.inclination * DEG2RAD;
+
+      const sunMaxPos = new THREE.Vector3(0, R_ce * Math.sin(epsRad), -R_ce * Math.cos(epsRad));
+      const sunMinPos = new THREE.Vector3(0, -R_ce * Math.sin(epsRad), -R_ce * Math.cos(epsRad));
+      const moonMaxPos = new THREE.Vector3(0, R_ce * Math.sin(epsRad + betaRad), -R_ce * Math.cos(epsRad + betaRad));
+      const moonMinPos = new THREE.Vector3(0, -R_ce * Math.sin(epsRad + betaRad), -R_ce * Math.cos(epsRad + betaRad));
+
+      this.sunMaxDecMesh.position.copy(sunMaxPos);
+      this.sunMinDecMesh.position.copy(sunMinPos);
+      this.moonMaxDecMesh.position.copy(moonMaxPos);
+      this.moonMinDecMesh.position.copy(moonMinPos);
+
+      this.sunMaxDecMesh.visible = true;
+      this.sunMinDecMesh.visible = true;
+      this.moonMaxDecMesh.visible = true;
+      this.moonMinDecMesh.visible = true;
+
+      // Draw arc/line between Sun Max and Moon Max
+      const arcPts = [];
+      const steps = 16;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const angle = epsRad + t * betaRad;
+        arcPts.push(new THREE.Vector3(0, R_ce * Math.sin(angle), -R_ce * Math.cos(angle)));
+      }
+      this.decDiffLine.geometry.dispose();
+      this.decDiffLine.geometry = new THREE.BufferGeometry().setFromPoints(arcPts);
+      this.decDiffLine.computeLineDistances();
+      this.decDiffLine.visible = true;
+
+      // Update label texts & positions
+      this.labelsData3D[this.sunMaxLabelIdx].el.style.display = 'none';
+      this.labelsData3D[this.moonMaxLabelIdx].el.style.display = 'none';
+
+      const midAngle = epsRad + 0.5 * betaRad;
+      const midPos = new THREE.Vector3(0, R_ce * Math.sin(midAngle), -R_ce * Math.cos(midAngle)).multiplyScalar(1.05);
+      this.labelsData3D[this.decDiffLabelIdx].position.copy(midPos);
+      this.labelsData3D[this.decDiffLabelIdx].el.style.display = 'block';
+      this.labelsData3D[this.decDiffLabelIdx].el.innerHTML = `
+        <div class="space-y-1 font-sans text-right" style="min-width: 130px; line-height: 1.3;">
+          <div style="color: #fbbf24; font-weight: 600;">Sun Max Dec (ε): +${OBLIQUITY.toFixed(1)}°</div>
+          <div style="color: #22d3ee; font-weight: 600;">Moon Max Dec (δ): +${(OBLIQUITY + this.inclination).toFixed(1)}°</div>
+          <div style="border-top: 1px solid rgba(255,255,255,0.15); margin: 3px 0; padding-top: 3px;"></div>
+          <div style="color: #f472b6; font-weight: 700;">Inclination (β): ${this.inclination.toFixed(1)}°</div>
+        </div>
+      `;
+
+    } else {
+      this.eclipticState.showDecMarkers = false;
+      this.sunMaxDecMesh.visible = false;
+      this.sunMinDecMesh.visible = false;
+      this.moonMaxDecMesh.visible = false;
+      this.moonMinDecMesh.visible = false;
+      this.decDiffLine.visible = false;
+      
+      this.moonMesh.visible = false;
+      this.moonOrbitRing.visible = false;
+
+      // Default Ecliptic logic
+      const sunAngle = ((this.eclipticState.dayOfYear - 80) / 365) * Math.PI * 2;
+      const sunLocalPos = new THREE.Vector3(Math.cos(sunAngle) * R_ce, 0, -Math.sin(sunAngle) * R_ce);
+      this.sunMesh.position.copy(sunLocalPos);
+
+      // Adjust daily path based on declination
+      const sunEqPos = sunLocalPos.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), -OBLIQUITY * DEG2RAD);
+      this.sunPathRing.position.y = sunEqPos.y;
+      const sunPathRadius = Math.sqrt(sunEqPos.x ** 2 + sunEqPos.z ** 2);
+      this.sunPathRing.scale.set(sunPathRadius / R_ce, sunPathRadius / R_ce, 1);
+
+      // Rotate Celestial Sphere
+      const sunRA = Math.atan2(-sunEqPos.z, sunEqPos.x);
+      const rotationAtNoon = -Math.PI / 2 - sunRA;
+      const timeOffset = (this.eclipticState.timeOfDay - 12) * (Math.PI / 12);
+      this.celestialSphere.rotation.y = rotationAtNoon - timeOffset;
+
+      // Lighting & Background
+      this.sunMesh.updateMatrixWorld(true);
+      const sunWorldPos = new THREE.Vector3();
+      this.sunMesh.getWorldPosition(sunWorldPos);
+      this.sunLight.position.copy(sunWorldPos);
+
+      const altitude = sunWorldPos.y / R_ce;
+      const nightColor = new THREE.Color(0x050505);
+      const twilightColor = new THREE.Color(0x170c2a);
+      const dayColor = new THREE.Color(0x38bdf8);
+      let bgColor = new THREE.Color();
+
+      if (altitude < -0.1) {
+        bgColor.copy(nightColor);
+        this.hemiLight.intensity = 0.2;
+        this.sunLight.intensity = 0;
+        this.starMaterial.opacity = 0.8;
+      } else if (altitude < 0.1) {
+        const t = (altitude + 0.1) / 0.2;
+        bgColor.lerpColors(nightColor, twilightColor, t);
+        this.hemiLight.intensity = 0.2 + (0.3 * t);
+        this.sunLight.intensity = 2.0 * t;
+        this.starMaterial.opacity = 0.8 * (1 - t);
+      } else {
+        const t = Math.min((altitude - 0.1) / 0.3, 1.0);
+        bgColor.lerpColors(twilightColor, dayColor, t);
+        this.hemiLight.intensity = 0.5 + (0.5 * t);
+        this.sunLight.intensity = 2.0;
+        this.starMaterial.opacity = 0;
+      }
+      this.scene3D.background = bgColor;
+
+      // Visibility Toggles
+      this.sunPathRing.visible = this.eclipticState.showSunPath;
+      this.equatorRing.visible = this.eclipticState.showEquator;
+      this.eclipticRing.visible = this.eclipticState.showEcliptic;
+      this.gridGroup.visible = this.eclipticState.showEquator;
+      this.zodiacConstellations.visible = this.eclipticState.showZodiacs;
+    }
   }
 
   updateEclipticLabels() {
