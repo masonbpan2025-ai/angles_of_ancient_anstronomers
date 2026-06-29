@@ -1519,22 +1519,22 @@ export class Level2 {
       // Position the Sun and Moon Max/Min Path Rings parallel to Equator
       this.sunMaxPathRing.position.y = R_ce * Math.sin(epsRad);
       const sunMaxR = R_ce * Math.cos(epsRad);
-      this.sunMaxPathRing.scale.set(sunMaxR / R_ce, sunMaxR / R_ce, 1);
+      this.sunMaxPathRing.scale.set(sunMaxR / R_ce, 1, sunMaxR / R_ce);
       this.sunMaxPathRing.visible = true;
 
       this.sunMinPathRing.position.y = -R_ce * Math.sin(epsRad);
       const sunMinR = R_ce * Math.cos(epsRad);
-      this.sunMinPathRing.scale.set(sunMinR / R_ce, sunMinR / R_ce, 1);
+      this.sunMinPathRing.scale.set(sunMinR / R_ce, 1, sunMinR / R_ce);
       this.sunMinPathRing.visible = true;
 
       this.moonMaxPathRing.position.y = R_ce * Math.sin(epsRad + betaRad);
       const moonMaxR = R_ce * Math.cos(epsRad + betaRad);
-      this.moonMaxPathRing.scale.set(moonMaxR / R_ce, moonMaxR / R_ce, 1);
+      this.moonMaxPathRing.scale.set(moonMaxR / R_ce, 1, moonMaxR / R_ce);
       this.moonMaxPathRing.visible = true;
 
       this.moonMinPathRing.position.y = -R_ce * Math.sin(epsRad + betaRad);
       const moonMinR = R_ce * Math.cos(epsRad + betaRad);
-      this.moonMinPathRing.scale.set(moonMinR / R_ce, moonMinR / R_ce, 1);
+      this.moonMinPathRing.scale.set(moonMinR / R_ce, 1, moonMinR / R_ce);
       this.moonMinPathRing.visible = true;
 
       const sunMaxPos = new THREE.Vector3(0, R_ce * Math.sin(epsRad), -R_ce * Math.cos(epsRad));
