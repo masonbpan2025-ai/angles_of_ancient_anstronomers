@@ -719,9 +719,26 @@ export class LevelUI {
         updateChecklist();
       }
     };
+    
+    const snapPoints = [-90, 0, 90, 180, 270, 360];
+    const snapThreshold = 4;
+    const snapValue = (val) => {
+      const num = parseFloat(val);
+      for (const pt of snapPoints) {
+        if (Math.abs(num - pt) <= snapThreshold) {
+          return pt;
+        }
+      }
+      return num;
+    };
 
     longSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
+      let val = parseFloat(e.target.value);
+      const snapped = snapValue(val);
+      if (snapped !== val) {
+        e.target.value = snapped;
+        val = snapped;
+      }
       longVal.textContent = val + '°';
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setMoonLongitude === 'function') {
         window.activeLevelInstance.setMoonLongitude(val);
@@ -730,7 +747,12 @@ export class LevelUI {
     });
 
     sunSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
+      let val = parseFloat(e.target.value);
+      const snapped = snapValue(val);
+      if (snapped !== val) {
+        e.target.value = snapped;
+        val = snapped;
+      }
       sunVal.textContent = val + '°';
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setSunLongitude === 'function') {
         window.activeLevelInstance.setSunLongitude(val);

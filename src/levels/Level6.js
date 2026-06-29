@@ -1109,11 +1109,13 @@ export class Level6 {
 
       skyObjects.forEach(obj => {
         let alphaVal;
+        let yOffsetDynamic;
         if (obj.type === 'sun') {
           const sunAngle = this.time * 1.0 * 0.035;
           const sX = Math.cos(sunAngle) * obj.r_def;
           const sY = -Math.sin(sunAngle) * obj.r_def;
           alphaVal = Math.atan2(-sY, sX);
+          yOffsetDynamic = obj.yOffset;
         } else {
           const defAngle = this.time * obj.defSpeed * 0.035;
           const epiAngle = this.time * obj.epiSpeed * 0.035;
@@ -1122,13 +1124,17 @@ export class Level6 {
           const pPlanetX = pDefX + Math.cos(epiAngle) * obj.r_epi;
           const pPlanetY = pDefY - Math.sin(epiAngle) * obj.r_epi;
           alphaVal = Math.atan2(-pPlanetY, pPlanetX);
+          
+          // Calculate dynamic vertical offset based on epicycle to show retrograde loops!
+          const wobbleAmp = obj.name === 'Venus' ? 14 : (obj.name === 'Mars' ? 10 : (obj.name === 'Jupiter' ? 6 : 4));
+          yOffsetDynamic = obj.yOffset + wobbleAmp * Math.sin(epiAngle);
         }
 
         // Normalize alphaVal to [-PI, PI]
         alphaVal = Math.atan2(Math.sin(alphaVal), Math.cos(alphaVal));
 
         const x_sky = ns_left + ((alphaVal + Math.PI) / (2 * Math.PI)) * (ns_right - ns_left);
-        const y_sky = ns_top + (ns_bottom - ns_top) / 2 + obj.yOffset;
+        const y_sky = ns_top + (ns_bottom - ns_top) / 2 + yOffsetDynamic;
 
         // Store trail
         const trailKey = obj.name;
@@ -1202,9 +1208,9 @@ export class Level6 {
       ctx.fillText("All objects projected to night sky with vertical separation.", rightLegendX, rightLegendY);
 
     } else {
-      // Translate 2D geometry to 1D Longitude + slow Latitude sine wave
+      // Translate 2D geometry to 1D Longitude + slow Latitude sine wave synced to epicycle/deferent
       const x_sky = ns_left + ((alpha + Math.PI) / (2 * Math.PI)) * (ns_right - ns_left);
-      const y_sky = ns_top + (ns_bottom - ns_top) / 2 + Math.sin(this.time * 0.05) * 20;
+      const y_sky = ns_top + (ns_bottom - ns_top) / 2 + Math.sin(this.epicycleAngle) * 16 + Math.sin(this.deferentAngle) * 6;
 
       // Store trail inside the Right Panel
       if (this.isSimPlaying) {
