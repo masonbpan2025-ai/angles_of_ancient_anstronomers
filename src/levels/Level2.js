@@ -826,7 +826,7 @@ export class Level2 {
     this.drawGreatCircle(orbU, orbV, 'Moon\'s Inclined Orbit', '#06b6d4', 0.7, false, moonOrbRadius);
 
     // Horizon (Grey/White) - Rotates around polar Y-axis with Earth self-rotation
-    const horU_0 = { x: Math.sin(radLat), y: Math.cos(radLat), z: 0 };
+    const horU_0 = { x: -Math.sin(radLat), y: -Math.cos(radLat), z: 0 };
     const horV_0 = { x: 0, y: 0, z: 1 };
     const horU = this.rotateY(horU_0, radRot);
     const horV = this.rotateY(horV_0, radRot);
@@ -956,8 +956,8 @@ export class Level2 {
     ctx.stroke();
 
     // Horizon Cardinal Points - Rotate around polar Y-axis
-    const pN_0 = { x: Math.sin(radLat), y: Math.cos(radLat), z: 0 };
-    const pS_0 = { x: -Math.sin(radLat), y: -Math.cos(radLat), z: 0 };
+    const pN_0 = { x: -Math.sin(radLat), y: -Math.cos(radLat), z: 0 };
+    const pS_0 = { x: Math.sin(radLat), y: Math.cos(radLat), z: 0 };
     const pE_0 = { x: 0, y: 0, z: 1 };
     const pW_0 = { x: 0, y: 0, z: -1 };
 
