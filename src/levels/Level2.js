@@ -266,9 +266,9 @@ export class Level2 {
     polarisMesh.position.set(0, R_ce, 0);
     this.celestialSphere.add(polarisMesh);
 
-    // Ecliptic System (Tilted -23.44 deg relative to equator)
+    // Ecliptic System (Tilted 23.44 deg relative to equator)
     this.eclipticGroup = new THREE.Group();
-    this.eclipticGroup.rotation.x = -23.44 * (Math.PI / 180);
+    this.eclipticGroup.rotation.x = 23.44 * (Math.PI / 180);
     this.celestialSphere.add(this.eclipticGroup);
 
     this.eclipticRing = createRingHelper(R_ce, 0xa855f7, 0.04);
@@ -1464,8 +1464,8 @@ export class Level2 {
       this.eclipticState.showEquator = true;
       this.eclipticState.showEcliptic = true;
 
-      // Update Moon's orbital inclination relative to Ecliptic (tilted in opposite direction to close the gap)
-      this.moonOrbitGroup.rotation.x = -this.inclination * DEG2RAD;
+      // Update Moon's orbital inclination relative to Ecliptic
+      this.moonOrbitGroup.rotation.x = this.inclination * DEG2RAD;
 
       // Position Sun based on sunLongitude
       const sunAngle = this.sunLongitude * DEG2RAD;
@@ -1478,15 +1478,15 @@ export class Level2 {
       this.moonMesh.position.copy(moonLocalPos);
 
       // Daily path of the Sun
-      const sunEqPos = sunLocalPos.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), -OBLIQUITY * DEG2RAD);
+      const sunEqPos = sunLocalPos.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), OBLIQUITY * DEG2RAD);
       this.sunPathRing.position.y = sunEqPos.y;
       const sunPathRadius = Math.sqrt(sunEqPos.x ** 2 + sunEqPos.z ** 2);
       this.sunPathRing.scale.set(sunPathRadius / R_ce, sunPathRadius / R_ce, 1);
 
       // Daily path of the Moon (tilted relative to Ecliptic)
       const moonEqPos = moonLocalPos.clone();
-      moonEqPos.applyAxisAngle(new THREE.Vector3(1, 0, 0), -this.inclination * DEG2RAD);
-      moonEqPos.applyAxisAngle(new THREE.Vector3(1, 0, 0), -OBLIQUITY * DEG2RAD);
+      moonEqPos.applyAxisAngle(new THREE.Vector3(1, 0, 0), this.inclination * DEG2RAD);
+      moonEqPos.applyAxisAngle(new THREE.Vector3(1, 0, 0), OBLIQUITY * DEG2RAD);
 
       this.moonPathRing.position.y = moonEqPos.y;
       const moonPathRadius = Math.sqrt(moonEqPos.x ** 2 + moonEqPos.z ** 2);
@@ -1633,7 +1633,7 @@ export class Level2 {
       this.sunMesh.position.copy(sunLocalPos);
 
       // Adjust daily path based on declination
-      const sunEqPos = sunLocalPos.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), -OBLIQUITY * DEG2RAD);
+      const sunEqPos = sunLocalPos.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), OBLIQUITY * DEG2RAD);
       this.sunPathRing.position.y = sunEqPos.y;
       const sunPathRadius = Math.sqrt(sunEqPos.x ** 2 + sunEqPos.z ** 2);
       this.sunPathRing.scale.set(sunPathRadius / R_ce, sunPathRadius / R_ce, 1);
