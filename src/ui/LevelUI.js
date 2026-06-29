@@ -613,48 +613,41 @@ export class LevelUI {
       </div>
 
       <!-- Parameter panel (placed bottom-right below the canvas) -->
-      <div class="level-panel flex flex-col gap-3 pointer-events-auto" style="position: absolute; bottom: 20px; right: 20px; left: 420px; width: auto; z-index: 100;">
-        <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Interactive Model Parameters</span>
-        
-        <div class="grid grid-cols-2 gap-x-6 gap-y-3">
-          <div class="flex flex-col gap-0.5">
-            <div class="flex justify-between text-[10px] text-slate-400">
-              <span>Moon Position (Longitude):</span>
-              <span id="moon-long-val" class="text-cyan-400 font-semibold">90°</span>
+      <div class="level-panel flex flex-col gap-2.5 pointer-events-auto" style="position: absolute; bottom: 20px; right: 20px; left: 420px; width: auto; z-index: 100; padding: 12px 20px;">
+        <div class="flex justify-between items-center border-b border-slate-800/60 pb-1.5">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Interactive Model Parameters</span>
+          <div class="flex items-center gap-2 text-[10px] text-slate-400">
+            <span>Reference Frame:</span>
+            <div class="flex gap-1 bg-slate-950 p-0.5 border border-slate-800 rounded-lg">
+              <button id="ref-rotate-earth-btn" class="px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition">Rotate Earth</button>
+              <button id="ref-fixed-horizon-btn" class="px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium">Fixed Horizon</button>
             </div>
-            <input type="range" id="moon-long-slider" min="-90" max="270" step="1" value="90" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
-          </div>
-
-          <div class="flex flex-col gap-0.5">
-            <div class="flex justify-between text-[10px] text-slate-400">
-              <span>Sun Position (Longitude):</span>
-              <span id="sun-long-val" class="text-cyan-400 font-semibold">90°</span>
-            </div>
-            <input type="range" id="sun-long-slider" min="0" max="360" step="1" value="90" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
-          </div>
-
-          <div class="flex flex-col gap-0.5">
-            <div class="flex justify-between text-[10px] text-slate-400">
-              <span>Earth Self-Rotation:</span>
-              <span id="earth-rot-val" class="text-cyan-400 font-semibold">0° (12:00 PM Noon)</span>
-            </div>
-            <input type="range" id="earth-rot-slider" min="0" max="360" step="1" value="0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
-          </div>
-
-          <div class="flex flex-col gap-0.5">
-            <div class="flex justify-between text-[10px] text-slate-400">
-              <span>Orbit Inclination (β):</span>
-              <span id="moon-inc-val" class="text-cyan-400 font-semibold">5.0°</span>
-            </div>
-            <input type="range" id="moon-inc-slider" min="0" max="10" step="0.1" value="5.0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
           </div>
         </div>
+        
+        <div class="grid grid-cols-2 gap-x-8 gap-y-2">
+          <div class="flex items-center gap-2.5 text-[10px]">
+            <span class="text-slate-400 w-32 shrink-0">Moon Position:</span>
+            <input type="range" id="moon-long-slider" min="-90" max="270" step="1" value="90" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            <span id="moon-long-val" class="text-cyan-400 font-semibold w-10 text-right shrink-0">90°</span>
+          </div>
 
-        <div class="flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-800/80 pt-2 mt-1">
-          <span>Reference Frame:</span>
-          <div class="flex gap-1 bg-slate-950 p-0.5 border border-slate-800 rounded-lg">
-            <button id="ref-rotate-earth-btn" class="px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition">Rotate Earth</button>
-            <button id="ref-fixed-horizon-btn" class="px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium">Fixed Horizon</button>
+          <div class="flex items-center gap-2.5 text-[10px]">
+            <span class="text-slate-400 w-32 shrink-0">Sun Position:</span>
+            <input type="range" id="sun-long-slider" min="0" max="360" step="1" value="90" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            <span id="sun-long-val" class="text-cyan-400 font-semibold w-10 text-right shrink-0">90°</span>
+          </div>
+
+          <div class="flex items-center gap-2.5 text-[10px]">
+            <span class="text-slate-400 w-32 shrink-0">Earth Rotation:</span>
+            <input type="range" id="earth-rot-slider" min="0" max="360" step="1" value="0" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            <span id="earth-rot-val" class="text-cyan-400 font-semibold w-28 text-right shrink-0 text-[9px]">0° (12:00 PM Noon)</span>
+          </div>
+
+          <div class="flex items-center gap-2.5 text-[10px]">
+            <span class="text-slate-400 w-32 shrink-0">Inclination (β):</span>
+            <input type="range" id="moon-inc-slider" min="0" max="10" step="0.1" value="5.0" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            <span id="moon-inc-val" class="text-cyan-400 font-semibold w-10 text-right shrink-0">5.0°</span>
           </div>
         </div>
       </div>
