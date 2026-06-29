@@ -91,7 +91,8 @@ export class Level2 {
 
     this.eclipticState = {
       dayOfYear: 172,
-      timeOfDay: 12,
+      timeOfDay: 0,
+      latitude: 30,
       showSunPath: true,
       showEquator: true,
       showEcliptic: true,
@@ -179,9 +180,9 @@ export class Level2 {
     this.scene3D.add(head);
     this.scene3D.add(body);
 
-    // Equatorial base tilted by (40 - 90) degrees
+    // Equatorial base tilted by (latitude - 90) degrees
     this.equatorialGroup = new THREE.Group();
-    this.equatorialGroup.rotation.x = (40 - 90) * (Math.PI / 180);
+    this.equatorialGroup.rotation.x = (this.eclipticState.latitude - 90) * (Math.PI / 180);
     this.scene3D.add(this.equatorialGroup);
 
     const createRingHelper = (radius, color, thickness = 0.06) => {
@@ -1365,6 +1366,9 @@ export class Level2 {
     const R_ce = 15;
     const OBLIQUITY = 23.44;
     const DEG2RAD = Math.PI / 180;
+
+    // 0. Update equatorial tilt based on Latitude
+    this.equatorialGroup.rotation.x = (this.eclipticState.latitude - 90) * DEG2RAD;
     
     // 1. Position Sun based on Day of Year
     const sunAngle = ((this.eclipticState.dayOfYear - 80) / 365) * Math.PI * 2;

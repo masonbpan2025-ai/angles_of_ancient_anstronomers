@@ -731,16 +731,21 @@ export class LevelUI {
               </label>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-x-8 gap-y-2">
+          <div class="grid grid-cols-3 gap-x-6 gap-y-2">
             <div class="flex items-center gap-2.5 text-[10px]">
-              <span class="text-slate-400 w-32 shrink-0">Day of Year:</span>
+              <span class="text-slate-400 w-20 shrink-0">Day of Year:</span>
               <input type="range" id="slider-day" min="1" max="365" value="172" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
               <span id="val-day" class="text-cyan-400 font-semibold w-10 text-right shrink-0">172</span>
             </div>
             <div class="flex items-center gap-2.5 text-[10px]">
-              <span class="text-slate-400 w-32 shrink-0">Time of Day:</span>
-              <input type="range" id="slider-time" min="0" max="24" step="0.1" value="12" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
-              <span id="val-time" class="text-cyan-400 font-semibold w-28 text-right shrink-0 text-[9px]">12:00</span>
+              <span class="text-slate-400 w-20 shrink-0">Time of Day:</span>
+              <input type="range" id="slider-time" min="0" max="24" step="0.1" value="0" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+              <span id="val-time" class="text-cyan-400 font-semibold w-12 text-right shrink-0">00:00</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-[10px]">
+              <span class="text-slate-400 w-20 shrink-0">Latitude:</span>
+              <input type="range" id="slider-lat" min="-90" max="90" step="1" value="30" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+              <span id="val-lat" class="text-cyan-400 font-semibold w-10 text-right shrink-0">30°</span>
             </div>
           </div>
         `;
@@ -749,6 +754,8 @@ export class LevelUI {
         const valDay = document.getElementById('val-day');
         const sliderTime = document.getElementById('slider-time');
         const valTime = document.getElementById('val-time');
+        const sliderLat = document.getElementById('slider-lat');
+        const valLat = document.getElementById('val-lat');
 
         const inst = window.activeLevelInstance;
         if (inst && inst.eclipticState) {
@@ -758,6 +765,9 @@ export class LevelUI {
           const hrs = Math.floor(inst.eclipticState.timeOfDay);
           const mns = Math.floor((inst.eclipticState.timeOfDay - hrs) * 60);
           valTime.textContent = `${hrs.toString().padStart(2, '0')}:${mns.toString().padStart(2, '0')}`;
+          
+          sliderLat.value = inst.eclipticState.latitude;
+          valLat.textContent = inst.eclipticState.latitude + '°';
 
           const updateTgl = (id, indId, stateKey) => {
             const el = document.getElementById(id);
@@ -810,6 +820,15 @@ export class LevelUI {
           valTime.textContent = `${hrs.toString().padStart(2, '0')}:${mns.toString().padStart(2, '0')}`;
           if (inst && inst.eclipticState) {
             inst.eclipticState.timeOfDay = val;
+            inst.updateEclipticScene();
+          }
+        });
+
+        sliderLat.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          valLat.textContent = val + '°';
+          if (inst && inst.eclipticState) {
+            inst.eclipticState.latitude = val;
             inst.updateEclipticScene();
           }
         });
