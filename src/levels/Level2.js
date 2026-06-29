@@ -194,9 +194,34 @@ export class Level2 {
       return mesh;
     };
 
+    const createDashedCircleHelper = (radius, color, dashSize = 0.4, gapSize = 0.2) => {
+      const geom = new THREE.BufferGeometry();
+      const pts = [];
+      const segments = 128;
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, -Math.sin(a) * radius));
+      }
+      geom.setFromPoints(pts);
+      const mat = new THREE.LineDashedMaterial({
+        color: color,
+        dashSize: dashSize,
+        gapSize: gapSize,
+        transparent: true,
+        opacity: 0.8
+      });
+      const line = new THREE.LineLoop(geom, mat);
+      line.computeLineDistances();
+      return line;
+    };
+
     // Sun Path (Amber)
     this.sunPathRing = createRingHelper(R_ce, 0xf59e0b, 0.08);
     this.equatorialGroup.add(this.sunPathRing);
+
+    // Moon Path (Teal/Light Blue)
+    this.moonPathRing = createRingHelper(R_ce, 0x22d3ee, 0.08);
+    this.equatorialGroup.add(this.moonPathRing);
 
     // Celestial Sphere (Rotates based on time of day)
     this.celestialSphere = new THREE.Group();
@@ -355,11 +380,11 @@ export class Level2 {
     this.createEclipticLabel('β_min', new THREE.Vector3(), 'marker-label', this.equatorialGroup, 'showDecMarkers');
     this.decDiffLabelIdxMin = this.labelsData3D.length - 1;
 
-    // --- Max and Min Path Rings (Tori parallel to Celestial Equator) ---
-    this.sunMaxPathRing = createRingHelper(R_ce, 0xf59e0b, 0.02);
-    this.sunMinPathRing = createRingHelper(R_ce, 0xf59e0b, 0.02);
-    this.moonMaxPathRing = createRingHelper(R_ce, 0x22d3ee, 0.02);
-    this.moonMinPathRing = createRingHelper(R_ce, 0x22d3ee, 0.02);
+    // --- Max and Min Path Rings (Dashed Circles parallel to Celestial Equator) ---
+    this.sunMaxPathRing = createDashedCircleHelper(R_ce, 0xf59e0b, 0.4, 0.2);
+    this.sunMinPathRing = createDashedCircleHelper(R_ce, 0xf59e0b, 0.4, 0.2);
+    this.moonMaxPathRing = createDashedCircleHelper(R_ce, 0x22d3ee, 0.4, 0.2);
+    this.moonMinPathRing = createDashedCircleHelper(R_ce, 0x22d3ee, 0.4, 0.2);
 
     this.equatorialGroup.add(this.sunMaxPathRing);
     this.equatorialGroup.add(this.sunMinPathRing);
@@ -1439,8 +1464,8 @@ export class Level2 {
       this.eclipticState.showEquator = true;
       this.eclipticState.showEcliptic = true;
 
-      // Update Moon's orbital inclination relative to Ecliptic
-      this.moonOrbitGroup.rotation.x = this.inclination * DEG2RAD;
+      // Update Moon's orbital inclination relative to Ecliptic (tilted in opposite direction to close the gap)
+      this.moonOrbitGroup.rotation.x = -this.inclination * DEG2RAD;
 
       // Position Sun based on sunLongitude
       const sunAngle = this.sunLongitude * DEG2RAD;
@@ -1458,6 +1483,15 @@ export class Level2 {
       const sunPathRadius = Math.sqrt(sunEqPos.x ** 2 + sunEqPos.z ** 2);
       this.sunPathRing.scale.set(sunPathRadius / R_ce, sunPathRadius / R_ce, 1);
 
+      // Daily path of the Moon (tilted relative to Ecliptic)
+      const moonEqPos = moonLocalPos.clone();
+      moonEqPos.applyAxisAngle(new THREE.Vector3(1, 0, 0), -this.inclination * DEG2RAD);
+      moonEqPos.applyAxisAngle(new THREE.Vector3(1, 0, 0), -OBLIQUITY * DEG2RAD);
+
+      this.moonPathRing.position.y = moonEqPos.y;
+      const moonPathRadius = Math.sqrt(moonEqPos.x ** 2 + moonEqPos.z ** 2);
+      this.moonPathRing.scale.set(moonPathRadius / R_ce, moonPathRadius / R_ce, 1);
+
       // Rotate Celestial Sphere based on earthRotation
       this.celestialSphere.rotation.y = this.earthRotation * DEG2RAD;
 
@@ -1466,6 +1500,7 @@ export class Level2 {
       this.moonMesh.visible = true;
       this.moonOrbitRing.visible = true;
       this.sunPathRing.visible = true;
+      this.moonPathRing.visible = true;
       this.equatorRing.visible = true;
       this.eclipticRing.visible = true;
       this.gridGroup.visible = true;
@@ -1585,6 +1620,7 @@ export class Level2 {
       
       this.moonMesh.visible = false;
       this.moonOrbitRing.visible = false;
+      this.moonPathRing.visible = false;
 
       this.sunMaxPathRing.visible = false;
       this.sunMinPathRing.visible = false;
