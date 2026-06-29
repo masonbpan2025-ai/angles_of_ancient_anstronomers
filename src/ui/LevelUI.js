@@ -873,6 +873,7 @@ export class LevelUI {
         paramPanel.innerHTML = `
           <div class="flex justify-between items-center border-b border-slate-800/60 pb-1.5">
             <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Interactive Model Parameters</span>
+            ${(activeTab === 'inclination' || activeTab === 'lunar_eclipse' || activeTab === 'solar_eclipse') ? '' : `
             <div class="flex items-center gap-2 text-[10px] text-slate-400">
               <span>Reference Frame:</span>
               <div class="flex gap-1 bg-slate-950 p-0.5 border border-slate-800 rounded-lg">
@@ -880,6 +881,7 @@ export class LevelUI {
                 <button id="ref-fixed-horizon-btn" class="px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium">Fixed Horizon</button>
               </div>
             </div>
+            `}
           </div>
           
           <div class="grid grid-cols-2 gap-x-8 gap-y-2">
@@ -905,7 +907,7 @@ export class LevelUI {
             </div>
           </div>
         `;
-
+ 
         const longSlider = document.getElementById('moon-long-slider');
         const longVal = document.getElementById('moon-long-val');
         const sunSlider = document.getElementById('sun-long-slider');
@@ -916,7 +918,7 @@ export class LevelUI {
         const incVal = document.getElementById('moon-inc-val');
         const rotateEarthBtn = document.getElementById('ref-rotate-earth-btn');
         const fixedHorizonBtn = document.getElementById('ref-fixed-horizon-btn');
-
+ 
         const inst = window.activeLevelInstance;
         if (inst) {
           longSlider.value = inst.moonLongitude;
@@ -927,27 +929,31 @@ export class LevelUI {
           rotVal.textContent = `${inst.earthRotation}° (${formatLocalTime(inst.earthRotation)})`;
           incSlider.value = inst.inclination;
           incVal.textContent = inst.inclination.toFixed(1) + '°';
-
+ 
           const updateToggleStateLocal = (rotateEarth) => {
-            if (rotateEarth) {
-              rotateEarthBtn.className = "px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition";
-              fixedHorizonBtn.className = "px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium";
-            } else {
-              rotateEarthBtn.className = "px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium";
-              fixedHorizonBtn.className = "px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition";
+            if (rotateEarthBtn && fixedHorizonBtn) {
+              if (rotateEarth) {
+                rotateEarthBtn.className = "px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition";
+                fixedHorizonBtn.className = "px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium";
+              } else {
+                rotateEarthBtn.className = "px-2 py-0.5 text-[9px] rounded bg-transparent text-slate-400 transition font-medium";
+                fixedHorizonBtn.className = "px-2 py-0.5 text-[9px] rounded bg-cyan-400 text-slate-950 font-bold transition";
+              }
             }
           };
           updateToggleStateLocal(inst.rotateEarth);
-
-          rotateEarthBtn.addEventListener('click', () => {
-            updateToggleStateLocal(true);
-            inst.setRotateEarth(true);
-          });
-
-          fixedHorizonBtn.addEventListener('click', () => {
-            updateToggleStateLocal(false);
-            inst.setRotateEarth(false);
-          });
+ 
+          if (rotateEarthBtn && fixedHorizonBtn) {
+            rotateEarthBtn.addEventListener('click', () => {
+              updateToggleStateLocal(true);
+              inst.setRotateEarth(true);
+            });
+ 
+            fixedHorizonBtn.addEventListener('click', () => {
+              updateToggleStateLocal(false);
+              inst.setRotateEarth(false);
+            });
+          }
         }
 
         const checkEclipseAlignmentLocal = () => {
