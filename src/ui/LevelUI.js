@@ -731,21 +731,21 @@ export class LevelUI {
               </label>
             </div>
           </div>
-          <div class="grid grid-cols-3 gap-x-6 gap-y-2">
+          <div class="grid grid-cols-2 gap-x-8 gap-y-2">
             <div class="flex items-center gap-2.5 text-[10px]">
-              <span class="text-slate-400 w-20 shrink-0">Day of Year:</span>
+              <span class="text-slate-400 w-24 shrink-0 font-medium">Day of Year:</span>
               <input type="range" id="slider-day" min="1" max="365" value="172" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
-              <span id="val-day" class="text-cyan-400 font-semibold w-10 text-right shrink-0">172</span>
+              <span id="val-day" class="text-cyan-400 font-semibold w-12 text-right shrink-0">172</span>
             </div>
             <div class="flex items-center gap-2.5 text-[10px]">
-              <span class="text-slate-400 w-20 shrink-0">Time of Day:</span>
+              <span class="text-slate-400 w-24 shrink-0 font-medium">Time of Day:</span>
               <input type="range" id="slider-time" min="0" max="24" step="0.1" value="0" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
               <span id="val-time" class="text-cyan-400 font-semibold w-12 text-right shrink-0">00:00</span>
             </div>
             <div class="flex items-center gap-2.5 text-[10px]">
-              <span class="text-slate-400 w-20 shrink-0">Latitude:</span>
+              <span class="text-slate-400 w-24 shrink-0 font-medium">Latitude:</span>
               <input type="range" id="slider-lat" min="-90" max="90" step="1" value="30" class="flex-grow h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
-              <span id="val-lat" class="text-cyan-400 font-semibold w-10 text-right shrink-0">30°</span>
+              <span id="val-lat" class="text-cyan-400 font-semibold w-12 text-right shrink-0">30°</span>
             </div>
           </div>
         `;
@@ -757,21 +757,25 @@ export class LevelUI {
         const sliderLat = document.getElementById('slider-lat');
         const valLat = document.getElementById('val-lat');
 
-        const inst = window.activeLevelInstance;
-        if (inst && inst.eclipticState) {
-          sliderDay.value = inst.eclipticState.dayOfYear;
-          valDay.textContent = Math.floor(inst.eclipticState.dayOfYear);
-          sliderTime.value = inst.eclipticState.timeOfDay;
-          const hrs = Math.floor(inst.eclipticState.timeOfDay);
-          const mns = Math.floor((inst.eclipticState.timeOfDay - hrs) * 60);
+        const getInst = () => window.activeLevelInstance;
+        const initialInst = getInst();
+        if (initialInst && initialInst.eclipticState) {
+          sliderDay.value = initialInst.eclipticState.dayOfYear;
+          valDay.textContent = Math.floor(initialInst.eclipticState.dayOfYear);
+          sliderTime.value = initialInst.eclipticState.timeOfDay;
+          const hrs = Math.floor(initialInst.eclipticState.timeOfDay);
+          const mns = Math.floor((initialInst.eclipticState.timeOfDay - hrs) * 60);
           valTime.textContent = `${hrs.toString().padStart(2, '0')}:${mns.toString().padStart(2, '0')}`;
           
-          sliderLat.value = inst.eclipticState.latitude;
-          valLat.textContent = inst.eclipticState.latitude + '°';
+          sliderLat.value = initialInst.eclipticState.latitude;
+          valLat.textContent = initialInst.eclipticState.latitude + '°';
 
           const updateTgl = (id, indId, stateKey) => {
             const el = document.getElementById(id);
-            el.checked = inst.eclipticState[stateKey];
+            const activeInst = getInst();
+            if (activeInst && activeInst.eclipticState) {
+              el.checked = activeInst.eclipticState[stateKey];
+            }
             const ind = document.getElementById(indId);
             const baseClass = id === 'tgl-sunpath' ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]' :
                               id === 'tgl-equator' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]' :
@@ -784,13 +788,16 @@ export class LevelUI {
             }
 
             el.addEventListener('change', (e) => {
-              inst.eclipticState[stateKey] = e.target.checked;
+              const activeInst2 = getInst();
+              if (activeInst2 && activeInst2.eclipticState) {
+                activeInst2.eclipticState[stateKey] = e.target.checked;
+                activeInst2.updateEclipticScene();
+              }
               if (e.target.checked) {
                 ind.className = `w-2.5 h-2.5 rounded-full ${baseClass} transition-colors`;
               } else {
                 ind.className = 'w-2.5 h-2.5 rounded-full bg-slate-700/50 border border-slate-600 transition-colors';
               }
-              inst.updateEclipticScene();
             });
           };
 
@@ -803,9 +810,10 @@ export class LevelUI {
         sliderDay.addEventListener('input', (e) => {
           const val = parseFloat(e.target.value);
           valDay.textContent = Math.floor(val);
-          if (inst && inst.eclipticState) {
-            inst.eclipticState.dayOfYear = val;
-            inst.updateEclipticScene();
+          const activeInst = getInst();
+          if (activeInst && activeInst.eclipticState) {
+            activeInst.eclipticState.dayOfYear = val;
+            activeInst.updateEclipticScene();
           }
         });
 
@@ -818,18 +826,20 @@ export class LevelUI {
           const hrs = Math.floor(val);
           const mns = Math.floor((val - hrs) * 60);
           valTime.textContent = `${hrs.toString().padStart(2, '0')}:${mns.toString().padStart(2, '0')}`;
-          if (inst && inst.eclipticState) {
-            inst.eclipticState.timeOfDay = val;
-            inst.updateEclipticScene();
+          const activeInst = getInst();
+          if (activeInst && activeInst.eclipticState) {
+            activeInst.eclipticState.timeOfDay = val;
+            activeInst.updateEclipticScene();
           }
         });
 
         sliderLat.addEventListener('input', (e) => {
           const val = parseFloat(e.target.value);
           valLat.textContent = val + '°';
-          if (inst && inst.eclipticState) {
-            inst.eclipticState.latitude = val;
-            inst.updateEclipticScene();
+          const activeInst = getInst();
+          if (activeInst && activeInst.eclipticState) {
+            activeInst.eclipticState.latitude = val;
+            activeInst.updateEclipticScene();
           }
         });
 
