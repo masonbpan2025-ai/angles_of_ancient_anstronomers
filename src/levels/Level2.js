@@ -1,6 +1,69 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+const ECLIPTIC_STYLES = `
+  .compass-label {
+      position: absolute;
+      color: #60a5fa;
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      will-change: transform;
+  }
+  .zodiac-label {
+      position: absolute;
+      color: #c084fc;
+      font-weight: 600;
+      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      will-change: transform;
+      text-align: center;
+  }
+  .polaris-label {
+      position: absolute;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-shadow: 0 2px 8px rgba(255, 255, 255, 0.6), 0 0 4px rgba(0, 0, 0, 0.9);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      will-change: transform;
+  }
+  .marker-label {
+      position: absolute;
+      color: #f472b6;
+      font-weight: 600;
+      font-size: 0.65rem;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(244, 114, 182, 0.3);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      will-change: transform;
+      white-space: nowrap;
+  }
+`;
+
 export class Level2 {
   constructor(container) {
     this.container = container;
+
+    // Inject custom CSS styling for 3D overlay labels if not already present
+    if (!document.getElementById('ecliptic-styles')) {
+      const styleEl = document.createElement('style');
+      styleEl.id = 'ecliptic-styles';
+      styleEl.textContent = ECLIPTIC_STYLES;
+      document.head.appendChild(styleEl);
+    }
+
+    // 2D Canvas setup (for standard inclination/eclipse tabs)
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.container.appendChild(this.canvas);
@@ -22,13 +85,242 @@ export class Level2 {
     this.isDragging = false;
     this.previousMousePosition = { x: 0, y: 0 };
 
-    this.resize();
-    window.addEventListener('resize', this.resize.bind(this));
+    // --- 3D Three.js Ecliptic Visualization Setup ---
+    this.activeTab = 'ecliptic';
+    this.isThreeActive = true;
 
-    // Listen for drag interactions on the left panel only
-    this.canvas.addEventListener('pointerdown', this.onPointerDown.bind(this));
-    this.canvas.addEventListener('pointermove', this.onPointerMove.bind(this));
-    window.addEventListener('pointerup', this.onPointerUp.bind(this));
+    this.eclipticState = {
+      dayOfYear: 172,
+      timeOfDay: 12,
+      showSunPath: true,
+      showEquator: true,
+      showEcliptic: true,
+      showZodiacs: true
+    };
+
+    // Containers for Three.js
+    this.threeContainer = document.createElement('div');
+    this.threeContainer.style.position = 'absolute';
+    this.threeContainer.style.top = '0';
+    this.threeContainer.style.left = '400px';
+    this.threeContainer.style.width = 'calc(100% - 400px)';
+    this.threeContainer.style.height = '100%';
+    this.threeContainer.style.display = 'block';
+    this.threeContainer.style.pointerEvents = 'none';
+    this.container.appendChild(this.threeContainer);
+
+    this.canvas3D = document.createElement('div');
+    this.canvas3D.style.position = 'absolute';
+    this.canvas3D.style.top = '0';
+    this.canvas3D.style.left = '0';
+    this.canvas3D.style.width = '100%';
+    this.canvas3D.style.height = '100%';
+    this.canvas3D.style.pointerEvents = 'auto'; // allow mouse drag on Three.js canvas
+    this.threeContainer.appendChild(this.canvas3D);
+
+    this.labels3D = document.createElement('div');
+    this.labels3D.style.position = 'absolute';
+    this.labels3D.style.top = '0';
+    this.labels3D.style.left = '0';
+    this.labels3D.style.width = '100%';
+    this.labels3D.style.height = '100%';
+    this.labels3D.style.pointerEvents = 'none';
+    this.threeContainer.appendChild(this.labels3D);
+
+    // Three.js Scene, Camera, Renderer
+    this.scene3D = new THREE.Scene();
+    this.scene3D.background = new THREE.Color(0x050505);
+
+    const w3D = window.innerWidth - 400;
+    const h3D = window.innerHeight;
+    this.camera3D = new THREE.PerspectiveCamera(45, w3D / h3D, 0.1, 1000);
+    this.camera3D.position.set(28, 18, 28);
+
+    this.renderer3D = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    this.renderer3D.setSize(w3D, h3D);
+    this.renderer3D.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.canvas3D.appendChild(this.renderer3D.domElement);
+
+    this.controls3D = new OrbitControls(this.camera3D, this.renderer3D.domElement);
+    this.controls3D.enableDamping = true;
+    this.controls3D.dampingFactor = 0.05;
+    this.controls3D.maxDistance = 60;
+    this.controls3D.minDistance = 5;
+    this.controls3D.maxPolarAngle = Math.PI / 2 + 0.1;
+
+    // Lights
+    this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x0f172a, 0.6);
+    this.hemiLight.position.set(0, 20, 0);
+    this.scene3D.add(this.hemiLight);
+
+    this.sunLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    this.scene3D.add(this.sunLight);
+
+    // Environment (Ground plane & Observer Cylinder/Sphere)
+    const R_ce = 15;
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(R_ce, 64),
+      new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    this.scene3D.add(ground);
+
+    const horizonEdge = new THREE.Mesh(
+      new THREE.RingGeometry(R_ce, R_ce + 0.2, 64),
+      new THREE.MeshBasicMaterial({ color: 0x334155, side: THREE.DoubleSide })
+    );
+    horizonEdge.rotation.x = -Math.PI / 2;
+    this.scene3D.add(horizonEdge);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), new THREE.MeshBasicMaterial({ color: 0xfcb7a0 }));
+    head.position.y = 0.55;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.4, 16), new THREE.MeshBasicMaterial({ color: 0x3b82f6 }));
+    body.position.y = 0.2;
+    this.scene3D.add(head);
+    this.scene3D.add(body);
+
+    // Equatorial base tilted by (40 - 90) degrees
+    this.equatorialGroup = new THREE.Group();
+    this.equatorialGroup.rotation.x = (40 - 90) * (Math.PI / 180);
+    this.scene3D.add(this.equatorialGroup);
+
+    const createRingHelper = (radius, color, thickness = 0.06) => {
+      const mesh = new THREE.Mesh(
+        new THREE.TorusGeometry(radius, thickness, 8, 128),
+        new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8 })
+      );
+      mesh.rotation.x = Math.PI / 2;
+      return mesh;
+    };
+
+    // Sun Path (Amber)
+    this.sunPathRing = createRingHelper(R_ce, 0xf59e0b, 0.08);
+    this.equatorialGroup.add(this.sunPathRing);
+
+    // Celestial Sphere (Rotates based on time of day)
+    this.celestialSphere = new THREE.Group();
+    this.equatorialGroup.add(this.celestialSphere);
+
+    // Equator (Blue)
+    this.equatorRing = createRingHelper(R_ce, 0x3b82f6, 0.04);
+    this.celestialSphere.add(this.equatorRing);
+
+    // Celestial Grid
+    this.gridGroup = new THREE.Group();
+    const gridMat = new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.15 });
+
+    // Latitude rings
+    for (let lat = -75; lat <= 75; lat += 15) {
+      if (lat === 0) continue;
+      const r = R_ce * Math.cos(lat * (Math.PI / 180));
+      const y = R_ce * Math.sin(lat * (Math.PI / 180));
+      const pts = [];
+      for (let i = 0; i <= 64; i++) {
+        const a = (i / 64) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * r, y, -Math.sin(a) * r));
+      }
+      this.gridGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), gridMat));
+    }
+
+    // Longitude lines
+    for (let lon = 0; lon < 360; lon += 15) {
+      const pts = [];
+      for (let i = 0; i <= 32; i++) {
+        const lat = (i / 32) * Math.PI - Math.PI / 2;
+        const r = R_ce * Math.cos(lat);
+        const y = R_ce * Math.sin(lat);
+        pts.push(new THREE.Vector3(Math.cos(lon * (Math.PI / 180)) * r, y, -Math.sin(lon * (Math.PI / 180)) * r));
+      }
+      this.gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), gridMat));
+    }
+    this.celestialSphere.add(this.gridGroup);
+
+    // Polaris (white sphere at North Celestial Pole)
+    const polarisMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    polarisMesh.position.set(0, R_ce, 0);
+    this.celestialSphere.add(polarisMesh);
+
+    // Ecliptic System (Tilted -23.44 deg relative to equator)
+    this.eclipticGroup = new THREE.Group();
+    this.eclipticGroup.rotation.x = -23.44 * (Math.PI / 180);
+    this.celestialSphere.add(this.eclipticGroup);
+
+    this.eclipticRing = createRingHelper(R_ce, 0xa855f7, 0.04);
+    this.eclipticGroup.add(this.eclipticRing);
+
+    // Sun Mesh on Ecliptic
+    this.sunMesh = new THREE.Mesh(new THREE.SphereGeometry(0.6, 32, 32), new THREE.MeshBasicMaterial({ color: 0xfde047 }));
+    this.eclipticGroup.add(this.sunMesh);
+
+    // Background Stars (1500 white stars)
+    const starGeom = new THREE.BufferGeometry();
+    const starPositions = [];
+    for (let i = 0; i < 1500; i++) {
+      const pt = new THREE.Vector3().randomDirection().multiplyScalar(R_ce * 1.05);
+      starPositions.push(pt.x, pt.y, pt.z);
+    }
+    starGeom.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+    this.starMaterial = new THREE.PointsMaterial({ size: 0.08, color: 0xffffff, transparent: true, opacity: 0.8 });
+    this.stars = new THREE.Points(starGeom, this.starMaterial);
+    this.celestialSphere.add(this.stars);
+
+    // Labels Overlay Data
+    this.labelsData3D = [];
+    this.createEclipticLabel = (text, pos, className, parentObj = null, visibilityKey = null) => {
+      const el = document.createElement('div');
+      el.className = className;
+      el.innerHTML = text;
+      this.labels3D.appendChild(el);
+
+      let dummy = null;
+      if (parentObj) {
+        dummy = new THREE.Object3D();
+        dummy.position.copy(pos);
+        parentObj.add(dummy);
+      }
+      this.labelsData3D.push({ el, position: pos.clone(), dummy, visibilityKey });
+    };
+
+    // Compass points labels
+    this.createEclipticLabel('N', new THREE.Vector3(0, 0, -R_ce * 1.08), 'compass-label');
+    this.createEclipticLabel('S', new THREE.Vector3(0, 0, R_ce * 1.08), 'compass-label');
+    this.createEclipticLabel('E', new THREE.Vector3(R_ce * 1.08, 0, 0), 'compass-label');
+    this.createEclipticLabel('W', new THREE.Vector3(-R_ce * 1.08, 0, 0), 'compass-label');
+
+    // Polaris label
+    this.createEclipticLabel('Polaris', new THREE.Vector3(0, R_ce * 1.08, 0), 'polaris-label', this.celestialSphere);
+
+    // Zodiac constellations markers and labels
+    this.zodiacConstellations = new THREE.Group();
+    this.eclipticGroup.add(this.zodiacConstellations);
+
+    const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+    signs.forEach((sign, i) => {
+      const centerAngle = i * 30 * (Math.PI / 180);
+      const x = Math.cos(centerAngle) * R_ce;
+      const z = -Math.sin(centerAngle) * R_ce;
+
+      const centerStar = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xd8b4fe }));
+      centerStar.position.set(x, 0, z);
+      this.zodiacConstellations.add(centerStar);
+
+      this.createEclipticLabel(sign, new THREE.Vector3(x * 1.1, 0, z * 1.1), 'zodiac-label', this.eclipticGroup, 'showZodiacs');
+    });
+
+    this.updateEclipticScene();
+
+    // Event listener bounds & setup
+    this.resizeBound = this.resize.bind(this);
+    this.resizeBound();
+    window.addEventListener('resize', this.resizeBound);
+
+    this.pointerDownBound = this.onPointerDown.bind(this);
+    this.pointerMoveBound = this.onPointerMove.bind(this);
+    this.pointerUpBound = this.onPointerUp.bind(this);
+
+    this.canvas.addEventListener('pointerdown', this.pointerDownBound);
+    this.canvas.addEventListener('pointermove', this.pointerMoveBound);
+    window.addEventListener('pointerup', this.pointerUpBound);
 
     this.animate = this.animate.bind(this);
     this.animationId = requestAnimationFrame(this.animate);
@@ -48,9 +340,7 @@ export class Level2 {
     const colWidth = availWidth / 2;
     
     // Determine the maximum base size that fits both horizontally and vertically
-    // Horizontal limit: colWidth * 0.5 - 25 (margin for labels and borders)
     const maxR_horizontal = colWidth * 0.5 - 25;
-    // Vertical limit: (canvas.height - bottomPanelHeight - 100) * 0.5 (leaving room for titles and margins)
     const maxR_vertical = (this.canvas.height - bottomPanelHeight - 100) * 0.5;
     
     // Determine target size, capping at a maximum of 285px to make illustrations bigger
@@ -72,6 +362,20 @@ export class Level2 {
     
     // Divider is halfway between the two centers
     this.dividerX = Math.round((this.cx1 + this.cx2) / 2);
+
+    // Dynamic resizing for Three.js 3D viewport
+    if (this.threeContainer) {
+      const w3D = window.innerWidth - taskPanelWidth;
+      const h3D = window.innerHeight;
+      this.threeContainer.style.width = w3D + 'px';
+      this.threeContainer.style.height = h3D + 'px';
+      
+      if (this.renderer3D && this.camera3D) {
+        this.camera3D.aspect = w3D / h3D;
+        this.camera3D.updateProjectionMatrix();
+        this.renderer3D.setSize(w3D, h3D);
+      }
+    }
   }
   onPointerDown(e) {
     // Only drag to rotate if clicking on the left 3D panel
@@ -1042,26 +1346,154 @@ export class Level2 {
     ctx.fillText('Observer\'s Local Sky View (Alexandria)', cx2, titleY);
   }
 
+  setTab(tabName) {
+    this.activeTab = tabName;
+    if (tabName === 'ecliptic') {
+      this.canvas.style.display = 'none';
+      this.threeContainer.style.display = 'block';
+      this.isThreeActive = true;
+      this.resize();
+      this.updateEclipticScene();
+    } else {
+      this.canvas.style.display = 'block';
+      this.threeContainer.style.display = 'none';
+      this.isThreeActive = false;
+    }
+  }
+
+  updateEclipticScene() {
+    const R_ce = 15;
+    const OBLIQUITY = 23.44;
+    const DEG2RAD = Math.PI / 180;
+    
+    // 1. Position Sun based on Day of Year
+    const sunAngle = ((this.eclipticState.dayOfYear - 80) / 365) * Math.PI * 2;
+    const sunLocalPos = new THREE.Vector3(Math.cos(sunAngle) * R_ce, 0, -Math.sin(sunAngle) * R_ce);
+    this.sunMesh.position.copy(sunLocalPos);
+
+    // 2. Adjust daily path based on declination
+    const sunEqPos = sunLocalPos.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), -OBLIQUITY * DEG2RAD);
+    this.sunPathRing.position.y = sunEqPos.y;
+    const sunPathRadius = Math.sqrt(sunEqPos.x ** 2 + sunEqPos.z ** 2);
+    this.sunPathRing.scale.set(sunPathRadius / R_ce, sunPathRadius / R_ce, 1);
+
+    // 3. Rotate Celestial Sphere
+    const sunRA = Math.atan2(-sunEqPos.z, sunEqPos.x);
+    const rotationAtNoon = -Math.PI / 2 - sunRA;
+    const timeOffset = (this.eclipticState.timeOfDay - 12) * (Math.PI / 12);
+    this.celestialSphere.rotation.y = rotationAtNoon - timeOffset;
+
+    // 4. Lighting & Background
+    this.sunMesh.updateMatrixWorld(true);
+    const sunWorldPos = new THREE.Vector3();
+    this.sunMesh.getWorldPosition(sunWorldPos);
+    this.sunLight.position.copy(sunWorldPos);
+
+    const altitude = sunWorldPos.y / R_ce;
+    const nightColor = new THREE.Color(0x050505);
+    const twilightColor = new THREE.Color(0x170c2a);
+    const dayColor = new THREE.Color(0x38bdf8);
+    let bgColor = new THREE.Color();
+
+    if (altitude < -0.1) {
+      bgColor.copy(nightColor);
+      this.hemiLight.intensity = 0.2;
+      this.sunLight.intensity = 0;
+      this.starMaterial.opacity = 0.8;
+    } else if (altitude < 0.1) {
+      const t = (altitude + 0.1) / 0.2;
+      bgColor.lerpColors(nightColor, twilightColor, t);
+      this.hemiLight.intensity = 0.2 + (0.3 * t);
+      this.sunLight.intensity = 2.0 * t;
+      this.starMaterial.opacity = 0.8 * (1 - t);
+    } else {
+      const t = Math.min((altitude - 0.1) / 0.3, 1.0);
+      bgColor.lerpColors(twilightColor, dayColor, t);
+      this.hemiLight.intensity = 0.5 + (0.5 * t);
+      this.sunLight.intensity = 2.0;
+      this.starMaterial.opacity = 0;
+    }
+    this.scene3D.background = bgColor;
+
+    // 5. Visibility Toggles
+    this.sunPathRing.visible = this.eclipticState.showSunPath;
+    this.equatorRing.visible = this.eclipticState.showEquator;
+    this.eclipticRing.visible = this.eclipticState.showEcliptic;
+    this.gridGroup.visible = this.eclipticState.showEquator;
+    this.zodiacConstellations.visible = this.eclipticState.showZodiacs;
+  }
+
+  updateEclipticLabels() {
+    const halfW = (window.innerWidth - 400) / 2;
+    const halfH = window.innerHeight / 2;
+
+    this.labelsData3D.forEach(item => {
+      if (item.visibilityKey && !this.eclipticState[item.visibilityKey]) {
+        item.el.style.opacity = 0;
+        return;
+      }
+
+      if (item.dummy) item.dummy.getWorldPosition(item.position);
+
+      const tempV = item.position.clone();
+      tempV.project(this.camera3D);
+
+      if (tempV.z > 1) {
+        item.el.style.opacity = 0;
+      } else {
+        const x = (tempV.x * halfW) + halfW;
+        const y = -(tempV.y * halfH) + halfH;
+        item.el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+        item.el.style.opacity = item.position.y < -0.5 ? 0.2 : 1;
+      }
+    });
+  }
+
   animate() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Draw background space gradient
-    const bgGrad = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-    bgGrad.addColorStop(0, '#020208');
-    bgGrad.addColorStop(0.5, '#050711');
-    bgGrad.addColorStop(1, '#090c1e');
-    this.ctx.fillStyle = bgGrad;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    this.drawSphere();
-
     this.animationId = requestAnimationFrame(this.animate);
+
+    if (this.isThreeActive) {
+      if (this.controls3D) {
+        this.controls3D.update();
+      }
+      if (this.renderer3D && this.scene3D && this.camera3D) {
+        this.renderer3D.render(this.scene3D, this.camera3D);
+      }
+      this.updateEclipticLabels();
+    } else {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      // Draw background space gradient
+      const bgGrad = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+      bgGrad.addColorStop(0, '#020208');
+      bgGrad.addColorStop(0.5, '#050711');
+      bgGrad.addColorStop(1, '#090c1e');
+      this.ctx.fillStyle = bgGrad;
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+      this.drawSphere();
+    }
   }
 
   destroy() {
     cancelAnimationFrame(this.animationId);
+    
+    // Remove listeners
+    window.removeEventListener('resize', this.resizeBound);
+    this.canvas.removeEventListener('pointerdown', this.pointerDownBound);
+    this.canvas.removeEventListener('pointermove', this.pointerMoveBound);
+    window.removeEventListener('pointerup', this.pointerUpBound);
+
     if (this.canvas && this.canvas.parentNode) {
       this.canvas.parentNode.removeChild(this.canvas);
+    }
+
+    if (this.threeContainer && this.threeContainer.parentNode) {
+      this.threeContainer.parentNode.removeChild(this.threeContainer);
+    }
+
+    if (this.renderer3D) {
+      this.renderer3D.dispose();
     }
   }
 }
