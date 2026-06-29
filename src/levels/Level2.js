@@ -518,7 +518,7 @@ export class Level2 {
       const radRot = this.earthRotation * (Math.PI / 180);
       
       const uZ = { x: Math.cos(radLat) * Math.cos(radRot), y: -Math.sin(radLat), z: Math.cos(radLat) * Math.sin(radRot) };
-      const uN = { x: Math.sin(radLat) * Math.cos(radRot), y: Math.cos(radLat), z: Math.sin(radLat) * Math.sin(radRot) };
+      const uN = { x: -Math.sin(radLat) * Math.cos(radRot), y: -Math.cos(radLat), z: -Math.sin(radLat) * Math.sin(radRot) };
       const uE = { x: -Math.sin(radRot), y: 0, z: Math.cos(radRot) };
       
       return {
@@ -747,7 +747,7 @@ export class Level2 {
 
     // Define Unit Vectors of Observer Frame in Celestial Sphere
     const uZ = { x: Math.cos(radLat) * Math.cos(radRot), y: -Math.sin(radLat), z: Math.cos(radLat) * Math.sin(radRot) };
-    const uN = { x: Math.sin(radLat) * Math.cos(radRot), y: Math.cos(radLat), z: Math.sin(radLat) * Math.sin(radRot) };
+    const uN = { x: -Math.sin(radLat) * Math.cos(radRot), y: -Math.cos(radLat), z: -Math.sin(radLat) * Math.sin(radRot) };
     const uE = { x: -Math.sin(radRot), y: 0, z: Math.cos(radRot) };
 
     // Function to project celestial 3D coordinates into local Alt-Az Sky Dome
@@ -1323,7 +1323,7 @@ export class Level2 {
     ctx.restore();
 
     // Project and Draw NCP in local sky
-    const localNCP = projectLocal({ x: 0, y: -this.radius, z: 0 });
+    const localNCP = projectLocal({ x: 0, y: this.radius, z: 0 });
     if (localNCP) {
       ctx.beginPath();
       ctx.arc(localNCP.x, localNCP.y, 4, 0, Math.PI * 2);
