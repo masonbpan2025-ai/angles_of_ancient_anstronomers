@@ -47,28 +47,7 @@ export class Level10 {
       pointer-events: auto;
     `;
     this.container.appendChild(this.uiOverlay);
-    this.renderUIOverlay();
-  }
-
-  renderUIOverlay() {
-    let statusText = 'Straight Beam';
-    let statusColor = 'text-slate-400';
-    let statusDesc = 'Under normal conditions, light travels in straight lines.';
-
-    if (this.gravityFactor > 0 && this.gravityFactor < 50) {
-      statusText = 'Gravitational Lensing';
-      statusColor = 'text-sky-400';
-      statusDesc = 'Light is bent by the massive gravity field, but has escape velocity.';
-    } else if (this.gravityFactor === 50) {
-      statusText = 'Dark Star Condition (Orbit)';
-      statusColor = 'text-green-400 font-bold animate-pulse';
-      statusDesc = 'The surface orbital velocity exactly equals the speed of light! The photons orbit the Earth.';
-    } else if (this.gravityFactor > 50) {
-      statusText = 'Singularity Capture (Black Hole)';
-      statusColor = 'text-red-400 font-bold';
-      statusDesc = 'Gravity is so strong that the escape velocity exceeds the speed of light. Light is trapped!';
-    }
-
+    
     this.uiOverlay.innerHTML = `
       <div class="bg-slate-900/95 border border-slate-800 p-4 rounded-2xl shadow-2xl w-[280px] font-sans text-slate-200 backdrop-blur-md">
         <h4 class="text-xs font-bold text-white mb-2.5 flex items-center gap-1.5">
@@ -81,25 +60,53 @@ export class Level10 {
         <div class="space-y-3">
           <div class="flex justify-between text-[10px] text-slate-400">
             <span>Mass Scale:</span>
-            <span class="text-violet-400 font-bold font-mono">${(this.gravityFactor * 2.0).toFixed(1)}x</span>
+            <span id="bh-mass-scale" class="text-violet-400 font-bold font-mono">0.0x</span>
           </div>
-          <input type="range" id="bh-gravity-slider" min="0" max="80" value="${this.gravityFactor}" 
+          <input type="range" id="bh-gravity-slider" min="0" max="80" value="0" 
             class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
           
           <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1">
             <span class="text-[9px] uppercase font-bold text-slate-500">Trajectory Status:</span>
-            <span class="text-[10.5px] font-bold ${statusColor}">${statusText}</span>
-            <p class="text-[9.5px] leading-relaxed text-slate-400">${statusDesc}</p>
+            <span id="bh-status-text" class="text-[10.5px] font-bold">Straight Beam</span>
+            <p id="bh-status-desc" class="text-[9.5px] leading-relaxed text-slate-400">Under normal conditions, light travels in straight lines.</p>
           </div>
         </div>
       </div>
     `;
 
+    this.massScaleEl = this.uiOverlay.querySelector('#bh-mass-scale');
+    this.statusTextEl = this.uiOverlay.querySelector('#bh-status-text');
+    this.statusDescEl = this.uiOverlay.querySelector('#bh-status-desc');
     const slider = this.uiOverlay.querySelector('#bh-gravity-slider');
+
     slider.addEventListener('input', (e) => {
       this.gravityFactor = parseInt(e.target.value);
-      this.renderUIOverlay();
+      this.updateUI();
     });
+
+    this.updateUI();
+  }
+
+  updateUI() {
+    this.massScaleEl.textContent = `${(this.gravityFactor * 2.0).toFixed(1)}x`;
+
+    if (this.gravityFactor === 0) {
+      this.statusTextEl.textContent = 'Straight Beam';
+      this.statusTextEl.className = 'text-[10.5px] font-bold text-slate-400';
+      this.statusDescEl.textContent = 'Under normal conditions, light travels in straight lines.';
+    } else if (this.gravityFactor > 0 && this.gravityFactor < 50) {
+      this.statusTextEl.textContent = 'Gravitational Lensing';
+      this.statusTextEl.className = 'text-[10.5px] font-bold text-sky-400';
+      this.statusDescEl.textContent = 'Light is bent by the massive gravity field, but has escape velocity.';
+    } else if (this.gravityFactor === 50) {
+      this.statusTextEl.textContent = 'Dark Star Condition (Orbit)';
+      this.statusTextEl.className = 'text-[10.5px] font-bold text-green-400 animate-pulse';
+      this.statusDescEl.textContent = 'The surface orbital velocity exactly equals the speed of light! The photons orbit the Earth.';
+    } else if (this.gravityFactor > 50) {
+      this.statusTextEl.textContent = 'Singularity Capture (Black Hole)';
+      this.statusTextEl.className = 'text-[10.5px] font-bold text-red-400';
+      this.statusDescEl.textContent = 'Gravity is so strong that the escape velocity exceeds the speed of light. Light is trapped!';
+    }
   }
 
   resize() {

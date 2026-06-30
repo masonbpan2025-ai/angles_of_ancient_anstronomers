@@ -47,22 +47,7 @@ export class Level11 {
       pointer-events: auto;
     `;
     this.container.appendChild(this.uiOverlay);
-    this.renderUIOverlay();
-  }
-
-  renderUIOverlay() {
-    // Deflection readout
-    const volume = (4/3) * Math.PI * Math.pow(this.largeSphereRadius, 3);
-    const maxVolume = (4/3) * Math.PI * Math.pow(35, 3);
     
-    // Torque and deflection scale with mass (volume)
-    const theta = (volume / maxVolume) * 0.08;
-    const angleDeg = (theta * 180 / Math.PI).toFixed(2);
-    const forceMicroN = (volume / maxVolume * 0.15).toFixed(3);
-    
-    // Cavendish lead mass (scales with volume)
-    const leadMassKg = Math.round(volume * 0.0011);
-
     this.uiOverlay.innerHTML = `
       <div class="bg-slate-900/95 border border-slate-800 p-4 rounded-2xl shadow-2xl w-[280px] font-sans text-slate-200 backdrop-blur-md">
         <h4 class="text-xs font-bold text-white mb-2.5 flex items-center gap-1.5">
@@ -75,23 +60,23 @@ export class Level11 {
         <div class="space-y-3">
           <div class="flex justify-between text-[10px] text-slate-400">
             <span>Large Lead Sphere Radius:</span>
-            <span class="text-violet-400 font-bold">${this.largeSphereRadius} px</span>
+            <span id="cav-radius-text" class="text-violet-400 font-bold">20 px</span>
           </div>
-          <input type="range" id="cav-spheres-slider" min="10" max="35" value="${this.largeSphereRadius}" 
+          <input type="range" id="cav-spheres-slider" min="10" max="35" value="20" 
             class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
           
           <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 text-[9.5px]">
             <div class="flex justify-between">
               <span class="text-slate-500">Lead Sphere Mass (M):</span>
-              <span class="text-amber-400 font-mono font-bold">${leadMassKg} kg</span>
+              <span id="cav-mass-readout" class="text-amber-400 font-mono font-bold">0 kg</span>
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Gravitational Torque:</span>
-              <span class="text-sky-400 font-mono font-bold">${forceMicroN} μN·m</span>
+              <span id="cav-torque-readout" class="text-sky-400 font-mono font-bold">0 μN·m</span>
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Torsion Deflection θ:</span>
-              <span class="text-green-400 font-mono font-bold">${angleDeg}°</span>
+              <span id="cav-deflection-readout" class="text-green-400 font-mono font-bold">0.00°</span>
             </div>
             <p class="text-[9px] text-slate-400 leading-relaxed mt-1.5 border-t border-slate-850 pt-1.5">
               Increasing the size of the large spheres increases their mass and gravitational pull, generating a larger torque that twists the suspended fiber.
@@ -101,11 +86,33 @@ export class Level11 {
       </div>
     `;
 
+    this.radiusTextEl = this.uiOverlay.querySelector('#cav-radius-text');
+    this.massReadoutEl = this.uiOverlay.querySelector('#cav-mass-readout');
+    this.torqueReadoutEl = this.uiOverlay.querySelector('#cav-torque-readout');
+    this.deflectionReadoutEl = this.uiOverlay.querySelector('#cav-deflection-readout');
+    
     const slider = this.uiOverlay.querySelector('#cav-spheres-slider');
     slider.addEventListener('input', (e) => {
       this.largeSphereRadius = parseInt(e.target.value);
-      this.renderUIOverlay();
+      this.updateUI();
     });
+
+    this.updateUI();
+  }
+
+  updateUI() {
+    const volume = (4/3) * Math.PI * Math.pow(this.largeSphereRadius, 3);
+    const maxVolume = (4/3) * Math.PI * Math.pow(35, 3);
+    
+    const theta = (volume / maxVolume) * 0.08;
+    const angleDeg = (theta * 180 / Math.PI).toFixed(2);
+    const forceMicroN = (volume / maxVolume * 0.15).toFixed(3);
+    const leadMassKg = Math.round(volume * 0.0011);
+
+    this.radiusTextEl.textContent = `${this.largeSphereRadius} px`;
+    this.massReadoutEl.textContent = `${leadMassKg} kg`;
+    this.torqueReadoutEl.textContent = `${forceMicroN} μN·m`;
+    this.deflectionReadoutEl.textContent = `${angleDeg}°`;
   }
 
   resize() {
@@ -148,8 +155,8 @@ export class Level11 {
     const cx = TASK_W + (W - TASK_W) / 2;
     const cy = H / 2 + 10;
 
-    const casingRadius = 150; // large casing circle
-    const rodLength = 240;   // rod diameter
+    const casingRadius = 180; // Large casing circle
+    const rodLength = 300;   // Large rod
 
     // Torsion/twist deflection math
     const volume = (4/3) * Math.PI * Math.pow(this.largeSphereRadius, 3);
@@ -161,7 +168,7 @@ export class Level11 {
     ctx.strokeStyle = 'rgba(74, 222, 128, 0.2)';
     ctx.lineWidth = 1;
     
-    // Draw tick marks on left scale (around Math.PI)
+    // Draw tick marks on left and right scales
     const drawTicks = (baseAngle) => {
       for (let d = -12; d <= 12; d += 2) {
         const tickAngle = baseAngle + (d * Math.PI / 180);
@@ -199,7 +206,7 @@ export class Level11 {
     ctx.strokeStyle = 'rgba(148,163,184,0.6)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(cx, cy - 140);
+    ctx.moveTo(cx, cy - 170);
     ctx.lineTo(cx, cy);
     ctx.stroke();
 
@@ -248,10 +255,9 @@ export class Level11 {
     ctx.restore();
 
     // --- STATIC LARGE SPHERES (M) ---
-    // Positioned at a fixed offset angle relative to the rod's neutral horizontal plane.
-    // They do not rotate; only their drawn radius changes with slider!
-    const fixedAngle = 0.28; // approx 16 degrees
-    const largeRadius = 142; // distance from center
+    // Positioned radially further out at largeRadius=185 to completely prevent overlap.
+    const fixedAngle = 0.35; // Angle offset
+    const largeRadius = 185;
     
     // Large Sphere 1 position (tilted slightly counterclockwise from left small sphere)
     const lx1 = cx - largeRadius * Math.cos(fixedAngle);
