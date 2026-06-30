@@ -535,6 +535,8 @@ export class Level8 {
 
     this.logContainer.innerHTML = `
       <div class="flex flex-col lg:flex-row h-full w-full bg-slate-950 text-slate-200 font-sans overflow-hidden">
+        <!-- Spacer to clear left task panel -->
+        <div class="hidden lg:block lg:w-[420px] shrink-0 pointer-events-none"></div>
         <!-- Left Panel: Math Explanation & Slider -->
         <div class="w-full lg:w-[380px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col z-20 overflow-y-auto shrink-0">
           <h2 class="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
