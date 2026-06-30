@@ -10,7 +10,11 @@ export class Level9 {
     this.container.appendChild(this.canvas);
 
     // Simulation state
-    this.subtask = 'cannonball'; // 'cannonball' or 'gravity'
+    this.subtask = 'cannonball'; // 'cannonball', 'gravity', or 'acceleration'
+    this.accelerationContainer = document.createElement('div');
+    this.accelerationContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:auto;display:none;';
+    this.container.appendChild(this.accelerationContainer);
+    this.accelerationUIInitialized = false;
     this.isSimPlaying = true;
     this.time = 0;
 
@@ -86,8 +90,17 @@ export class Level9 {
     this.resetSimulation();
     if (subtask === 'gravity') {
       this._gravityIllustration.show();
+      this.canvas.style.display = 'none';
+      this.accelerationContainer.style.display = 'none';
+    } else if (subtask === 'acceleration') {
+      this._gravityIllustration.hide();
+      this.canvas.style.display = 'none';
+      this.accelerationContainer.style.display = 'block';
+      this.renderAccelerationUI();
     } else {
       this._gravityIllustration.hide();
+      this.canvas.style.display = 'block';
+      this.accelerationContainer.style.display = 'none';
     }
   }
 
@@ -461,6 +474,281 @@ export class Level9 {
     if (this.canvas && this.canvas.parentNode) {
       this.canvas.parentNode.removeChild(this.canvas);
     }
+    if (this.accelerationContainer && this.accelerationContainer.parentNode) {
+      this.accelerationContainer.parentNode.removeChild(this.accelerationContainer);
+    }
+  }
+
+  renderAccelerationUI() {
+    if (this.subtask !== 'acceleration') return;
+
+    if (this.accelerationX === undefined) this.accelerationX = 30; // 30 degrees for 2*theta
+
+    const twoThetaDeg = this.accelerationX;
+    const twoTheta = (twoThetaDeg * Math.PI) / 180;
+    const theta = twoTheta / 2;
+
+    const sunX = 200;
+    const sunY = 100;
+    const r = 75;
+
+    const px = sunX + r * Math.sin(twoTheta);
+    const py = sunY - r * Math.cos(twoTheta);
+
+    if (!this.accelerationUIInitialized) {
+      this.accelerationContainer.innerHTML = `
+        <div class="flex flex-col lg:flex-row h-full w-full bg-slate-950 text-slate-200 font-sans overflow-hidden">
+          <!-- Spacer to clear left task panel -->
+          <div class="hidden lg:block lg:w-[420px] shrink-0 pointer-events-none"></div>
+
+          <!-- Left Panel: Spacer of w-[380px] to match the Level 8 layout -->
+          <div class="w-full lg:w-[380px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col z-20 overflow-y-auto shrink-0">
+            <h2 class="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
+              <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Geometric Acceleration Proof
+            </h2>
+            <p class="text-[10.5px] text-slate-400 mb-4 font-sans">
+              How Newton geometrically derived the centripetal acceleration (a = v²/R) equation.
+            </p>
+
+            <div class="flex flex-col gap-3">
+              <!-- Explanation Box -->
+              <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
+                <h3 class="text-[11px] font-bold text-violet-400 mb-1.5 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                  Newton's Geometric Insight
+                </h3>
+                <p class="text-[10px] text-slate-300 mb-2 leading-relaxed font-sans">
+                  Newton analyzed an orbit as a series of constant falling drops towards the center.
+                  Over a small time interval t:
+                  <br>• The satellite travels horizontally by v · t (inertial tangent).
+                  <br>• It falls vertically towards the center by ½ · a · t².
+                </p>
+                <p class="text-[10px] text-slate-400 leading-relaxed">
+                  As the time interval t → 0 (drag the slider in the top-right to test), the approximation sin(2θ) ≈ 2θ and tanθ ≈ θ becomes exact, revealing the centripetal relationship.
+                </p>
+              </div>
+
+              <!-- Trigonometric Limits Card -->
+              <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80 font-sans">
+                <h3 class="text-[11px] font-bold text-sky-400 mb-1.5 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                  Trigonometric Limit
+                </h3>
+                <div class="space-y-2 text-[10px] text-slate-300 font-sans">
+                  <div class="bg-slate-950/50 p-2 rounded border border-slate-900 leading-relaxed font-mono">
+                    <div>tan(θ) = opposite / adjacent</div>
+                    <div class="text-sky-400">tan(θ) = (½ · a · t²) / (v · t)</div>
+                    <div class="text-violet-400">tan(θ) = ½ · a · t / v ≈ θ</div>
+                  </div>
+                  <div class="bg-slate-950/50 p-2 rounded border border-slate-900 leading-relaxed font-mono mt-1.5">
+                    <div>sin(2θ) = opposite / hypotenuse</div>
+                    <div class="text-yellow-400">sin(2θ) = v · t / R</div>
+                    <div class="text-violet-400">sin(2θ) ≈ 2θ</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel: SVG Illustration -->
+          <div class="flex-grow relative bg-black flex flex-col h-full overflow-hidden">
+            <div class="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800/80 backdrop-blur text-xs font-semibold">
+              <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              Space Geometry View
+            </div>
+
+            <!-- Floating slider box in the top-right of illustration area -->
+            <div class="absolute top-4 right-4 z-20 bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl shadow-xl w-[260px] backdrop-blur-md">
+              <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+                Time Interval (Δt)
+              </h4>
+              <div class="flex justify-between text-[10px] text-slate-400 mb-1.5">
+                <span>Angle 2θ:</span>
+                <span id="accel-angle-val" class="text-violet-400 font-bold">${twoThetaDeg}°</span>
+              </div>
+              <input type="range" id="accel-x-slider" min="5" max="60" value="${twoThetaDeg}" 
+                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
+            </div>
+
+            <!-- Floating proof derivations in the bottom-left -->
+            <div class="absolute bottom-4 left-4 z-20 bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-xl w-[320px] backdrop-blur-md font-mono text-[10px] space-y-2">
+              <h4 class="text-xs font-bold text-white mb-1 flex items-center gap-1.5 font-sans">
+                <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                Proof Derivation
+              </h4>
+              <div class="space-y-1 bg-slate-950/60 p-2.5 rounded border border-slate-850">
+                <div class="text-slate-400">tan(θ) = (½ · a · t²) / (v · t) ≈ θ</div>
+                <div class="text-slate-400">sin(2θ) = v · t / R</div>
+                <div class="text-white flex items-center gap-1.5 my-1.5">
+                  <span>⟹</span>
+                  <span class="text-sky-400 font-bold">2 · (½ · a · t) / v = v · t / R</span>
+                </div>
+                <div class="text-white flex items-center gap-1.5 font-bold">
+                  <span>⟹</span>
+                  <span class="text-yellow-400 font-extrabold">v² = a · R</span>
+                </div>
+                <div class="text-white flex items-center gap-1.5 font-bold mt-1">
+                  <span>⟹</span>
+                  <span class="text-green-400 font-extrabold">a = v² / R</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Status Bar in bottom-right -->
+            <div id="accel-status-bar" class="absolute bottom-4 right-4 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900/90 text-slate-200 backdrop-blur-md shadow-2xl max-w-[240px]">
+              <h4 class="text-xs font-bold text-white mb-1 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Limit Verification
+              </h4>
+              <p id="accel-status-desc" class="text-[10px] leading-relaxed opacity-90">
+                Small angle approximation holds: sin(2θ) ≈ 2θ is verified.
+              </p>
+            </div>
+
+            <div class="flex-grow w-full h-full relative flex items-center justify-center p-6 flex-col">
+              <!-- Background Grid -->
+              <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px); background-size: 30px 30px;"></div>
+
+              <svg viewBox="0 0 400 200" class="w-full max-h-[85%] z-10 overflow-visible">
+                <defs>
+                  <!-- Arrow Markers -->
+                  <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+                  </marker>
+                </defs>
+
+                <!-- Circle Orbit -->
+                <circle cx="${sunX}" cy="${sunY}" r="${r}" fill="none" stroke="#475569" stroke-width="1.5" />
+
+                <!-- Vertical diameter dashed line -->
+                <line x1="${sunX}" y1="${sunY - r}" x2="${sunX}" y2="${sunY + r}" stroke="rgba(255,255,255,0.15)" stroke-dasharray="3,3" />
+
+                <!-- Chords and lines -->
+                <line id="svg-chord-top" x1="${sunX}" y1="${sunY - r}" x2="${px}" y2="${py}" stroke="#94a3b8" stroke-width="1" />
+                <line id="svg-chord-bot" x1="${sunX}" y1="${sunY + r}" x2="${px}" y2="${py}" stroke="#64748b" stroke-width="1" />
+                <line id="svg-radius-line" x1="${sunX}" y1="${sunY}" x2="${px}" y2="${py}" stroke="#eab308" stroke-width="1.2" />
+                <text id="svg-radius-text" x="" y="" fill="#eab308" font-size="8.5" font-family="Outfit" font-weight="bold">R</text>
+
+                <!-- Vertical segment representing fall (1/2 * a * t^2) -->
+                <line id="svg-fall-line" x1="${sunX}" y1="${sunY - r}" x2="${sunX}" y2="${py}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
+                <text id="svg-fall-text" x="${sunX - 45}" y="" fill="#38bdf8" font-size="7.5" font-family="Outfit" font-weight="bold">½ · a · t²</text>
+
+                <!-- Horizontal segment representing velocity (v * t) -->
+                <line id="svg-vel-line" x1="${sunX}" y1="${py}" x2="${px}" y2="${py}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
+                <text id="svg-vel-text" x="" y="" fill="#38bdf8" font-size="7.5" font-family="Outfit" font-weight="bold" text-anchor="middle">v · t</text>
+
+                <!-- Angle Arcs -->
+                <path id="svg-arc-center" d="" fill="none" stroke="#eab308" stroke-width="1" />
+                <text id="svg-arc-center-text" x="" y="" fill="#eab308" font-size="7" font-family="Outfit">2θ</text>
+
+                <path id="svg-arc-bottom" d="" fill="none" stroke="#64748b" stroke-width="1" />
+                <text id="svg-arc-bottom-text" x="" y="" fill="#64748b" font-size="7" font-family="Outfit">θ</text>
+
+                <path id="svg-arc-chord" d="" fill="none" stroke="#94a3b8" stroke-width="1" />
+                <text id="svg-arc-chord-text" x="" y="" fill="#94a3b8" font-size="7" font-family="Outfit">θ</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const slider = this.accelerationContainer.querySelector('#accel-x-slider');
+      slider.addEventListener('input', (e) => {
+        this.accelerationX = parseInt(e.target.value);
+        this.renderAccelerationUI();
+      });
+
+      this.accelerationUIInitialized = true;
+    }
+
+    // --- DYNAMIC UPDATES ---
+    this.accelerationContainer.querySelector('#accel-x-slider').value = this.accelerationX;
+    this.accelerationContainer.querySelector('#accel-angle-val').textContent = `${twoThetaDeg}°`;
+
+    const pxVal = sunX + r * Math.sin(twoTheta);
+    const pyVal = sunY - r * Math.cos(twoTheta);
+
+    this.accelerationContainer.querySelector('#svg-chord-top').setAttribute('x2', pxVal);
+    this.accelerationContainer.querySelector('#svg-chord-top').setAttribute('y2', pyVal);
+    
+    this.accelerationContainer.querySelector('#svg-chord-bot').setAttribute('x2', pxVal);
+    this.accelerationContainer.querySelector('#svg-chord-bot').setAttribute('y2', pyVal);
+
+    this.accelerationContainer.querySelector('#svg-radius-line').setAttribute('x2', pxVal);
+    this.accelerationContainer.querySelector('#svg-radius-line').setAttribute('y2', pyVal);
+    
+    const dxP = pxVal - sunX;
+    const dyP = pyVal - sunY;
+    const lenP = Math.sqrt(dxP*dxP + dyP*dyP);
+    const uxP = dxP / (lenP || 1);
+    const uyP = dyP / (lenP || 1);
+    const perpX = -uyP;
+    const perpY = uxP;
+    const textX = sunX + dxP * 0.5 + perpX * 8;
+    const textY = sunY + dyP * 0.5 + perpY * 8;
+    this.accelerationContainer.querySelector('#svg-radius-text').setAttribute('x', textX);
+    this.accelerationContainer.querySelector('#svg-radius-text').setAttribute('y', textY);
+
+    this.accelerationContainer.querySelector('#svg-fall-line').setAttribute('y2', pyVal - 2);
+    this.accelerationContainer.querySelector('#svg-fall-text').setAttribute('y', (sunY - r) + (pyVal - (sunY - r)) / 2 + 3);
+
+    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('y1', pyVal);
+    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('x2', pxVal - 2);
+    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('y2', pyVal);
+    this.accelerationContainer.querySelector('#svg-vel-text').setAttribute('x', sunX + (pxVal - sunX) / 2);
+    this.accelerationContainer.querySelector('#svg-vel-text').setAttribute('y', pyVal + 10);
+
+    const arcR1 = 16;
+    const startX1 = sunX;
+    const startY1 = sunY - arcR1;
+    const endX1 = sunX + arcR1 * Math.sin(twoTheta);
+    const endY1 = sunY - arcR1 * Math.cos(twoTheta);
+    const pathD1 = `M ${startX1} ${startY1} A ${arcR1} ${arcR1} 0 0 1 ${endX1} ${endY1}`;
+    this.accelerationContainer.querySelector('#svg-arc-center').setAttribute('d', pathD1);
+    const labelAngle1 = -Math.PI/2 + twoTheta/2;
+    this.accelerationContainer.querySelector('#svg-arc-center-text').setAttribute('x', sunX + (arcR1 + 8) * Math.cos(labelAngle1));
+    this.accelerationContainer.querySelector('#svg-arc-center-text').setAttribute('y', sunY + (arcR1 + 8) * Math.sin(labelAngle1) + 3);
+
+    const botY = sunY + r;
+    const arcR2 = 20;
+    const startX2 = sunX;
+    const startY2 = botY - arcR2;
+    const dxBot = pxVal - sunX;
+    const dyBot = pyVal - botY;
+    const chordAngle = Math.atan2(dyBot, dxBot);
+    const endX2 = sunX + arcR2 * Math.cos(chordAngle);
+    const endY2 = botY + arcR2 * Math.sin(chordAngle);
+    const pathD2 = `M ${startX2} ${startY2} A ${arcR2} ${arcR2} 0 0 1 ${endX2} ${endY2}`;
+    this.accelerationContainer.querySelector('#svg-arc-bottom').setAttribute('d', pathD2);
+    const labelAngle2 = -Math.PI/2 + theta/2;
+    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('x', sunX + (arcR2 + 8) * Math.cos(labelAngle2));
+    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('y', botY + (arcR2 + 8) * Math.sin(labelAngle2) + 3);
+
+    const arcR3 = 18;
+    const startX3 = pxVal - arcR3;
+    const startY3 = pyVal;
+    const dxChord = sunX - pxVal;
+    const dyChord = (sunY - r) - pyVal;
+    const chordAngleTop = Math.atan2(dyChord, dxChord);
+    const endX3 = pxVal + arcR3 * Math.cos(chordAngleTop);
+    const endY3 = pyVal + arcR3 * Math.sin(chordAngleTop);
+    const pathD3 = `M ${startX3} ${startY3} A ${arcR3} ${arcR3} 0 0 1 ${endX3} ${endY3}`;
+    this.accelerationContainer.querySelector('#svg-arc-chord').setAttribute('d', pathD3);
+    const labelAngle3 = Math.PI - theta/2;
+    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('x', pxVal + (arcR3 + 8) * Math.cos(labelAngle3));
+    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('y', pyVal + (arcR3 + 8) * Math.sin(labelAngle3) + 3);
+
+    const statusDesc = this.accelerationContainer.querySelector('#accel-status-desc');
+    const ratio = Math.sin(twoTheta) / (twoTheta || 1);
+    const percentDrift = ((1 - ratio) * 100).toFixed(2);
+    statusDesc.innerHTML = `
+      Small angle approximation:
+      <br>• sin(2θ) ≈ 2θ (error: <strong>${percentDrift}%</strong>).
+      <br>• tan(θ) ≈ θ (error: <strong>${((Math.tan(theta) - theta) / (theta || 1) * 100).toFixed(2)}%</strong>).
+      <br><span class="text-violet-400 font-bold">Limit holds!</span> As Δt → 0, a = v² / R is exact.
+    `;
   }
 }
 

@@ -39,6 +39,7 @@ export class LevelUI {
     this.kepler8_logVerified = false;
     this.newton1Verified = false;
     this.newton2Verified = false;
+    this.newton3Verified = false;
     gameState.subscribe((state) => {
       if (state.activeLevel === 1) {
         this.renderLevel1();
@@ -2649,9 +2650,10 @@ export class LevelUI {
         <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">Gravity which united the celestial and terrestrial rule</p>
 
         <!-- Tabs -->
-        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5">
-          <button id="tab-n1" class="tab-n px-2 py-1 text-[10px] font-semibold rounded transition" style="background:rgb(139,92,246);color:#fff;">Newton's Cannonball</button>
-          <button id="tab-n2" class="tab-n px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Law of Gravity</button>
+        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 font-sans">
+          <button id="tab-n1" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:rgb(139,92,246);color:#fff;">Newton's Cannonball</button>
+          <button id="tab-n2" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Law of Gravity</button>
+          <button id="tab-n3" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Centripetal Proof</button>
         </div>
 
         <!-- Cannonball Content -->
@@ -2704,6 +2706,33 @@ export class LevelUI {
           </div>
         </div>
 
+        <!-- Centripetal Proof Content -->
+        <div id="content-n3" class="flex flex-col gap-2 mt-2 hidden">
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <h3 class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Geometric Centripetal Proof</h3>
+            <p class="text-[10px] leading-relaxed text-slate-300">
+              Newton used a geometric method to derive the equation for centripetal acceleration. By analyzing a small interval of circular motion, the horizontal component represents uniform velocity displacement (v · t), and the vertical drop represents fall due to gravity (½ · a · t²).
+            </p>
+            <p class="text-[10px] leading-relaxed text-slate-450 italic">
+              By using trigonometry, tan(θ) ≈ θ and sin(2θ) ≈ 2θ, we can equate these to prove the universal acceleration law: a = v² / R.
+            </p>
+            <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-2">
+              <span class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">Orbit Period Challenge:</span>
+              <p class="text-[10px] text-slate-400">
+                Earth Radius: <strong>R = 6,371 km</strong>.<br>
+                Acceleration of Gravity: <strong>a = 9.8 m/s²</strong>.<br>
+                Calculate the orbital period T (in hours) of a near-Earth orbit satellite.
+              </p>
+              <span class="text-[10.5px] font-semibold text-slate-200">Orbital period T (hours):</span>
+              <div class="flex gap-2">
+                <input type="number" id="newton3-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 1.41" step="0.01">
+                <button id="newton3-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+              </div>
+              <div id="newton3-feedback" class="text-[10.5px] font-medium hidden"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Checklist -->
         <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
@@ -2712,6 +2741,9 @@ export class LevelUI {
           </div>
           <div id="check-n2" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Gravitational Constant G Verified</span>
+          </div>
+          <div id="check-n3" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Centripetal Proof Verified</span>
           </div>
         </div>
 
@@ -2736,6 +2768,7 @@ export class LevelUI {
     const finalBtn  = document.getElementById('final-submit-btn');
     const checkN1   = document.getElementById('check-n1');
     const checkN2   = document.getElementById('check-n2');
+    const checkN3   = document.getElementById('check-n3');
 
     const refreshChecklist = () => {
       if (this.newton1Verified) {
@@ -2746,7 +2779,11 @@ export class LevelUI {
         checkN2.querySelector('.status-check').textContent = '✅';
         checkN2.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
       }
-      if (this.newton1Verified && this.newton2Verified) {
+      if (this.newton3Verified) {
+        checkN3.querySelector('.status-check').textContent = '✅';
+        checkN3.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      }
+      if (this.newton1Verified && this.newton2Verified && this.newton3Verified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
       }
@@ -2794,11 +2831,32 @@ export class LevelUI {
       n2Fb.classList.remove('hidden');
     });
 
+    // Verification tab 3
+    const n3Input = document.getElementById('newton3-input');
+    const n3VerifyBtn = document.getElementById('newton3-verify-btn');
+    const n3Fb = document.getElementById('newton3-feedback');
+
+    n3VerifyBtn.addEventListener('click', () => {
+      const val = parseFloat(n3Input.value);
+      if (val >= 1.38 && val <= 1.43) {
+        n3Fb.textContent = '✓ Correct! For a near-Earth satellite, T = 2π * sqrt(R/g) ≈ 5066s ≈ 1.41 hours.';
+        n3Fb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+        this.newton3Verified = true;
+        refreshChecklist();
+      } else {
+        n3Fb.textContent = '❌ Incorrect. Hint: v = sqrt(a*R) ≈ 7901 m/s. Circumference C = 2πR ≈ 40,030 km. Period T = C / v ≈ 5066s ≈ 1.41 hours.';
+        n3Fb.className = 'text-[11px] font-semibold text-red-500 mt-1';
+      }
+      n3Fb.classList.remove('hidden');
+    });
+
     // Tab switching
     const tab1 = document.getElementById('tab-n1');
     const tab2 = document.getElementById('tab-n2');
+    const tab3 = document.getElementById('tab-n3');
     const con1 = document.getElementById('content-n1');
     const con2 = document.getElementById('content-n2');
+    const con3 = document.getElementById('content-n3');
 
     const switchTab = (which) => {
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
@@ -2807,13 +2865,21 @@ export class LevelUI {
       if (which === 'cannonball') {
         tab1.style.background = 'rgb(139,92,246)'; tab1.style.color = '#fff';
         tab2.style.background = 'transparent';     tab2.style.color = 'rgb(148,163,184)';
-        con1.classList.remove('hidden'); con2.classList.add('hidden');
+        tab3.style.background = 'transparent';     tab3.style.color = 'rgb(148,163,184)';
+        con1.classList.remove('hidden'); con2.classList.add('hidden'); con3.classList.add('hidden');
         renderN9Params('cannonball');
-      } else {
+      } else if (which === 'gravity') {
         tab2.style.background = 'rgb(139,92,246)'; tab2.style.color = '#fff';
         tab1.style.background = 'transparent';     tab1.style.color = 'rgb(148,163,184)';
-        con2.classList.remove('hidden'); con1.classList.add('hidden');
+        tab3.style.background = 'transparent';     tab3.style.color = 'rgb(148,163,184)';
+        con2.classList.remove('hidden'); con1.classList.add('hidden'); con3.classList.add('hidden');
         renderN9Params('gravity');
+      } else {
+        tab3.style.background = 'rgb(139,92,246)'; tab3.style.color = '#fff';
+        tab1.style.background = 'transparent';     tab1.style.color = 'rgb(148,163,184)';
+        tab2.style.background = 'transparent';     tab2.style.color = 'rgb(148,163,184)';
+        con3.classList.remove('hidden'); con1.classList.add('hidden'); con2.classList.add('hidden');
+        renderN9Params('acceleration');
       }
     };
 
@@ -2824,6 +2890,11 @@ export class LevelUI {
     const renderN9Params = (tab) => {
       const pp = document.getElementById('n9-param-panel');
       if (!pp) return;
+      if (tab === 'acceleration') {
+        pp.style.display = 'none';
+        return;
+      }
+      pp.style.display = 'flex';
       if (tab === 'cannonball') {
         pp.innerHTML = `
           <div class="flex flex-wrap items-center gap-4 w-full">
