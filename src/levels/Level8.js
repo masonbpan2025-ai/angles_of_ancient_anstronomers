@@ -550,12 +550,12 @@ export class Level8 {
             <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
               <h3 class="text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                Similar Triangles
+                The Geometry of Shadows
               </h3>
               <p class="text-[10px] text-slate-300 mb-2 leading-relaxed">
-                By similar triangles, the ratio of the Moon's radius to its shadow length is the same as the Sun's radius to the total distance:
+                To find the length of the dark shadow cone (L), Kepler used the law similar triangles. The ratio of the Moon's radius to its shadow is the same as the Sun's radius to the total distance.
               </p>
-
+ 
               <div class="bg-slate-950/50 p-2 rounded border border-slate-900 text-center font-mono text-[10.5px]">
                 <div class="flex items-center justify-center gap-3">
                   <div class="flex flex-col items-center">
@@ -569,9 +569,9 @@ export class Level8 {
                   </div>
                 </div>
               </div>
-
-              <p class="text-[10px] text-slate-300 mt-2.5 mb-1.5">Solving for shadow length (<span class="text-blue-400 font-bold">L</span>) yields:</p>
-
+ 
+              <p class="text-[10px] text-slate-300 mt-2.5 mb-1.5">When using algebra to solve for L, the final equation becomes:</p>
+ 
               <div class="bg-slate-950/50 p-2 rounded border border-slate-900 text-center font-mono text-[10.5px]">
                 <div class="flex items-center justify-center gap-2">
                   <span class="text-blue-400 font-bold">L</span>
@@ -584,11 +584,27 @@ export class Level8 {
               </div>
             </div>
 
+            <!-- Logarithmic Simplification Explanation -->
+            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
+              <h3 class="text-[11px] font-bold text-blue-400 mb-1.5 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 7h6m-6 4h6m-6 4h6M3 5h18v14H3z"/></svg>
+                Logarithmic approach to calculate L
+              </h3>
+              <p class="text-[10px] text-slate-300 mb-2 leading-relaxed">
+                By taking logs on both sides, we convert the multiplication in the numerator into addition, and the division into subtraction:
+              </p>
+              <div class="bg-slate-950/50 p-2 rounded border border-slate-900 font-mono text-[9px] space-y-1">
+                <div>log(L) = log(Dist × R_moon) - log(R_sun - R_moon)</div>
+                <div class="text-blue-400">log(L) = [log(Dist) + log(R_moon)] - log(R_sun - R_moon)</div>
+                <div class="text-emerald-400 font-bold">L = 10<sup>log(L)</sup> (Antilog lookup)</div>
+              </div>
+            </div>
+ 
             <!-- Interactive Calculator Box -->
             <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
               <div class="mb-4">
                 <div class="flex justify-between text-[10.5px] text-slate-400 mb-1.5">
-                  <span>Distance (Dist)</span>
+                  <span>Move Moon Closer/Further</span>
                   <span class="text-emerald-400 font-bold">${distanceSunMoonReal.toLocaleString()} miles</span>
                 </div>
                 <input type="range" id="moon-x-slider" min="100" max="260" value="${this.moonX}" 
