@@ -10,7 +10,7 @@ export class Level11 {
 
     // Simulation state
     this.time = 0;
-    this.largeSpherePos = 0; // 0 (neutral / far) to 1 (active / close)
+    this.largeSphereRadius = 20; // Radius in pixels (10 to 35)
 
     // Stars background
     this.stars = [];
@@ -52,9 +52,16 @@ export class Level11 {
 
   renderUIOverlay() {
     // Deflection readout
-    const angleRad = this.largeSpherePos * 0.06;
-    const angleDeg = (angleRad * 180 / Math.PI).toFixed(2);
-    const forceMicroN = (this.largeSpherePos * 0.15).toFixed(3);
+    const volume = (4/3) * Math.PI * Math.pow(this.largeSphereRadius, 3);
+    const maxVolume = (4/3) * Math.PI * Math.pow(35, 3);
+    
+    // Torque and deflection scale with mass (volume)
+    const theta = (volume / maxVolume) * 0.08;
+    const angleDeg = (theta * 180 / Math.PI).toFixed(2);
+    const forceMicroN = (volume / maxVolume * 0.15).toFixed(3);
+    
+    // Cavendish lead mass (scales with volume)
+    const leadMassKg = Math.round(volume * 0.0011);
 
     this.uiOverlay.innerHTML = `
       <div class="bg-slate-900/95 border border-slate-800 p-4 rounded-2xl shadow-2xl w-[280px] font-sans text-slate-200 backdrop-blur-md">
@@ -67,27 +74,27 @@ export class Level11 {
         
         <div class="space-y-3">
           <div class="flex justify-between text-[10px] text-slate-400">
-            <span>Large Sphere Attraction:</span>
-            <span class="text-violet-400 font-bold">${Math.round(this.largeSpherePos * 100)}%</span>
+            <span>Large Lead Sphere Radius:</span>
+            <span class="text-violet-400 font-bold">${this.largeSphereRadius} px</span>
           </div>
-          <input type="range" id="cav-spheres-slider" min="0" max="100" value="${this.largeSpherePos * 100}" 
+          <input type="range" id="cav-spheres-slider" min="10" max="35" value="${this.largeSphereRadius}" 
             class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
           
           <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 text-[9.5px]">
             <div class="flex justify-between">
-              <span class="text-slate-500">Torque Force:</span>
-              <span class="text-amber-400 font-mono font-bold">${forceMicroN} μN</span>
+              <span class="text-slate-500">Lead Sphere Mass (M):</span>
+              <span class="text-amber-400 font-mono font-bold">${leadMassKg} kg</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-500">Twist Angle θ:</span>
-              <span class="text-sky-400 font-mono font-bold">${angleDeg}°</span>
+              <span class="text-slate-500">Gravitational Torque:</span>
+              <span class="text-sky-400 font-mono font-bold">${forceMicroN} μN·m</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-500">Laser Deflection Δx:</span>
-              <span class="text-rose-400 font-mono font-bold">${Math.round(this.largeSpherePos * 52)} mm</span>
+              <span class="text-slate-500">Torsion Deflection θ:</span>
+              <span class="text-green-400 font-mono font-bold">${angleDeg}°</span>
             </div>
             <p class="text-[9px] text-slate-400 leading-relaxed mt-1.5 border-t border-slate-850 pt-1.5">
-              Deflection is measured by bouncing a laser off a mirror on the wire, amplifying the tiny angle over a long distance to scale.
+              Increasing the size of the large spheres increases their mass and gravitational pull, generating a larger torque that twists the suspended fiber.
             </p>
           </div>
         </div>
@@ -96,7 +103,7 @@ export class Level11 {
 
     const slider = this.uiOverlay.querySelector('#cav-spheres-slider');
     slider.addEventListener('input', (e) => {
-      this.largeSpherePos = parseInt(e.target.value) / 100;
+      this.largeSphereRadius = parseInt(e.target.value);
       this.renderUIOverlay();
     });
   }
@@ -104,20 +111,6 @@ export class Level11 {
   resize() {
     this.canvas.width = this.container.clientWidth;
     this.canvas.height = this.container.clientHeight;
-  }
-
-  rrect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
   }
 
   animate() {
@@ -153,93 +146,64 @@ export class Level11 {
     // Layout configuration
     const TASK_W = 400;
     const cx = TASK_W + (W - TASK_W) / 2;
-    const cy = H / 2 + 25;
+    const cy = H / 2 + 10;
 
-    // Draw scale/ruler at top
-    const scaleY = cy - 140;
-    const scaleW = 340;
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx - scaleW / 2, scaleY);
-    ctx.lineTo(cx + scaleW / 2, scaleY);
-    ctx.stroke();
+    const casingRadius = 150; // large casing circle
+    const rodLength = 240;   // rod diameter
 
-    // Scale ticks
-    ctx.fillStyle = '#64748b';
-    ctx.font = '8px monospace';
-    ctx.textAlign = 'center';
-    for (let i = -10; i <= 10; i++) {
-      const tx = cx + i * 15;
-      ctx.beginPath();
-      ctx.moveTo(tx, scaleY);
-      ctx.lineTo(tx, scaleY - (i % 5 === 0 ? 6 : 3));
-      ctx.stroke();
-      if (i % 5 === 0) {
-        ctx.fillText(i * 10, tx, scaleY - 9);
+    // Torsion/twist deflection math
+    const volume = (4/3) * Math.PI * Math.pow(this.largeSphereRadius, 3);
+    const maxVolume = (4/3) * Math.PI * Math.pow(35, 3);
+    const theta = (volume / maxVolume) * 0.08; // Rod deflection twist angle (up to 4.6 degrees)
+
+    // --- DRAW DETAILED PROTRACTOR DIALS (Enclosure scales) ---
+    ctx.save();
+    ctx.strokeStyle = 'rgba(74, 222, 128, 0.2)';
+    ctx.lineWidth = 1;
+    
+    // Draw tick marks on left scale (around Math.PI)
+    const drawTicks = (baseAngle) => {
+      for (let d = -12; d <= 12; d += 2) {
+        const tickAngle = baseAngle + (d * Math.PI / 180);
+        const startR = casingRadius - 4;
+        const endR = casingRadius + 4;
+        ctx.beginPath();
+        ctx.moveTo(cx + startR * Math.cos(tickAngle), cy + startR * Math.sin(tickAngle));
+        ctx.lineTo(cx + endR * Math.cos(tickAngle), cy + endR * Math.sin(tickAngle));
+        ctx.stroke();
+
+        // Numbers on main divisions
+        if (d % 6 === 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          ctx.font = '7.5px monospace';
+          const labelR = casingRadius + 14;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${d > 0 ? '+' : ''}${d}°`, cx + labelR * Math.cos(tickAngle), cy + labelR * Math.sin(tickAngle));
+        }
       }
-    }
-
-    // Laser deflection math
-    const theta = this.largeSpherePos * 0.06; // beam twist in radians (approx 3.4 degrees max)
-    const deltaX = 140 * Math.tan(2 * theta); // reflected laser is deflected by 2*theta
-    const scaleX = cx + deltaX;
-
-    // Laser emitter unit
-    const lx = cx - 140;
-    const ly = cy + 40;
-    ctx.save();
-    ctx.translate(lx, ly);
-    ctx.rotate(Math.atan2(cy - ly, cx - lx));
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(-15, -4, 25, 8);
-    ctx.fillStyle = '#ef4444'; // laser tip
-    ctx.fillRect(10, -2, 3, 4);
+    };
+    
+    drawTicks(Math.PI);
+    drawTicks(0);
     ctx.restore();
 
-    // Red Laser incident beam
-    ctx.save();
-    ctx.strokeStyle = 'rgba(239,68,68,0.4)';
-    ctx.lineWidth = 1.2;
+    // Draw main casing ring (casingRadius)
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(lx + 8, ly - 2);
-    ctx.lineTo(cx, cy);
+    ctx.arc(cx, cy, casingRadius, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.restore();
 
-    // Red Laser reflected beam
-    ctx.save();
-    ctx.shadowColor = '#ef4444';
-    ctx.shadowBlur = 8;
-    ctx.strokeStyle = 'rgba(239,68,68,0.85)';
-    ctx.lineWidth = 2.0;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(scaleX, scaleY);
-    ctx.stroke();
-    ctx.restore();
-
-    // Laser dot on the scale
-    ctx.save();
-    ctx.fillStyle = '#ff3333';
-    ctx.shadowColor = '#ff0000';
-    ctx.shadowBlur = 12;
-    ctx.beginPath();
-    ctx.arc(scaleX, scaleY, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Draw central torsion wire hanging down
-    ctx.strokeStyle = '#94a3b8';
+    // Draw central torsion wire hanging down from ceiling to mirror
+    ctx.strokeStyle = 'rgba(148,163,184,0.6)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(cx, cy - 90);
+    ctx.moveTo(cx, cy - 140);
     ctx.lineTo(cx, cy);
     ctx.stroke();
 
-    // Torsion rod and small spheres
-    const rodLength = 120;
-    // Rotation of rod is theta (torsion twist)
+    // Draw Torsion rod (rotated by theta)
     const rx = (rodLength / 2) * Math.cos(theta);
     const ry = (rodLength / 2) * Math.sin(theta);
 
@@ -251,68 +215,75 @@ export class Level11 {
     ctx.lineTo(cx + rx, cy + ry);
     ctx.stroke();
 
-    // Small spheres
+    // Pointer wires at the ends of the rod to read deflection on scale
+    ctx.strokeStyle = '#f97316'; // orange pointer
+    ctx.lineWidth = 1.2;
+    // Left pointer
+    ctx.beginPath();
+    ctx.moveTo(cx - rx, cy - ry);
+    ctx.lineTo(cx - (casingRadius - 4) * Math.cos(theta), cy - (casingRadius - 4) * Math.sin(theta));
+    ctx.stroke();
+    // Right pointer
+    ctx.beginPath();
+    ctx.moveTo(cx + rx, cy + ry);
+    ctx.lineTo(cx + (casingRadius - 4) * Math.cos(theta), cy + (casingRadius - 4) * Math.sin(theta));
+    ctx.stroke();
+
+    // Small lead spheres (m)
     ctx.fillStyle = '#64748b';
     ctx.strokeStyle = '#94a3b8';
     ctx.lineWidth = 1;
     // Small Sphere 1
-    ctx.beginPath(); ctx.arc(cx - rx, cy - ry, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx - rx, cy - ry, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     // Small Sphere 2
-    ctx.beginPath(); ctx.arc(cx + rx, cy + ry, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx + rx, cy + ry, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
-    // Central mirror plate on wire
+    // Central mirror plate on wire (representing the angle visualizer of the wire)
     ctx.fillStyle = '#cbd5e1';
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    // A small rectangle tilted by theta representing the mirror
     ctx.rect(cx - 6, cy - 4, 12, 8);
     ctx.fill(); ctx.stroke();
     ctx.restore();
 
-    // Large lead spheres (M)
-    // Their neutral position is perpendicular to the rod. Active position rotates closer.
-    const activeAngle = 0.5 - this.largeSpherePos * 0.42; // rotate from far to very close
-    const largeRadius = 65; // radius from center to large spheres
+    // --- STATIC LARGE SPHERES (M) ---
+    // Positioned at a fixed offset angle relative to the rod's neutral horizontal plane.
+    // They do not rotate; only their drawn radius changes with slider!
+    const fixedAngle = 0.28; // approx 16 degrees
+    const largeRadius = 142; // distance from center
     
-    // Large Sphere 1 position
-    const lx1 = cx - largeRadius * Math.cos(activeAngle);
-    const ly1 = cy - largeRadius * Math.sin(activeAngle);
+    // Large Sphere 1 position (tilted slightly counterclockwise from left small sphere)
+    const lx1 = cx - largeRadius * Math.cos(fixedAngle);
+    const ly1 = cy - largeRadius * Math.sin(fixedAngle);
     
-    // Large Sphere 2 position
-    const lx2 = cx + largeRadius * Math.cos(activeAngle);
-    const ly2 = cy + largeRadius * Math.sin(activeAngle);
-
-    // Draw support brackets / lines for large spheres
-    ctx.strokeStyle = 'rgba(71,85,105,0.4)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(cx, cy, largeRadius, 0.5 - 0.42, 0.5, true);
-    ctx.stroke();
+    // Large Sphere 2 position (tilted slightly counterclockwise from right small sphere)
+    const lx2 = cx + largeRadius * Math.cos(fixedAngle);
+    const ly2 = cy + largeRadius * Math.sin(fixedAngle);
 
     // Draw Large Spheres
     ctx.save();
-    ctx.fillStyle = '#334155';
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.5;
+    ctx.fillStyle = '#475569';
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
     // Sphere 1
-    ctx.beginPath(); ctx.arc(lx1, ly1, 15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx1, ly1, this.largeSphereRadius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     // Sphere 2
-    ctx.beginPath(); ctx.arc(lx2, ly2, 15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx2, ly2, this.largeSphereRadius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
 
     // Labels
     ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 9.5px Outfit,sans-serif';
-    ctx.fillText("M (Large Sphere)", lx1 - 20, ly1 - 20);
-    ctx.fillText("m", cx - rx - 15, cy - ry - 12);
-    ctx.fillText("Mirror", cx - 18, cy + 22);
+    ctx.fillText("M (Large Sphere)", lx1 - 20, ly1 - this.largeSphereRadius - 8);
+    ctx.fillText("m", cx - rx - 18, cy - ry - 14);
+    ctx.fillText("Casing Scale", cx - casingRadius + 10, cy - casingRadius - 10);
 
     // Subtitle headers
     ctx.fillStyle = '#fff'; ctx.font = '600 13px Outfit,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     ctx.fillText("Cavendish Torsion Balance Setup", IX_center(W, TASK_W), 44);
     ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 10px Outfit,sans-serif';
-    ctx.fillText("Drag the slider to rotate the large masses (M) closer to the small ones (m). Bouncing light records the twist.", IX_center(W, TASK_W), 61);
+    ctx.fillText("Increasing sphere mass (M) increases gravitational pull, deflecting the torsion rod pointers along the protractor scale.", IX_center(W, TASK_W), 61);
   }
 
   destroy() {
