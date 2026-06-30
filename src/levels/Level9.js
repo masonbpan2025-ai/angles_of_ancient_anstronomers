@@ -489,8 +489,8 @@ export class Level9 {
     const theta = twoTheta / 2;
 
     const sunX = 200;
-    const sunY = 100;
-    const r = 75;
+    const sunY = 200;
+    const r = 150;
 
     const px = sunX + r * Math.sin(twoTheta);
     const py = sunY - r * Math.cos(twoTheta);
@@ -501,7 +501,7 @@ export class Level9 {
           <!-- Spacer to clear left task panel -->
           <div class="hidden lg:block lg:w-[420px] shrink-0 pointer-events-none"></div>
 
-          <!-- Left Panel: Spacer of w-[380px] to match the Level 8 layout -->
+          <!-- Left Panel: Math Explanation & Proof Derivation -->
           <div class="w-full lg:w-[380px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col z-20 overflow-y-auto shrink-0">
             <h2 class="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
               <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -524,8 +524,8 @@ export class Level9 {
                   <br>• The satellite travels horizontally by v · t (inertial tangent).
                   <br>• It falls vertically towards the center by ½ · a · t².
                 </p>
-                <p class="text-[10px] text-slate-400 leading-relaxed">
-                  As the time interval t → 0 (drag the slider in the top-right to test), the approximation sin(2θ) ≈ 2θ and tanθ ≈ θ becomes exact, revealing the centripetal relationship.
+                <p class="text-[10px] text-slate-400 leading-relaxed font-sans">
+                  As the time interval t → 0 (drag the slider in the top-right to test), the approximation sin(2θ) ≈ 2θ and tanθ ≈ θ becomes exact.
                 </p>
               </div>
 
@@ -538,13 +538,37 @@ export class Level9 {
                 <div class="space-y-2 text-[10px] text-slate-300 font-sans">
                   <div class="bg-slate-950/50 p-2 rounded border border-slate-900 leading-relaxed font-mono">
                     <div>tan(θ) = opposite / adjacent</div>
-                    <div class="text-sky-400">tan(θ) = (½ · a · t²) / (v · t)</div>
-                    <div class="text-violet-400">tan(θ) = ½ · a · t / v ≈ θ</div>
+                    <div class="text-sky-400 font-bold">tan(θ) = (½ · a · t²) / (v · t)</div>
+                    <div class="text-violet-400 font-bold">tan(θ) = ½ · a · t / v ≈ θ</div>
                   </div>
                   <div class="bg-slate-950/50 p-2 rounded border border-slate-900 leading-relaxed font-mono mt-1.5">
                     <div>sin(2θ) = opposite / hypotenuse</div>
-                    <div class="text-yellow-400">sin(2θ) = v · t / R</div>
-                    <div class="text-violet-400">sin(2θ) ≈ 2θ</div>
+                    <div class="text-yellow-400 font-bold">sin(2θ) = v · t / R</div>
+                    <div class="text-violet-400 font-bold">sin(2θ) ≈ 2θ</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Proof Derivation Card (Moved to Left Panel) -->
+              <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80 font-mono text-[9.5px] space-y-2">
+                <h3 class="text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1.5 font-sans">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                  Proof Derivation
+                </h3>
+                <div class="space-y-1 bg-slate-950/60 p-2.5 rounded border border-slate-850 leading-relaxed">
+                  <div class="text-slate-400">tan(θ) = (½ · a · t²) / (v · t) ≈ θ</div>
+                  <div class="text-slate-400">sin(2θ) = v · t / R</div>
+                  <div class="text-white flex items-center gap-1.5 my-1.5">
+                    <span>⟹</span>
+                    <span class="text-sky-400 font-bold">2 · (½ · a · t) / v = v · t / R</span>
+                  </div>
+                  <div class="text-white flex items-center gap-1.5 font-bold">
+                    <span>⟹</span>
+                    <span class="text-yellow-400 font-extrabold">v² = a · R</span>
+                  </div>
+                  <div class="text-white flex items-center gap-1.5 font-bold mt-1">
+                    <span>⟹</span>
+                    <span class="text-green-400 font-extrabold">a = v² / R</span>
                   </div>
                 </div>
               </div>
@@ -572,30 +596,6 @@ export class Level9 {
                 class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
             </div>
 
-            <!-- Floating proof derivations in the bottom-left -->
-            <div class="absolute bottom-4 left-4 z-20 bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-xl w-[320px] backdrop-blur-md font-mono text-[10px] space-y-2">
-              <h4 class="text-xs font-bold text-white mb-1 flex items-center gap-1.5 font-sans">
-                <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                Proof Derivation
-              </h4>
-              <div class="space-y-1 bg-slate-950/60 p-2.5 rounded border border-slate-850">
-                <div class="text-slate-400">tan(θ) = (½ · a · t²) / (v · t) ≈ θ</div>
-                <div class="text-slate-400">sin(2θ) = v · t / R</div>
-                <div class="text-white flex items-center gap-1.5 my-1.5">
-                  <span>⟹</span>
-                  <span class="text-sky-400 font-bold">2 · (½ · a · t) / v = v · t / R</span>
-                </div>
-                <div class="text-white flex items-center gap-1.5 font-bold">
-                  <span>⟹</span>
-                  <span class="text-yellow-400 font-extrabold">v² = a · R</span>
-                </div>
-                <div class="text-white flex items-center gap-1.5 font-bold mt-1">
-                  <span>⟹</span>
-                  <span class="text-green-400 font-extrabold">a = v² / R</span>
-                </div>
-              </div>
-            </div>
-
             <!-- Dynamic Status Bar in bottom-right -->
             <div id="accel-status-bar" class="absolute bottom-4 right-4 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900/90 text-slate-200 backdrop-blur-md shadow-2xl max-w-[240px]">
               <h4 class="text-xs font-bold text-white mb-1 flex items-center gap-1.5">
@@ -611,7 +611,7 @@ export class Level9 {
               <!-- Background Grid -->
               <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px); background-size: 30px 30px;"></div>
 
-              <svg viewBox="0 0 400 200" class="w-full max-h-[85%] z-10 overflow-visible">
+              <svg viewBox="0 0 400 400" class="w-full max-h-[92%] z-10 overflow-visible">
                 <defs>
                   <!-- Arrow Markers -->
                   <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -633,7 +633,7 @@ export class Level9 {
 
                 <!-- Vertical segment representing fall (1/2 * a * t^2) -->
                 <line id="svg-fall-line" x1="${sunX}" y1="${sunY - r}" x2="${sunX}" y2="${py}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
-                <text id="svg-fall-text" x="${sunX - 45}" y="" fill="#38bdf8" font-size="7.5" font-family="Outfit" font-weight="bold">½ · a · t²</text>
+                <text id="svg-fall-text" x="${sunX - 55}" y="" fill="#38bdf8" font-size="7.5" font-family="Outfit" font-weight="bold">½ · a · t²</text>
 
                 <!-- Horizontal segment representing velocity (v * t) -->
                 <line id="svg-vel-line" x1="${sunX}" y1="${py}" x2="${px}" y2="${py}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
@@ -700,7 +700,7 @@ export class Level9 {
     this.accelerationContainer.querySelector('#svg-vel-text').setAttribute('x', sunX + (pxVal - sunX) / 2);
     this.accelerationContainer.querySelector('#svg-vel-text').setAttribute('y', pyVal + 10);
 
-    const arcR1 = 16;
+    const arcR1 = 28;
     const startX1 = sunX;
     const startY1 = sunY - arcR1;
     const endX1 = sunX + arcR1 * Math.sin(twoTheta);
@@ -708,11 +708,11 @@ export class Level9 {
     const pathD1 = `M ${startX1} ${startY1} A ${arcR1} ${arcR1} 0 0 1 ${endX1} ${endY1}`;
     this.accelerationContainer.querySelector('#svg-arc-center').setAttribute('d', pathD1);
     const labelAngle1 = -Math.PI/2 + twoTheta/2;
-    this.accelerationContainer.querySelector('#svg-arc-center-text').setAttribute('x', sunX + (arcR1 + 8) * Math.cos(labelAngle1));
-    this.accelerationContainer.querySelector('#svg-arc-center-text').setAttribute('y', sunY + (arcR1 + 8) * Math.sin(labelAngle1) + 3);
+    this.accelerationContainer.querySelector('#svg-arc-center-text').setAttribute('x', sunX + (arcR1 + 10) * Math.cos(labelAngle1));
+    this.accelerationContainer.querySelector('#svg-arc-center-text').setAttribute('y', sunY + (arcR1 + 10) * Math.sin(labelAngle1) + 3);
 
     const botY = sunY + r;
-    const arcR2 = 20;
+    const arcR2 = 35;
     const startX2 = sunX;
     const startY2 = botY - arcR2;
     const dxBot = pxVal - sunX;
@@ -723,10 +723,10 @@ export class Level9 {
     const pathD2 = `M ${startX2} ${startY2} A ${arcR2} ${arcR2} 0 0 1 ${endX2} ${endY2}`;
     this.accelerationContainer.querySelector('#svg-arc-bottom').setAttribute('d', pathD2);
     const labelAngle2 = -Math.PI/2 + theta/2;
-    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('x', sunX + (arcR2 + 8) * Math.cos(labelAngle2));
-    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('y', botY + (arcR2 + 8) * Math.sin(labelAngle2) + 3);
+    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('x', sunX + (arcR2 + 10) * Math.cos(labelAngle2));
+    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('y', botY + (arcR2 + 10) * Math.sin(labelAngle2) + 3);
 
-    const arcR3 = 18;
+    const arcR3 = 30;
     const startX3 = pxVal - arcR3;
     const startY3 = pyVal;
     const dxChord = sunX - pxVal;
@@ -737,8 +737,8 @@ export class Level9 {
     const pathD3 = `M ${startX3} ${startY3} A ${arcR3} ${arcR3} 0 0 1 ${endX3} ${endY3}`;
     this.accelerationContainer.querySelector('#svg-arc-chord').setAttribute('d', pathD3);
     const labelAngle3 = Math.PI - theta/2;
-    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('x', pxVal + (arcR3 + 8) * Math.cos(labelAngle3));
-    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('y', pyVal + (arcR3 + 8) * Math.sin(labelAngle3) + 3);
+    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('x', pxVal + (arcR3 + 12) * Math.cos(labelAngle3));
+    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('y', pyVal + (arcR3 + 12) * Math.sin(labelAngle3) + 3);
 
     const statusDesc = this.accelerationContainer.querySelector('#accel-status-desc');
     const ratio = Math.sin(twoTheta) / (twoTheta || 1);
@@ -751,5 +751,3 @@ export class Level9 {
     `;
   }
 }
-
-
