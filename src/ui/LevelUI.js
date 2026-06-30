@@ -553,8 +553,8 @@ export class LevelUI {
       saros: {
         title: "5. The Saros & Synodic Cycle",
         desc: "Because the Sun slowly moves along the Ecliptic as the Moon orbits the Earth, the Moon must travel slightly more than 360° to catch up with the Sun and complete a full cycle of phases. This phase cycle (synodic month) is longer than the actual orbital cycle (sidereal month). Ancient observers noted that after 18 years, 11 days, and 8 hours—the Saros cycle—the Sun, Moon, and Earth align in nearly identical geometries, allowing eclipses to be predicted with high precision.",
-        question: "Calculate the Moon's phase cycle (synodic month) in days, based on the Moon's orbit cycle of 27.321661 days and the Sun's orbit cycle of 365.24219 days. (Round to two decimal places, e.g. 29.53)",
-        placeholder: "e.g. 29.53",
+        question: "Calculate the Moon's phase cycle (synodic month) in days, based on the Moon's orbit cycle of 27.321661 days and the Sun's orbit cycle of 365.24219 days. (Round to two decimal places, e.g. 28.50)",
+        placeholder: "e.g. 28.50",
         answer: 29.53
       }
     };
@@ -1067,7 +1067,7 @@ export class LevelUI {
 
         if (activeTab === 'saros') {
           inputArea.innerHTML = `
-            <input type="number" id="calc-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-cyan-500 transition" placeholder="e.g. 29.53" step="0.01">
+            <input type="number" id="calc-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-cyan-500 transition" placeholder="e.g. 28.50" step="0.01">
             <button id="verify-tab-btn" class="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
           `;
           const verifyBtn = document.getElementById('verify-tab-btn');

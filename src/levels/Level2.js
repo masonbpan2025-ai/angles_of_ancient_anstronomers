@@ -737,10 +737,19 @@ export class Level2 {
  
     // Increment simulation time (in virtual days)
     // Scale: 0.06 virtual days per frame.
-    this.sarosTime = (this.sarosTime || 0) + 0.06;
     const maxTime = 29.530588; // loop one synodic cycle
     if (this.sarosTime >= maxTime) {
-      this.sarosTime = 0;
+      this.sarosPauseCounter = (this.sarosPauseCounter || 0) + 1;
+      // 5 seconds at 60 fps = 300 frames
+      if (this.sarosPauseCounter >= 300) {
+        this.sarosTime = 0;
+        this.sarosPauseCounter = 0;
+      } else {
+        this.sarosTime = maxTime;
+      }
+    } else {
+      this.sarosTime = (this.sarosTime || 0) + 0.06;
+      this.sarosPauseCounter = 0;
     }
  
     const t = this.sarosTime;
