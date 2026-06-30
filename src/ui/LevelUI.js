@@ -2652,8 +2652,8 @@ export class LevelUI {
         <!-- Tabs -->
         <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 font-sans">
           <button id="tab-n1" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:rgb(139,92,246);color:#fff;">Newton's Cannonball</button>
-          <button id="tab-n2" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Law of Gravity</button>
           <button id="tab-n3" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Centripetal Proof</button>
+          <button id="tab-n2" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Law of Gravity</button>
         </div>
 
         <!-- Cannonball Content -->
@@ -2739,11 +2739,11 @@ export class LevelUI {
           <div id="check-n1" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Moon Orbit Period Verified</span>
           </div>
-          <div id="check-n2" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
-            <span class="status-check">❌</span><span>Gravitational Constant G Verified</span>
-          </div>
           <div id="check-n3" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Centripetal Proof Verified</span>
+          </div>
+          <div id="check-n2" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Gravitational Constant G Verified</span>
           </div>
         </div>
 
@@ -2885,6 +2885,7 @@ export class LevelUI {
 
     tab1.addEventListener('click', () => switchTab('cannonball'));
     tab2.addEventListener('click', () => switchTab('gravity'));
+    tab3.addEventListener('click', () => switchTab('acceleration'));
 
     // Param panel renderer
     const renderN9Params = (tab) => {
