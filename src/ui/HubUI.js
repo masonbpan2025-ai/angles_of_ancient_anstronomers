@@ -93,6 +93,14 @@ export class HubUI {
         desc: 'Universal Gravitation', 
         briefingTitle: 'Newton\'s Universal Gravitation', 
         briefingText: 'Explore Newton\'s Cannonball thought experiment to see how gravity governs orbits, and visualise the mathematical derivation of the Universal Law of Gravity.' 
+      },
+      { 
+        id: 10, 
+        title: 'Level 10: Black Hole', 
+        target: 'earth-moon', 
+        desc: 'Find black hole condition using Newtonian physics', 
+        briefingTitle: 'Dark Stars & Black Holes', 
+        briefingText: 'Explore the Newtonian concept of a "Dark Star" — an object so massive or dense that its orbital velocity at the surface matches the speed of light, preventing light from escaping.' 
       }
     ];
 

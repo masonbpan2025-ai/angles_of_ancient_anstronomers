@@ -40,6 +40,7 @@ export class LevelUI {
     this.newton1Verified = false;
     this.newton2Verified = false;
     this.newton3Verified = false;
+    this.blackholeVerified = false;
     gameState.subscribe((state) => {
       if (state.activeLevel === 1) {
         this.renderLevel1();
@@ -67,6 +68,9 @@ export class LevelUI {
         this.show();
       } else if (state.activeLevel === 9) {
         this.renderLevel9();
+        this.show();
+      } else if (state.activeLevel === 10) {
+        this.renderLevel10();
         this.show();
       } else {
         this.hide();
@@ -3003,6 +3007,109 @@ export class LevelUI {
 
     // Default to 1st tab
     switchTab('cannonball');
+  }
+
+  renderLevel10() {
+    this.container.innerHTML = `
+      <div class="level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-violet-400">Level 10: Black Hole</h2>
+          <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
+        </div>
+        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">Find black hole condition using Newtonian physics</p>
+
+        <div class="flex flex-col gap-2 mt-2">
+          <!-- Background Section -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Historical Background</h3>
+            <p class="text-[10px] leading-relaxed text-slate-300">
+              In 1783, John Michell published a paper proposing "dark stars." He reasoned that if an object's surface gravity is so strong that the escape velocity exceeds the speed of light, light emitted from its surface would be pulled back down, making the star invisible. 
+            </p>
+            <p class="text-[10px] leading-relaxed text-slate-300">
+              Rather than using escape velocity, we can use the Newtonian circular orbit velocity equation:
+              <span class="block text-center font-serif text-amber-400 font-bold my-1 text-xs">v² = G · M / r</span>
+              When the orbit velocity at the surface equals the speed of light (<span class="font-serif">c</span>), we get the critical black hole condition:
+              <span class="block text-center font-serif text-amber-400 font-bold my-1 text-xs">c² = G · M / r  ⟹  r = G · M / c²</span>
+            </p>
+          </div>
+
+          <!-- Challenge Section -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Earth Black Hole Challenge:</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              Let's calculate the critical radius <span class="font-serif">r</span> of the Earth if it were compressed into a black hole.
+              Instead of needing the gravitational constant <span class="font-serif">G</span> directly, we can use the Moon's orbit parameter:
+              <span class="block text-center font-serif text-sky-400 font-bold my-1 text-[10.5px]">v<sub>m</sub>² = G · M / D<sub>m</sub>  ⟹  G · M = v<sub>m</sub>² · D<sub>m</sub></span>
+              where:<br>
+              • Moon speed: <strong>v<sub>m</sub> = 1,022 m/s</strong> (1.022 km/s)<br>
+              • Moon-Earth distance: <strong>D<sub>m</sub> = 384,400,000 m</strong> (384,400 km)<br>
+              • Speed of light: <strong>c = 299,792,000 m/s</strong> (299,792 km/s)<br>
+            </p>
+            <span class="text-[10.5px] font-semibold text-slate-200">Critical Earth Radius r (in millimeters):</span>
+            <div class="flex gap-2">
+              <input type="number" id="bh-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 4.5" step="0.01">
+              <button id="bh-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="bh-feedback" class="text-[10.5px] font-medium hidden"></div>
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 mt-2">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
+          <div id="check-bh" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Black Hole Radius Verified</span>
+          </div>
+        </div>
+
+        <button id="bh-final-submit-btn" disabled
+          class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2">
+          Verify &amp; Finish Game
+        </button>
+      </div>
+    `;
+
+    const exitBtn = document.getElementById('exit-btn');
+    exitBtn.addEventListener('click', () => {
+      gameState.completeLevel(10);
+    });
+
+    const verifyBtn = document.getElementById('bh-verify-btn');
+    const input = document.getElementById('bh-input');
+    const feedback = document.getElementById('bh-feedback');
+    const checkBh = document.getElementById('check-bh');
+    const finalBtn = document.getElementById('bh-final-submit-btn');
+
+    const refreshCheck = () => {
+      if (this.blackholeVerified) {
+        checkBh.querySelector('.status-check').textContent = '✅';
+        checkBh.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+        finalBtn.disabled = false;
+        finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
+      }
+    };
+
+    verifyBtn.addEventListener('click', () => {
+      const val = parseFloat(input.value);
+      // Theoretical: r = (1022^2 * 3.844e8) / (299792000^2) = 4.467 mm
+      if (val >= 4.3 && val <= 4.6) {
+        feedback.textContent = '✓ Correct! The Earth would need to be compressed to a radius of ~4.47 millimeters for its orbital velocity to equal the speed of light.';
+        feedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+        this.blackholeVerified = true;
+        refreshCheck();
+      } else {
+        feedback.textContent = '❌ Incorrect. Hint: Calculate GM = v_m^2 * D_m ≈ 4.015e14 m^3/s^2. Then r = GM / c^2 = 4.015e14 / 8.9875e16 ≈ 0.00447 meters = 4.47 mm.';
+        feedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+      }
+      feedback.classList.remove('hidden');
+    });
+
+    finalBtn.addEventListener('click', () => {
+      alert("Congratulations! You have completed all levels, unlocking the mysteries of ancient astronomical calculations and reaching the black hole horizon using Newtonian physics!");
+      gameState.completeLevel(10);
+    });
+
+    refreshCheck();
   }
 }
 
