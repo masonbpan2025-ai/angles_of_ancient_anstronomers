@@ -36,6 +36,7 @@ export class LevelUI {
     this.kepler23Verified = false;
     this.kepler8_1Verified = false;
     this.kepler8_23Verified = false;
+    this.kepler8_logVerified = false;
     this.newton1Verified = false;
     this.newton2Verified = false;
     gameState.subscribe((state) => {
@@ -2246,8 +2247,9 @@ export class LevelUI {
         <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5">
           <button id="tab-k1"  class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:rgb(139,92,246);color:#fff;">Kepler's 1st Law</button>
           <button id="tab-k23" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Kepler's 2nd &amp; 3rd</button>
+          <button id="tab-klog" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Eclipse &amp; Logarithm</button>
         </div>
-
+ 
         <!-- 1st Law content -->
         <div id="content-k1" class="flex flex-col gap-2 mt-2">
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
@@ -2276,7 +2278,7 @@ export class LevelUI {
             </div>
           </div>
         </div>
-
+ 
         <!-- 2nd &amp; 3rd Law content -->
         <div id="content-k23" class="flex flex-col gap-2 mt-2 hidden">
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
@@ -2291,7 +2293,37 @@ export class LevelUI {
             </p>
           </div>
         </div>
-
+ 
+        <!-- Logarithm Task content -->
+        <div id="content-klog" class="flex flex-col gap-2 mt-2 hidden">
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <h3 class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Eclipse prediction &amp; logarithm</h3>
+            <p class="text-[10.5px] leading-relaxed text-slate-300">
+              Kepler predicted the 1631 transits and solar eclipses with unmatched accuracy. However, similar-triangle geometry of shadow cones required massive astronomical calculations.
+            </p>
+            <p class="text-[10.5px] leading-relaxed text-slate-300">
+              In 1614, Scottish mathematician <strong>John Napier</strong> invented logarithms, turning nightmare multiplications into simple additions. Kepler wrote that logarithms "doubled the life of the astronomer".
+            </p>
+            <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-2">
+              <span class="text-[10.5px] font-semibold text-slate-300">Solve L at default position (Dist = 136,800 miles):</span>
+              
+              <div class="flex flex-col gap-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">1. Log of Numerator: log(136800 × 1737)</label>
+                <input type="number" id="calc-klog-num" class="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 8.50" step="0.01">
+              </div>
+ 
+              <div class="flex flex-col gap-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">2. Shadow Length L (miles, integer)</label>
+                <input type="number" id="calc-klog-len" class="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 350">
+              </div>
+ 
+              <button id="verify-klog-btn" class="w-full bg-violet-500 hover:bg-violet-600 text-white font-bold py-1.5 rounded-lg text-xs transition mt-1">Verify Calculation</button>
+ 
+              <div id="klog-feedback" class="text-xs p-2 rounded-lg border hidden"></div>
+            </div>
+          </div>
+        </div>
+ 
         <!-- Checklist -->
         <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
@@ -2301,14 +2333,17 @@ export class LevelUI {
           <div id="check-k23" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>2nd &amp; 3rd Laws Explored</span>
           </div>
+          <div id="check-klog" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Eclipse &amp; Logarithm Verified</span>
+          </div>
         </div>
-
+ 
         <button id="final-submit-btn" disabled
           class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2">
           Verify &amp; Unlock Next Level
         </button>
       </div>
-
+ 
       <!-- Bottom control panel -->
       <div id="k8-param-panel"
         class="absolute bottom-6 right-6 left-[420px] bg-slate-900/90 backdrop-blur-md border border-slate-800 p-4 rounded-xl shadow-xl flex flex-col gap-2.5 text-slate-200 pointer-events-auto"
@@ -2324,8 +2359,9 @@ export class LevelUI {
     const finalBtn  = document.getElementById('final-submit-btn');
     const checkK1   = document.getElementById('check-k1');
     const checkK23  = document.getElementById('check-k23');
+    const checkKlog = document.getElementById('check-klog');
     const k1Fb      = document.getElementById('kepler1-feedback');
-
+ 
     const refreshChecklist = () => {
       if (this.kepler8_1Verified) {
         checkK1.querySelector('.status-check').textContent = '✅';
@@ -2335,7 +2371,11 @@ export class LevelUI {
         checkK23.querySelector('.status-check').textContent = '✅';
         checkK23.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
       }
-      if (this.kepler8_1Verified && this.kepler8_23Verified) {
+      if (this.kepler8_logVerified) {
+        checkKlog.querySelector('.status-check').textContent = '✅';
+        checkKlog.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      }
+      if (this.kepler8_1Verified && this.kepler8_23Verified && this.kepler8_logVerified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
       }
@@ -2379,31 +2419,77 @@ export class LevelUI {
     // Tab switching
     const tab1  = document.getElementById('tab-k1');
     const tab23 = document.getElementById('tab-k23');
+    const tablog = document.getElementById('tab-tab-klog') || document.getElementById('tab-klog');
     const con1  = document.getElementById('content-k1');
     const con23 = document.getElementById('content-k23');
-
+    const conlog = document.getElementById('content-klog');
+ 
     const switchTab = (which) => {
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
         window.activeLevelInstance.setSubtask(which);
       }
+      tab1.style.background  = 'transparent'; tab1.style.color  = 'rgb(148,163,184)';
+      tab23.style.background = 'transparent'; tab23.style.color = 'rgb(148,163,184)';
+      tablog.style.background = 'transparent'; tablog.style.color = 'rgb(148,163,184)';
+      
+      con1.classList.add('hidden');
+      con23.classList.add('hidden');
+      conlog.classList.add('hidden');
+ 
       if (which === 'kepler1') {
         tab1.style.background  = 'rgb(139,92,246)'; tab1.style.color  = '#fff';
-        tab23.style.background = 'transparent';     tab23.style.color = 'rgb(148,163,184)';
-        con1.classList.remove('hidden'); con23.classList.add('hidden');
+        con1.classList.remove('hidden');
         renderK8Params('kepler1');
-      } else {
+      } else if (which === 'kepler23') {
         tab23.style.background = 'rgb(139,92,246)'; tab23.style.color = '#fff';
-        tab1.style.background  = 'transparent';     tab1.style.color  = 'rgb(148,163,184)';
-        con23.classList.remove('hidden'); con1.classList.add('hidden');
+        con23.classList.remove('hidden');
         this.kepler8_23Verified = true;
         refreshChecklist();
         renderK8Params('kepler23');
+      } else if (which === 'logarithm') {
+        tablog.style.background = 'rgb(139,92,246)'; tablog.style.color = '#fff';
+        conlog.classList.remove('hidden');
+        renderK8Params('logarithm');
       }
     };
-
+ 
     tab1.addEventListener('click',  () => switchTab('kepler1'));
     tab23.addEventListener('click', () => switchTab('kepler23'));
-
+    tablog.addEventListener('click', () => switchTab('logarithm'));
+ 
+    // Logarithm subtask verification
+    const klogBtn = document.getElementById('verify-klog-btn');
+    const inputNum = document.getElementById('calc-klog-num');
+    const inputLen = document.getElementById('calc-klog-len');
+    const klogFb = document.getElementById('klog-feedback');
+ 
+    klogBtn.addEventListener('click', () => {
+      klogFb.classList.remove('hidden');
+      const valNum = parseFloat(inputNum.value);
+      const valLen = parseInt(inputLen.value);
+ 
+      const isNumCorrect = Math.abs(valNum - 8.38) <= 0.025 || Math.abs(valNum - 8.376) <= 0.025;
+      const isLenCorrect = Math.abs(valLen - 342) <= 1;
+ 
+      if (isNumCorrect && isLenCorrect) {
+        klogFb.innerHTML = '<strong>✓ Correct!</strong> Using logs, log(Dist) + log(R_moon) = 8.376. Subtracting log(R_sun - R_moon) gives log(L) = 2.534. The antilog is 342 miles.';
+        klogFb.className = 'text-xs p-2 rounded-lg border border-green-900/30 bg-green-950/20 text-green-400 leading-relaxed';
+        this.kepler8_logVerified = true;
+        refreshChecklist();
+      } else {
+        klogFb.innerHTML = '<strong>Incorrect.</strong> Hint: log(136,800) ≈ 5.136, log(1,737) ≈ 3.240. Sum = 8.376. The final shadow L = 342 miles.';
+        klogFb.className = 'text-xs p-2 rounded-lg border border-red-900/30 bg-red-950/20 text-red-400 leading-relaxed';
+      }
+    });
+ 
+    if (this.kepler8_logVerified) {
+      inputNum.value = '8.38';
+      inputLen.value = '342';
+      klogFb.innerHTML = '<strong>✓ Correct!</strong> Using logs, log(Dist) + log(R_moon) = 8.376. Subtracting log(R_sun - R_moon) gives log(L) = 2.534. The antilog is 342 miles.';
+      klogFb.className = 'text-xs p-2 rounded-lg border border-green-900/30 bg-green-950/20 text-green-400 leading-relaxed';
+      klogFb.classList.remove('hidden');
+    }
+ 
     // Param panel renderer
     const renderK8Params = (tab) => {
       const pp = document.getElementById('k8-param-panel');
@@ -2420,7 +2506,7 @@ export class LevelUI {
             </div>
             <div class="text-[9px] text-slate-500 italic w-full">Orange dots = Tycho Brahe's observations of Mars. Select a model to test it.</div>
           </div>`;
-      } else {
+      } else if (tab === 'kepler23') {
         pp.innerHTML = `
           <div class="flex flex-wrap items-center gap-4 w-full">
             <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kepler's 2nd &amp; 3rd Laws Visualizer</span>
@@ -2435,20 +2521,34 @@ export class LevelUI {
               <span class="text-purple-400 font-semibold">Right: T² vs a³ log-log plot (3rd Law)</span>
             </div>
           </div>`;
+      } else {
+        pp.innerHTML = `
+          <div class="flex flex-wrap items-center gap-4 w-full">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Eclipse prediction &amp; logarithm</span>
+            <div class="text-[9px] text-slate-500 italic w-full">Scottish mathematician John Napier invented logarithms to turn complex multiplication into simple addition. Use the panel on the left to calculate and verify.</div>
+          </div>`;
       }
-      document.getElementById('k8-play-btn').addEventListener('click', () => {
-        if (window.activeLevelInstance && typeof window.activeLevelInstance.togglePlay === 'function') {
-          window.activeLevelInstance.togglePlay();
-          const inst = window.activeLevelInstance;
-          document.getElementById('k8-play-icon').textContent = inst.isSimPlaying ? '❚❚' : '▶';
-          document.getElementById('k8-play-text').textContent = inst.isSimPlaying ? 'Pause' : 'Play';
-        }
-      });
-      document.getElementById('k8-reset-btn').addEventListener('click', () => {
-        if (window.activeLevelInstance && typeof window.activeLevelInstance.resetSimulation === 'function') {
-          window.activeLevelInstance.resetSimulation();
-        }
-      });
+      
+      const playBtn = document.getElementById('k8-play-btn');
+      if (playBtn) {
+        playBtn.addEventListener('click', () => {
+          if (window.activeLevelInstance && typeof window.activeLevelInstance.togglePlay === 'function') {
+            window.activeLevelInstance.togglePlay();
+            const inst = window.activeLevelInstance;
+            document.getElementById('k8-play-icon').textContent = inst.isSimPlaying ? '❚❚' : '▶';
+            document.getElementById('k8-play-text').textContent = inst.isSimPlaying ? 'Pause' : 'Play';
+          }
+        });
+      }
+      
+      const resetBtn = document.getElementById('k8-reset-btn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          if (window.activeLevelInstance && typeof window.activeLevelInstance.resetSimulation === 'function') {
+            window.activeLevelInstance.resetSimulation();
+          }
+        });
+      }
     };
 
     // Restore verified state
