@@ -604,15 +604,6 @@ export class Level8 {
  
             <!-- Interactive Calculator Box -->
             <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
-              <div class="mb-4">
-                <div class="flex justify-between text-[10.5px] text-slate-400 mb-1.5">
-                  <span>Move Moon Closer/Further</span>
-                  <span class="text-emerald-400 font-bold">${distanceSunMoonReal.toLocaleString()} miles</span>
-                </div>
-                <input type="range" id="moon-x-slider" min="100" max="260" value="${this.moonX}" 
-                  class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
-              </div>
-
               <!-- Mode Toggle -->
               <div class="flex bg-slate-950 rounded-lg p-0.5 mb-3.5 border border-slate-800">
                 <button id="btn-std-math" class="flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors ${!this.showLogs ? 'bg-slate-800 text-white font-bold' : 'text-slate-400 hover:text-white'}">
@@ -666,6 +657,20 @@ export class Level8 {
           <div class="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800/80 backdrop-blur text-xs font-semibold">
             <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
             Space Geometry View
+          </div>
+ 
+          <!-- Floating slider box in the top-right of illustration area -->
+          <div class="absolute top-4 right-4 z-20 bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl shadow-xl w-[260px] backdrop-blur-md">
+            <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+              Calculate Shadow Length
+            </h4>
+            <div class="flex justify-between text-[10px] text-slate-400 mb-1.5">
+              <span>Move Moon Closer/Further</span>
+              <span class="text-emerald-400 font-bold">${distanceSunMoonReal.toLocaleString()} miles</span>
+            </div>
+            <input type="range" id="moon-x-slider" min="100" max="260" value="${this.moonX}" 
+              class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
           </div>
 
           <div class="flex-grow w-full h-full relative flex items-center justify-center p-6">

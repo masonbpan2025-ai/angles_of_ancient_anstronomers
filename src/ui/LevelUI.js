@@ -2494,6 +2494,11 @@ export class LevelUI {
     const renderK8Params = (tab) => {
       const pp = document.getElementById('k8-param-panel');
       if (!pp) return;
+      if (tab === 'logarithm') {
+        pp.style.display = 'none';
+        return;
+      }
+      pp.style.display = 'flex';
       if (tab === 'kepler1') {
         pp.innerHTML = `
           <div class="flex flex-wrap items-center gap-4 w-full">
