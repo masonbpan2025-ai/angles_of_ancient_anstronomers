@@ -725,8 +725,294 @@ export class Level2 {
     }
     ctx.restore();
   }
+ 
+  drawSarosCycle() {
+    const ctx = this.ctx;
+    const cx1 = this.cx1;
+    const cy1 = this.cy1;
+    const radius = this.radius;
+    const cx2 = this.cx2;
+    const cy2 = this.cy2;
+    const rSky = this.radiusSky;
+ 
+    // Increment simulation time (in virtual days)
+    // Scale: 0.06 virtual days per frame.
+    this.sarosTime = (this.sarosTime || 0) + 0.06;
+    const maxTime = 29.530588; // loop one synodic cycle
+    if (this.sarosTime >= maxTime) {
+      this.sarosTime = 0;
+    }
+ 
+    const t = this.sarosTime;
+ 
+    // Periods
+    const P_sid = 27.321661; // orbital period of moon
+    const P_sun = 365.24219;  // apparent orbital period of sun
+ 
+    // Angular positions relative to positive X-axis (direction to distant stars)
+    const moonAngle = (t * (Math.PI * 2 / P_sid)); // radians CCW
+    const sunAngle = (t * (Math.PI * 2 / P_sun));   // radians CCW
+ 
+    const rMoonOrbit = radius * 0.45;
+    const rSunOrbit = radius * 0.85;
+ 
+    // Positions (geocentric: Earth at center)
+    const moonPos = {
+      x: cx1 + Math.cos(moonAngle) * rMoonOrbit,
+      y: cy1 - Math.sin(moonAngle) * rMoonOrbit
+    };
+    const sunPos = {
+      x: cx1 + Math.cos(sunAngle) * rSunOrbit,
+      y: cy1 - Math.sin(sunAngle) * rSunOrbit
+    };
+ 
+    // --- LEFT PANEL: GEOCENTRIC VIEW ---
+    // 1. Background boundary
+    ctx.beginPath();
+    ctx.arc(cx1, cy1, radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.3)';
+    ctx.fill();
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+ 
+    // 2. Distant Star Reference Line (0 degrees - direction to stars)
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.moveTo(cx1, cy1);
+    ctx.lineTo(cx1 + radius, cy1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '500 9px Outfit';
+    ctx.textAlign = 'left';
+    ctx.fillText('Direction to Distant Stars (0°)', cx1 + radius - 140, cy1 - 6);
+ 
+    // 3. Orbits
+    // Moon orbit
+    ctx.beginPath();
+    ctx.arc(cx1, cy1, rMoonOrbit, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+ 
+    // Sun orbit
+    ctx.beginPath();
+    ctx.arc(cx1, cy1, rSunOrbit, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+ 
+    // 4. Shaded wedges/arcs for Sidereal vs Synodic Month progress
+    if (t > P_sid) {
+      ctx.beginPath();
+      ctx.moveTo(cx1, cy1);
+      ctx.arc(cx1, cy1, rMoonOrbit * 0.7, 0, -moonAngle, true);
+      ctx.lineTo(cx1, cy1);
+      ctx.fillStyle = 'rgba(168, 85, 247, 0.15)'; // purple shade
+      ctx.fill();
+ 
+      // Label the extra angle
+      ctx.fillStyle = '#c084fc';
+      ctx.font = '600 9px Outfit';
+      ctx.fillText('Catch-up Arc', cx1 + 25, cy1 - 25);
+    }
+ 
+    // 5. Draw lines to bodies
+    // Earth-Sun line
+    ctx.beginPath();
+    ctx.moveTo(cx1, cy1);
+    ctx.lineTo(sunPos.x, sunPos.y);
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+ 
+    // Earth-Moon line
+    ctx.beginPath();
+    ctx.moveTo(cx1, cy1);
+    ctx.lineTo(moonPos.x, moonPos.y);
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+ 
+    // 6. Draw Earth (Center)
+    ctx.beginPath();
+    ctx.arc(cx1, cy1, 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px Outfit';
+    ctx.textAlign = 'center';
+    ctx.fillText('Earth', cx1, cy1 + 3);
+ 
+    // 7. Draw Sun
+    ctx.save();
+    const sunGlow = ctx.createRadialGradient(sunPos.x, sunPos.y, 2, sunPos.x, sunPos.y, 14);
+    sunGlow.addColorStop(0, '#ffffff');
+    sunGlow.addColorStop(0.3, '#fef08a');
+    sunGlow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    ctx.beginPath();
+    ctx.arc(sunPos.x, sunPos.y, 14, 0, Math.PI * 2);
+    ctx.fillStyle = sunGlow;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(sunPos.x, sunPos.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 10px Outfit';
+    ctx.fillText('Sun', sunPos.x, sunPos.y - 12);
+    ctx.restore();
+ 
+    // 8. Draw Moon
+    ctx.beginPath();
+    ctx.arc(moonPos.x, moonPos.y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fill();
+    ctx.strokeStyle = '#22d3ee';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#22d3ee';
+    ctx.font = '600 10px Outfit';
+    ctx.fillText('Moon', moonPos.x, moonPos.y - 8);
+ 
+    // 9. Draw Sidereal and Synodic completion markers
+    ctx.beginPath();
+    ctx.arc(cx1 + rMoonOrbit, cy1, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#22d3ee';
+    ctx.fill();
+    
+    if (t >= P_sid) {
+      ctx.beginPath();
+      ctx.arc(cx1 + rMoonOrbit, cy1, 6, 0, Math.PI * 2);
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = '#22d3ee';
+      ctx.font = '600 9.5px Outfit';
+      ctx.fillText('Sidereal Point (27.32d)', cx1 + rMoonOrbit + 8, cy1 + 14);
+    }
+ 
+    // --- RIGHT PANEL: PHASE & CYCLE DATA ---
+    // 1. Draw solid local sky dome background
+    ctx.beginPath();
+    ctx.arc(cx2, cy2, rSky, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+    ctx.fill();
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+ 
+    // 2. Draw Moon Phase Icon
+    const elongation = moonAngle - sunAngle;
+    
+    ctx.save();
+    ctx.translate(cx2, cy2 - 25);
+    const rMoonBig = 45;
+    
+    // Draw dark background
+    ctx.beginPath();
+    ctx.arc(0, 0, rMoonBig, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e293b';
+    ctx.fill();
+    
+    // Draw illumination
+    ctx.fillStyle = '#e2e8f0';
+    const pct = (1 - Math.cos(elongation)) / 2;
+    if (pct > 0.5) {
+      ctx.beginPath();
+      ctx.arc(0, 0, rMoonBig, -Math.PI/2, Math.PI/2, false);
+      const k = (pct - 0.5) * 2;
+      ctx.scale(k, 1);
+      ctx.arc(0, 0, rMoonBig, Math.PI/2, -Math.PI/2, false);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, 0, rMoonBig, -Math.PI/2, Math.PI/2, false);
+      const k = (0.5 - pct) * 2;
+      ctx.scale(k, 1);
+      ctx.arc(0, 0, rMoonBig, Math.PI/2, -Math.PI/2, true);
+      ctx.fill();
+    }
+    ctx.restore();
+ 
+    // Shadow border on Moon Phase
+    ctx.beginPath();
+    ctx.arc(cx2, cy2 - 25, 45, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+ 
+    // Text labels under phase
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = '600 12px Outfit';
+    ctx.textAlign = 'center';
+    
+    let phaseName = 'New Moon';
+    const normElo = (elongation % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+    const degElo = normElo * 180 / Math.PI;
+    if (degElo < 22.5 || degElo > 337.5) phaseName = 'New Moon';
+    else if (degElo >= 22.5 && degElo < 67.5) phaseName = 'Waxing Crescent';
+    else if (degElo >= 67.5 && degElo < 112.5) phaseName = 'First Quarter';
+    else if (degElo >= 112.5 && degElo < 157.5) phaseName = 'Waxing Gibbous';
+    else if (degElo >= 157.5 && degElo < 202.5) phaseName = 'Full Moon';
+    else if (degElo >= 202.5 && degElo < 247.5) phaseName = 'Waning Gibbous';
+    else if (degElo >= 247.5 && degElo < 292.5) phaseName = 'Third Quarter';
+    else if (degElo >= 292.5 && degElo <= 337.5) phaseName = 'Waning Crescent';
+ 
+    ctx.fillText(`Current Phase: ${phaseName}`, cx2, cy2 + 35);
+ 
+    // Live Metrics HUD Box
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+    ctx.strokeStyle = 'rgba(51, 65, 85, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(cx2 - 100, cy2 + 50, 200, 70, 8);
+    ctx.fill();
+    ctx.stroke();
+ 
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = '500 10.5px Outfit';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Time Elapsed: ${t.toFixed(2)} days`, cx2 - 85, cy2 + 68);
+    ctx.fillText(`Moon Orbit (Sidereal): ${((moonAngle * 180 / Math.PI) % 360).toFixed(1)}°`, cx2 - 85, cy2 + 86);
+    ctx.fillText(`Sun Orbit (Apparent): ${((sunAngle * 180 / Math.PI) % 360).toFixed(1)}°`, cx2 - 85, cy2 + 104);
+    ctx.restore();
+ 
+    // Highlights when specific events occur
+    if (t < 0.8) {
+      ctx.fillStyle = '#a7f3d0';
+      ctx.font = '600 11px Outfit';
+      ctx.fillText('New Moon Conjunction: Aligning at 0 days', cx2, cy2 - 85);
+    } else if (Math.abs(t - P_sid) < 0.8) {
+      ctx.fillStyle = '#67e8f9';
+      ctx.font = '600 11px Outfit';
+      ctx.fillText('Sidereal Month (27.32d): 360° completed!', cx2, cy2 - 85);
+    } else if (Math.abs(t - maxTime) < 0.8) {
+      ctx.fillStyle = '#f87171';
+      ctx.font = '600 11px Outfit';
+      ctx.fillText('Synodic Month (29.53d): Caught up with Sun!', cx2, cy2 - 85);
+    }
+ 
+    // Titles
+    const titleY = Math.min(cy1 - radius, cy2 - rSky) - 25;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = '600 12.5px Outfit';
+    ctx.textAlign = 'center';
+    ctx.fillText('Geocentric Moon & Sun Orbit Simulation', cx1, titleY);
+    ctx.fillText('Elongation & Moon Phase View', cx2, titleY);
+  }
 
   drawSphere() {
+    if (this.activeTab === 'saros') {
+      this.drawSarosCycle();
+      return;
+    }
     const ctx = this.ctx;
 
     // 1. Draw solid horizon bounding disk of Celestial Sphere
@@ -1437,6 +1723,9 @@ export class Level2 {
 
   setTab(tabName) {
     this.activeTab = tabName;
+    if (tabName === 'saros') {
+      this.sarosTime = 0;
+    }
     if (tabName === 'ecliptic' || tabName === 'inclination') {
       this.canvas.style.display = 'none';
       this.threeContainer.style.display = 'block';
