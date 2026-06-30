@@ -504,6 +504,7 @@ export class SolarSystem {
     else if (planetId === 8) this.setFocusTarget('system-inner');
     else if (planetId === 9) this.setFocusTarget('venus-transit');
     else if (planetId === 10) this.setFocusTarget('earth-moon');
+    else if (planetId === 11) this.setFocusTarget('earth');
     
     if (onComplete) {
       setTimeout(onComplete, 1200);

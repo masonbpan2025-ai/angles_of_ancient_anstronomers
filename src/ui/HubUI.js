@@ -101,6 +101,14 @@ export class HubUI {
         desc: 'Find black hole condition using Newtonian physics', 
         briefingTitle: 'Dark Stars & Black Holes', 
         briefingText: 'Explore the Newtonian concept of a "Dark Star" — an object so massive or dense that its orbital velocity at the surface matches the speed of light, preventing light from escaping.' 
+      },
+      { 
+        id: 11, 
+        title: 'Level 11: Gravity Constant', 
+        target: 'earth', 
+        desc: 'How the Gravity Constant and the density of earth is measured', 
+        briefingTitle: 'Cavendish\'s Gravity Constant', 
+        briefingText: 'Analyze Henry Cavendish\'s famous 1798 torsion balance experiment, which measured the tiny gravitational attraction between lead spheres to determine the gravitational constant G and "weigh" the Earth.' 
       }
     ];
 

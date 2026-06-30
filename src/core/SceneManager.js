@@ -9,6 +9,7 @@ import { Level7 } from '../levels/Level7.js';
 import { Level8 } from '../levels/Level8.js';
 import { Level9 } from '../levels/Level9.js';
 import { Level10 } from '../levels/Level10.js';
+import { Level11 } from '../levels/Level11.js';
 
 export class SceneManager {
   constructor(hub, hubUI, levelUI) {
@@ -74,6 +75,8 @@ export class SceneManager {
         this.activeLevelInstance = new Level9(this.spokeContainer);
       } else if (levelId === 10) {
         this.activeLevelInstance = new Level10(this.spokeContainer);
+      } else if (levelId === 11) {
+        this.activeLevelInstance = new Level11(this.spokeContainer);
       }
       window.activeLevelInstance = this.activeLevelInstance;
       this.levelUI.show();

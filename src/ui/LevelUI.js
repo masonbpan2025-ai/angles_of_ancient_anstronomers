@@ -41,6 +41,7 @@ export class LevelUI {
     this.newton2Verified = false;
     this.newton3Verified = false;
     this.blackholeVerified = false;
+    this.gravityConstantVerified = false;
     gameState.subscribe((state) => {
       if (state.activeLevel === 1) {
         this.renderLevel1();
@@ -71,6 +72,9 @@ export class LevelUI {
         this.show();
       } else if (state.activeLevel === 10) {
         this.renderLevel10();
+        this.show();
+      } else if (state.activeLevel === 11) {
+        this.renderLevel11();
         this.show();
       } else {
         this.hide();
@@ -3107,6 +3111,107 @@ export class LevelUI {
     finalBtn.addEventListener('click', () => {
       alert("Congratulations! You have completed all levels, unlocking the mysteries of ancient astronomical calculations and reaching the black hole horizon using Newtonian physics!");
       gameState.completeLevel(10);
+    });
+
+    refreshCheck();
+  }
+
+  renderLevel11() {
+    this.container.innerHTML = `
+      <div class="level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-violet-400">Level 11: Gravity Constant</h2>
+          <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
+        </div>
+        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">How the Gravity Constant and the density of earth is measured</p>
+
+        <div class="flex flex-col gap-2 mt-2">
+          <!-- Background Section -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Cavendish Torsion Balance</h3>
+            <p class="text-[10px] leading-relaxed text-slate-300">
+              In 1798, Henry Cavendish built a highly sensitive torsion balance to measure the extremely weak gravitational attraction between lead spheres. This allowed him to compute the value of the gravitational constant <span class="font-serif">G</span> and "weigh" the Earth.
+            </p>
+            <p class="text-[10px] leading-relaxed text-slate-300">
+              Once <span class="font-serif">G</span> is measured, the Earth's average density (<span class="font-serif">&rho;</span>) can be calculated directly using the local gravity formula:
+              <span class="block text-center font-serif text-amber-400 font-bold my-1 text-xs">g = G · M / R² = G · (&rho; · ⁴/₃&pi;R³) / R² = ⁴/₃&pi; · G · &rho; · R</span>
+              Solving for density:
+              <span class="block text-center font-serif text-amber-400 font-bold my-1 text-xs">&rho; = 3g / (4&pi; · G · R)</span>
+            </p>
+          </div>
+
+          <!-- Challenge Section -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Earth Density Challenge:</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              Given the parameters:
+              <br>• Gravitational constant: <strong>G = 6.674 &times; 10<sup>-11</sup> m³ kg<sup>-1</sup> s<sup>-2</sup></strong>
+              <br>• Local gravity: <strong>g = 9.8 m/s²</strong>
+              <br>• Earth radius: <strong>R = 6,371,000 m</strong> (6,371 km)
+              <br>Calculate the average density of the Earth in kilograms per cubic meter (kg/m³).
+            </p>
+            <span class="text-[10.5px] font-semibold text-slate-200">Average Earth Density &rho; (kg/m³):</span>
+            <div class="flex gap-2">
+              <input type="number" id="gc-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 5500" step="1">
+              <button id="gc-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="gc-feedback" class="text-[10.5px] font-medium hidden font-sans"></div>
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 mt-2">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
+          <div id="check-gc" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Earth Density Verified</span>
+          </div>
+        </div>
+
+        <button id="gc-final-submit-btn" disabled
+          class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2">
+          Verify &amp; Finish Game
+        </button>
+      </div>
+    `;
+
+    const exitBtn = document.getElementById('exit-btn');
+    exitBtn.addEventListener('click', () => {
+      gameState.completeLevel(11);
+    });
+
+    const verifyBtn = document.getElementById('gc-verify-btn');
+    const input = document.getElementById('gc-input');
+    const feedback = document.getElementById('gc-feedback');
+    const checkGc = document.getElementById('check-gc');
+    const finalBtn = document.getElementById('gc-final-submit-btn');
+
+    const refreshCheck = () => {
+      if (this.gravityConstantVerified) {
+        checkGc.querySelector('.status-check').textContent = '✅';
+        checkGc.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+        finalBtn.disabled = false;
+        finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
+      }
+    };
+
+    verifyBtn.addEventListener('click', () => {
+      const val = parseFloat(input.value);
+      // Theoretical: rho = 3*9.8 / (4*pi*6.674e-11*6.371e6) = 5502 kg/m3
+      if (val >= 5450 && val <= 5550) {
+        feedback.textContent = '✓ Correct! The average density is about 5500 kg/m³, which is quite a bit larger than the average surface rock density (~3000 kg/m³). This difference is how scientists figured out that Earth must have a very dense metallic core (composed of iron and nickel)!';
+        feedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+        this.gravityConstantVerified = true;
+        refreshCheck();
+      } else {
+        feedback.textContent = '❌ Incorrect. Hint: Calculate 3 * 9.8 / (4 * π * 6.674e-11 * 6.371e6) ≈ 5502 kg/m³.';
+        feedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+      }
+      feedback.classList.remove('hidden');
+    });
+
+    finalBtn.addEventListener('click', () => {
+      alert("Congratulations! You have completed all levels, including measuring G and calculating the average density of the Earth, confirming the existence of its dense metallic core!");
+      gameState.completeLevel(11);
     });
 
     refreshCheck();
