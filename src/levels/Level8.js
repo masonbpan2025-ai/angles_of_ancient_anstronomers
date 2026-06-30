@@ -533,246 +533,310 @@ export class Level8 {
 
     const isTotalEclipse = apexX >= earthX - earthR;
 
-    this.logContainer.innerHTML = `
-      <div class="flex flex-col lg:flex-row h-full w-full bg-slate-950 text-slate-200 font-sans overflow-hidden">
-        <!-- Spacer to clear left task panel -->
-        <div class="hidden lg:block lg:w-[420px] shrink-0 pointer-events-none"></div>
-        <!-- Left Panel: Math Explanation & Slider -->
-        <div class="w-full lg:w-[380px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col z-20 overflow-y-auto shrink-0">
-          <h2 class="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
-            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM21 3L3 21"/></svg>
-            The Shadow Cone Geometry
-          </h2>
-          <p class="text-[10.5px] text-slate-400 mb-4">
-            How similar triangles forced Kepler to multiply massive numbers to find the length of the eclipse shadow.
-          </p>
-
-          <div class="flex flex-col gap-3">
-            <!-- Formula Breakdown -->
-            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
-              <h3 class="text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                The Geometry of Shadows
-              </h3>
-              <p class="text-[10px] text-slate-300 mb-2 leading-relaxed">
-                To find the length of the dark shadow cone (L), Kepler used the law similar triangles. The ratio of the Moon's radius to its shadow is the same as the Sun's radius to the total distance.
-              </p>
- 
-              <div class="bg-slate-950/50 p-2 rounded border border-slate-900 text-center font-mono text-[10.5px]">
-                <div class="flex items-center justify-center gap-3">
-                  <div class="flex flex-col items-center">
-                    <span class="border-b border-slate-600 pb-0.5 px-1.5 text-yellow-400">R_sun</span>
-                    <span class="pt-0.5 px-1.5 text-[9.5px]">Dist + <span class="text-blue-400">L</span></span>
-                  </div>
-                  <span>=</span>
-                  <div class="flex flex-col items-center">
-                    <span class="border-b border-slate-600 pb-0.5 px-1.5 text-slate-300">R_moon</span>
-                    <span class="pt-0.5 px-1.5 text-blue-400">L</span>
-                  </div>
-                </div>
-              </div>
- 
-              <p class="text-[10px] text-slate-300 mt-2.5 mb-1.5">When using algebra to solve for L, the final equation becomes:</p>
- 
-              <div class="bg-slate-950/50 p-2 rounded border border-slate-900 text-center font-mono text-[10.5px]">
-                <div class="flex items-center justify-center gap-2">
-                  <span class="text-blue-400 font-bold">L</span>
-                  <span>=</span>
-                  <div class="flex flex-col items-center">
-                    <span class="border-b border-slate-600 pb-0.5 px-1.5 text-red-400 font-bold bg-red-950/20 rounded">Dist × R_moon</span>
-                    <span class="pt-0.5 px-1.5 text-slate-400 text-[9px]">R_sun - R_moon</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Logarithmic Simplification Explanation -->
-            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
-              <h3 class="text-[11px] font-bold text-blue-400 mb-1.5 flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 7h6m-6 4h6m-6 4h6M3 5h18v14H3z"/></svg>
-                Logarithmic approach to calculate L
-              </h3>
-              <p class="text-[10px] text-slate-300 mb-2 leading-relaxed">
-                By taking logs on both sides, we convert the multiplication in the numerator into addition, and the division into subtraction:
-              </p>
-              <div class="bg-slate-950/50 p-2 rounded border border-slate-900 font-mono text-[9px] space-y-1">
-                <div>log(L) = log(Dist × R_moon) - log(R_sun - R_moon)</div>
-                <div class="text-blue-400">log(L) = [log(Dist) + log(R_moon)] - log(R_sun - R_moon)</div>
-                <div class="text-emerald-400 font-bold">L = 10<sup>log(L)</sup> (Antilog lookup)</div>
-              </div>
-            </div>
- 
-            <!-- Interactive Calculator Box -->
-            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
-              <!-- Mode Toggle -->
-              <div class="flex bg-slate-950 rounded-lg p-0.5 mb-3.5 border border-slate-800">
-                <button id="btn-std-math" class="flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors ${!this.showLogs ? 'bg-slate-800 text-white font-bold' : 'text-slate-400 hover:text-white'}">
-                  Standard Math
-                </button>
-                <button id="btn-log-math" class="flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors ${this.showLogs ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'}">
-                  Use Logarithms
-                </button>
-              </div>
-
-              <!-- Calculation Panel -->
-              <div class="bg-slate-950 p-3 rounded-lg font-mono text-[11px] border border-slate-900 min-h-[140px] flex flex-col justify-center">
-                ${!this.showLogs ? `
-                  <div class="space-y-2.5">
-                    <div class="text-slate-500 text-[9px] uppercase tracking-wider font-bold">Numerator Calculation</div>
-                    <div class="flex flex-col text-right w-full border-b border-slate-800 pb-1.5">
-                      <span class="text-yellow-400">${distanceSunMoonReal.toLocaleString()}</span>
-                      <span class="text-slate-300">× ${moonRadiusReal.toLocaleString()}</span>
-                    </div>
-                    <div class="text-right text-red-400 font-bold">
-                      = ${numerator.toLocaleString()}
-                    </div>
-                    <div class="text-slate-500 text-[9px] uppercase tracking-wider font-bold mt-2">Division (divided by 694,263)</div>
-                    <div class="text-right text-emerald-400 font-bold text-xs">
-                      = ${trueLength.toLocaleString()} miles
-                    </div>
-                  </div>
-                ` : `
-                  <div class="space-y-2.5">
-                    <div class="text-slate-500 text-[9px] uppercase tracking-wider font-bold">Logarithmic Addition</div>
-                    <div class="flex flex-col text-right w-full border-b border-slate-800 pb-1.5 text-[10px]">
-                      <span class="text-yellow-400">log(${distanceSunMoonReal}) → ${Math.log10(distanceSunMoonReal).toFixed(5)}</span>
-                      <span class="text-slate-300">+ log(${moonRadiusReal}) → ${Math.log10(moonRadiusReal).toFixed(5)}</span>
-                    </div>
-                    <div class="text-right text-blue-400 font-bold">
-                      = ${Math.log10(numerator).toFixed(5)}
-                    </div>
-                    <div class="text-slate-500 text-[9px] uppercase tracking-wider font-bold mt-2">Subtract log(denominator) &amp; reverse</div>
-                    <div class="text-right text-emerald-400 font-bold text-xs">
-                      = ${trueLength.toLocaleString()} miles
-                    </div>
-                  </div>
-                `}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Panel: SVG Canvas -->
-        <div class="flex-grow relative bg-black flex flex-col h-full overflow-hidden">
-          <div class="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800/80 backdrop-blur text-xs font-semibold">
-            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            Space Geometry View
-          </div>
- 
-          <!-- Floating slider box in the top-right of illustration area -->
-          <div class="absolute top-4 right-4 z-20 bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl shadow-xl w-[260px] backdrop-blur-md">
-            <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
-              Calculate Shadow Length
-            </h4>
-            <div class="flex justify-between text-[10px] text-slate-400 mb-1.5">
-              <span>Move Moon Closer/Further</span>
-              <span class="text-emerald-400 font-bold">${distanceSunMoonReal.toLocaleString()} miles</span>
-            </div>
-            <input type="range" id="moon-x-slider" min="100" max="260" value="${this.moonX}" 
-              class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
-          </div>
-
-          <div class="flex-grow w-full h-full relative flex items-center justify-center p-6">
-            <!-- Background Grid -->
-            <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px); background-size: 30px 30px;"></div>
-
-            <svg viewBox="0 -100 400 200" class="w-full max-h-[85%] z-10 overflow-visible">
-              <defs>
-                <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#fef08a" />
-                  <stop offset="70%" stop-color="#eab308" />
-                  <stop offset="100%" stop-color="#ca8a04" stop-opacity="0" />
-                </radialGradient>
-              </defs>
-
-              <!-- Construction Lines -->
-              <line x1="${sunX}" y1="${-sunR}" x2="${apexX}" y2="0" stroke="#f87171" stroke-width="0.8" stroke-dasharray="3,3" class="opacity-50" />
-              <line x1="${sunX}" y1="${sunR}" x2="${apexX}" y2="0" stroke="#f87171" stroke-width="0.8" stroke-dasharray="3,3" class="opacity-50" />
-              <line x1="-30" y1="0" x2="430" y2="0" stroke="#475569" stroke-width="0.5" stroke-dasharray="2,2" />
-
-              <!-- Penumbra (light outer shadow) -->
-              <polygon points="${this.moonX},${-moonR} ${this.moonX},${moonR} 400,${moonR + (400 - this.moonX) * 0.18} 400,${-moonR - (400 - this.moonX) * 0.18}" fill="rgba(255,255,255,0.04)" />
-              
-              <!-- Umbra (dark shadow cone) -->
-              <polygon points="${this.moonX},${-moonR} ${this.moonX},${moonR} ${apexX},0" fill="rgba(0,0,0,0.85)" stroke="#475569" stroke-width="0.5" />
-
-              <!-- Sun -->
-              <circle cx="${sunX}" cy="0" r="${sunR}" fill="url(#sunGlow)" />
-              <line x1="${sunX}" y1="0" x2="${sunX}" y2="${-sunR}" stroke="#fef08a" stroke-width="1.2" />
-              <text x="${sunX + 5}" y="${-sunR / 2}" fill="#fef08a" font-size="9" font-family="Outfit" font-weight="bold">R_sun</text>
-
-              <!-- Earth -->
-              <g transform="translate(${earthX}, 0)">
-                <circle cx="0" cy="0" r="${earthR}" fill="#1e3a8a" />
-                <path d="M 0 -${earthR} A ${earthR} ${earthR} 0 0 1 0 ${earthR} A ${earthR / 2} ${earthR} 0 0 0 0 -${earthR}" fill="#0f172a" class="opacity-75" />
-                <text x="0" y="24" fill="#94a3b8" font-size="9" font-family="Outfit" text-anchor="middle">Earth</text>
-                ${isTotalEclipse ? `
-                  <circle cx="-${earthR}" cy="0" r="2.5" fill="#ef4444" class="animate-pulse" />
-                ` : ''}
-              </g>
-
-              <!-- Moon -->
-              <g transform="translate(${this.moonX}, 0)">
-                <circle cx="0" cy="0" r="${moonR}" fill="#94a3b8" />
-                <path d="M 0 -${moonR} A ${moonR} ${moonR} 0 0 1 0 ${moonR} A ${moonR / 2} ${moonR} 0 0 0 0 -${moonR}" fill="#334155" />
-                <line x1="0" y1="0" x2="0" y2="${-moonR}" stroke="#cbd5e1" stroke-width="1.2" />
-                <text x="5" y="${-moonR / 2}" fill="#cbd5e1" font-size="7.5" font-family="Outfit" font-weight="bold">R_moon</text>
-              </g>
-
-              <!-- Dimensions -->
-              <g font-size="8.5" font-family="Outfit" fill="#10b981" font-weight="500">
-                <line x1="${sunX}" y1="55" x2="${this.moonX}" y2="55" stroke="#10b981" stroke-width="0.8" />
-                <line x1="${sunX}" y1="52" x2="${sunX}" y2="58" stroke="#10b981" stroke-width="0.8" />
-                <line x1="${this.moonX}" y1="52" x2="${this.moonX}" y2="58" stroke="#10b981" stroke-width="0.8" />
-                <text x="${sunX + (this.moonX - sunX) / 2}" y="67" text-anchor="middle">Dist (D)</text>
-              </g>
-
-              <g font-size="8.5" font-family="Outfit" fill="#3b82f6" font-weight="500">
-                <line x1="${this.moonX}" y1="38" x2="${apexX}" y2="38" stroke="#3b82f6" stroke-width="0.8" />
-                <line x1="${this.moonX}" y1="35" x2="${this.moonX}" y2="41" stroke="#3b82f6" stroke-width="0.8" />
-                <line x1="${apexX}" y1="35" x2="${apexX}" y2="41" stroke="#3b82f6" stroke-width="0.8" />
-                <text x="${this.moonX + (apexX - this.moonX) / 2}" y="50" text-anchor="middle">Length (L)</text>
-              </g>
-            </svg>
-          </div>
-
-          <!-- Dynamic Status Bar -->
-          <div class="absolute bottom-4 right-4 px-4 py-2.5 rounded-xl border backdrop-blur-md shadow-2xl max-w-[240px] transition-colors ${isTotalEclipse ? 'bg-red-950/80 border-red-900/50 text-red-200' : 'bg-slate-900/80 border-slate-700/50 text-slate-200'}">
-            <h4 class="text-xs font-bold text-white mb-1 flex items-center gap-1.5">
-              ${isTotalEclipse ? `
-                <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              ` : `
-                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              `}
-              Eclipse Status
-            </h4>
-            <p class="text-[10px] leading-relaxed opacity-90">
-              ${isTotalEclipse ? "The Umbra touches Earth! A Total Solar Eclipse is occurring." : "The Umbra falls short. Observers on Earth see an Annular Eclipse (Ring of Fire)."}
+    if (!this.logUIInitialized) {
+      this.logContainer.innerHTML = `
+        <div class="flex flex-col lg:flex-row h-full w-full bg-slate-950 text-slate-200 font-sans overflow-hidden">
+          <!-- Spacer to clear left task panel -->
+          <div class="hidden lg:block lg:w-[420px] shrink-0 pointer-events-none"></div>
+          <!-- Left Panel: Math Explanation & Slider -->
+          <div class="w-full lg:w-[380px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col z-20 overflow-y-auto shrink-0">
+            <h2 class="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM21 3L3 21"/></svg>
+              The Shadow Cone Geometry
+            </h2>
+            <p class="text-[10.5px] text-slate-400 mb-4">
+              How similar triangles forced Kepler to multiply massive numbers to find the length of the eclipse shadow.
             </p>
+
+            <div class="flex flex-col gap-3">
+              <!-- Formula Breakdown -->
+              <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
+                <h3 class="text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  The Geometry of Shadows
+                </h3>
+                <p class="text-[10px] text-slate-300 mb-2 leading-relaxed">
+                  To find the length of the dark shadow cone (L), Kepler used the law similar triangles. The ratio of the Moon's radius to its shadow is the same as the Sun's radius to the total distance.
+                </p>
+ 
+                <div class="bg-slate-950/50 p-2 rounded border border-slate-900 text-center font-mono text-[10.5px]">
+                  <div class="flex items-center justify-center gap-3">
+                    <div class="flex flex-col items-center">
+                      <span class="border-b border-slate-600 pb-0.5 px-1.5 text-yellow-400">R_sun</span>
+                      <span class="pt-0.5 px-1.5 text-[9.5px]">Dist + <span class="text-blue-400">L</span></span>
+                    </div>
+                    <span>=</span>
+                    <div class="flex flex-col items-center">
+                      <span class="border-b border-slate-600 pb-0.5 px-1.5 text-slate-300">R_moon</span>
+                      <span class="pt-0.5 px-1.5 text-blue-400">L</span>
+                    </div>
+                  </div>
+                </div>
+ 
+                <p class="text-[10px] text-slate-300 mt-2.5 mb-1.5">When using algebra to solve for L, the final equation becomes:</p>
+ 
+                <div class="bg-slate-950/50 p-2 rounded border border-slate-900 text-center font-mono text-[10.5px]">
+                  <div class="flex items-center justify-center gap-2">
+                    <span class="text-blue-400 font-bold">L</span>
+                    <span>=</span>
+                    <div class="flex flex-col items-center">
+                      <span class="border-b border-slate-600 pb-0.5 px-1.5 text-red-400 font-bold bg-red-950/20 rounded">Dist × R_moon</span>
+                      <span class="pt-0.5 px-1.5 text-slate-400 text-[9px]">R_sun - R_moon</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Logarithmic Simplification Explanation -->
+              <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
+                <h3 class="text-[11px] font-bold text-blue-400 mb-1.5 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 7h6m-6 4h6m-6 4h6M3 5h18v14H3z"/></svg>
+                  Logarithmic approach to calculate L
+                </h3>
+                <p class="text-[10px] text-slate-300 mb-2 leading-relaxed">
+                  By taking logs on both sides, we convert the multiplication in the numerator into addition, and the division into subtraction:
+                </p>
+                <div class="bg-slate-950/50 p-2 rounded border border-slate-900 font-mono text-[9px] space-y-1">
+                  <div>log(L) = log(Dist × R_moon) - log(R_sun - R_moon)</div>
+                  <div class="text-blue-400">log(L) = [log(Dist) + log(R_moon)] - log(R_sun - R_moon)</div>
+                  <div class="text-emerald-400 font-bold">L = 10<sup>log(L)</sup> (Antilog lookup)</div>
+                </div>
+              </div>
+ 
+              <!-- Interactive Calculator Box -->
+              <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
+                <!-- Mode Toggle -->
+                <div class="flex bg-slate-950 rounded-lg p-0.5 mb-3.5 border border-slate-800">
+                  <button id="btn-std-math" class="flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors">
+                    Standard Math
+                  </button>
+                  <button id="btn-log-math" class="flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors">
+                    Use Logarithms
+                  </button>
+                </div>
+
+                <!-- Calculation Panel -->
+                <div id="log-calc-panel" class="bg-slate-950 p-3 rounded-lg font-mono text-[11px] border border-slate-900 min-h-[140px] flex flex-col justify-center"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel: SVG Canvas -->
+          <div class="flex-grow relative bg-black flex flex-col h-full overflow-hidden">
+            <div class="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800/80 backdrop-blur text-xs font-semibold">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              Space Geometry View
+            </div>
+ 
+            <!-- Floating slider box in the top-right of illustration area -->
+            <div class="absolute top-4 right-4 z-20 bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl shadow-xl w-[260px] backdrop-blur-md">
+              <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+                Calculate Shadow Length
+              </h4>
+              <div class="flex justify-between text-[10px] text-slate-400 mb-1.5">
+                <span>Move Moon Closer/Further</span>
+                <span id="log-dist-val" class="text-emerald-400 font-bold"></span>
+              </div>
+              <input type="range" id="moon-x-slider" min="100" max="260" value="${this.moonX}" 
+                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+            </div>
+
+            <div class="flex-grow w-full h-full relative flex items-center justify-center p-6">
+              <!-- Background Grid -->
+              <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px); background-size: 30px 30px;"></div>
+
+              <svg viewBox="0 -100 400 200" class="w-full max-h-[85%] z-10 overflow-visible">
+                <defs>
+                  <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#fef08a" />
+                    <stop offset="70%" stop-color="#eab308" />
+                    <stop offset="100%" stop-color="#ca8a04" stop-opacity="0" />
+                  </radialGradient>
+                </defs>
+
+                <!-- Construction Lines -->
+                <line id="svg-const-line1" x1="${sunX}" y1="${-sunR}" x2="${apexX}" y2="0" stroke="#f87171" stroke-width="0.8" stroke-dasharray="3,3" class="opacity-50" />
+                <line id="svg-const-line2" x1="${sunX}" y1="${sunR}" x2="${apexX}" y2="0" stroke="#f87171" stroke-width="0.8" stroke-dasharray="3,3" class="opacity-50" />
+                <line x1="-30" y1="0" x2="430" y2="0" stroke="#475569" stroke-width="0.5" stroke-dasharray="2,2" />
+
+                <!-- Penumbra (light outer shadow) -->
+                <polygon id="svg-penumbra" points="" fill="rgba(255,255,255,0.04)" />
+                
+                <!-- Umbra (dark shadow cone) -->
+                <polygon id="svg-umbra" points="" fill="rgba(0,0,0,0.85)" stroke="#475569" stroke-width="0.5" />
+
+                <!-- Sun -->
+                <circle cx="${sunX}" cy="0" r="${sunR}" fill="url(#sunGlow)" />
+                <line x1="${sunX}" y1="0" x2="${sunX}" y2="${-sunR}" stroke="#fef08a" stroke-width="1.2" />
+                <text x="${sunX + 5}" y="${-sunR / 2}" fill="#fef08a" font-size="9" font-family="Outfit" font-weight="bold">R_sun</text>
+
+                <!-- Earth -->
+                <g transform="translate(${earthX}, 0)">
+                  <circle cx="0" cy="0" r="${earthR}" fill="#1e3a8a" />
+                  <path d="M 0 -${earthR} A ${earthR} ${earthR} 0 0 1 0 ${earthR} A ${earthR / 2} ${earthR} 0 0 0 0 -${earthR}" fill="#0f172a" class="opacity-75" />
+                  <text x="0" y="24" fill="#94a3b8" font-size="9" font-family="Outfit" text-anchor="middle">Earth</text>
+                  <circle id="svg-earth-dot" cx="-${earthR}" cy="0" r="2.5" fill="#ef4444" class="animate-pulse" />
+                </g>
+
+                <!-- Moon -->
+                <g id="svg-moon-grp">
+                  <circle cx="0" cy="0" r="${moonR}" fill="#94a3b8" />
+                  <path d="M 0 -${moonR} A ${moonR} ${moonR} 0 0 1 0 ${moonR} A ${moonR / 2} ${moonR} 0 0 0 0 -${moonR}" fill="#334155" />
+                  <line x1="0" y1="0" x2="0" y2="${-moonR}" stroke="#cbd5e1" stroke-width="1.2" />
+                  <text x="5" y="${-moonR / 2}" fill="#cbd5e1" font-size="7.5" font-family="Outfit" font-weight="bold">R_moon</text>
+                </g>
+
+                <!-- Dimensions -->
+                <g font-size="8.5" font-family="Outfit" fill="#10b981" font-weight="500">
+                  <line id="svg-dim-dist-line" x1="${sunX}" y1="55" x2="${this.moonX}" y2="55" stroke="#10b981" stroke-width="0.8" />
+                  <line x1="${sunX}" y1="52" x2="${sunX}" y2="58" stroke="#10b981" stroke-width="0.8" />
+                  <line id="svg-dim-dist-tick2" x1="${this.moonX}" y1="52" x2="${this.moonX}" y2="58" stroke="#10b981" stroke-width="0.8" />
+                  <text id="svg-dim-dist-text" x="${sunX + (this.moonX - sunX) / 2}" y="67" text-anchor="middle">Dist (D)</text>
+                </g>
+
+                <g font-size="8.5" font-family="Outfit" fill="#3b82f6" font-weight="500">
+                  <line id="svg-dim-len-line" x1="${this.moonX}" y1="38" x2="${apexX}" y2="38" stroke="#3b82f6" stroke-width="0.8" />
+                  <line id="svg-dim-len-tick1" x1="${this.moonX}" y1="35" x2="${this.moonX}" y2="41" stroke="#3b82f6" stroke-width="0.8" />
+                  <line id="svg-dim-len-tick2" x1="${apexX}" y1="35" x2="${apexX}" y2="41" stroke="#3b82f6" stroke-width="0.8" />
+                  <text id="svg-dim-len-text" x="${this.moonX + (apexX - this.moonX) / 2}" y="50" text-anchor="middle">Length (L)</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Dynamic Status Bar -->
+            <div id="log-status-bar" class="absolute bottom-4 right-4 px-4 py-2.5 rounded-xl border backdrop-blur-md shadow-2xl max-w-[240px] transition-colors"></div>
           </div>
         </div>
-      </div>
-    `;
+      `;
 
-    const slider = this.logContainer.querySelector('#moon-x-slider');
-    slider.addEventListener('input', (e) => {
-      this.moonX = parseInt(e.target.value);
-      this.renderLogarithmUI();
-    });
+      const slider = this.logContainer.querySelector('#moon-x-slider');
+      slider.addEventListener('input', (e) => {
+        this.moonX = parseInt(e.target.value);
+        this.renderLogarithmUI();
+      });
 
+      const btnStd = this.logContainer.querySelector('#btn-std-math');
+      const btnLog = this.logContainer.querySelector('#btn-log-math');
+
+      btnStd.addEventListener('click', () => {
+        this.showLogs = false;
+        this.renderLogarithmUI();
+      });
+
+      btnLog.addEventListener('click', () => {
+        this.showLogs = true;
+        this.renderLogarithmUI();
+      });
+
+      this.logUIInitialized = true;
+    }
+
+    // Dynamic Updates
+    this.logContainer.querySelector('#moon-x-slider').value = this.moonX;
+    this.logContainer.querySelector('#log-dist-val').textContent = `${distanceSunMoonReal.toLocaleString()} miles`;
+    
     const btnStd = this.logContainer.querySelector('#btn-std-math');
     const btnLog = this.logContainer.querySelector('#btn-log-math');
 
-    btnStd.addEventListener('click', () => {
-      this.showLogs = false;
-      this.renderLogarithmUI();
-    });
-
-    btnLog.addEventListener('click', () => {
-      this.showLogs = true;
-      this.renderLogarithmUI();
-    });
+    if (this.showLogs) {
+      btnLog.className = 'flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors bg-blue-600 text-white font-bold';
+      btnStd.className = 'flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors text-slate-400 hover:text-white';
+    } else {
+      btnStd.className = 'flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors bg-slate-800 text-white font-bold';
+      btnLog.className = 'flex-1 text-[10.5px] py-1.5 rounded-md font-medium transition-colors text-slate-400 hover:text-white';
+    }
+ 
+    // Update Calc panel contents
+    const calcPanel = this.logContainer.querySelector('#log-calc-panel');
+    if (!this.showLogs) {
+      calcPanel.innerHTML = `
+        <div class="space-y-2.5">
+          <div class="text-slate-500 text-[9px] uppercase tracking-wider font-bold">Numerator Calculation</div>
+          <div class="flex flex-col text-right w-full border-b border-slate-800 pb-1.5">
+            <span class="text-yellow-400">${distanceSunMoonReal.toLocaleString()}</span>
+            <span class="text-slate-300">× ${moonRadiusReal.toLocaleString()}</span>
+          </div>
+          <div class="text-right text-red-400 font-bold">
+            = ${numerator.toLocaleString()}
+          </div>
+          <div class="text-slate-500 text-[9px] uppercase tracking-wider font-bold mt-2">Division (divided by 694,263)</div>
+          <div class="text-right text-emerald-400 font-bold text-xs">
+            = ${trueLength.toLocaleString()} miles
+          </div>
+        </div>
+      `;
+    } else {
+      calcPanel.innerHTML = `
+        <div class="space-y-2.5">
+          <div class="text-slate-500 text-[9px] uppercase tracking-wider font-bold">Logarithmic Addition</div>
+          <div class="flex flex-col text-right w-full border-b border-slate-800 pb-1.5 text-[10px]">
+            <span class="text-yellow-400">log(${distanceSunMoonReal}) → ${Math.log10(distanceSunMoonReal).toFixed(5)}</span>
+            <span class="text-slate-300">+ log(${moonRadiusReal}) → ${Math.log10(moonRadiusReal).toFixed(5)}</span>
+          </div>
+          <div class="text-right text-blue-400 font-bold">
+            = ${Math.log10(numerator).toFixed(5)}
+          </div>
+          <div class="text-slate-500 text-[9px] uppercase tracking-wider font-bold mt-2">Subtract log(denominator) &amp; reverse</div>
+          <div class="text-right text-emerald-400 font-bold text-xs">
+            = ${trueLength.toLocaleString()} miles
+          </div>
+        </div>
+      `;
+    }
+ 
+    // Update SVG elements
+    this.logContainer.querySelector('#svg-const-line1').setAttribute('x2', apexX);
+    this.logContainer.querySelector('#svg-const-line2').setAttribute('x2', apexX);
+    this.logContainer.querySelector('#svg-penumbra').setAttribute('points', `${this.moonX},-10 ${this.moonX},10 400,${10 + (400 - this.moonX) * 0.18} 400,${-10 - (400 - this.moonX) * 0.18}`);
+    this.logContainer.querySelector('#svg-umbra').setAttribute('points', `${this.moonX},-10 ${this.moonX},10 ${apexX},0`);
+    this.logContainer.querySelector('#svg-moon-grp').setAttribute('transform', `translate(${this.moonX}, 0)`);
+    
+    const earthDot = this.logContainer.querySelector('#svg-earth-dot');
+    if (isTotalEclipse) {
+      earthDot.classList.remove('hidden');
+    } else {
+      earthDot.classList.add('hidden');
+    }
+ 
+    this.logContainer.querySelector('#svg-dim-dist-line').setAttribute('x2', this.moonX);
+    this.logContainer.querySelector('#svg-dim-dist-tick2').setAttribute('x1', this.moonX);
+    this.logContainer.querySelector('#svg-dim-dist-tick2').setAttribute('x2', this.moonX);
+    this.logContainer.querySelector('#svg-dim-dist-text').setAttribute('x', sunX + (this.moonX - sunX) / 2);
+ 
+    this.logContainer.querySelector('#svg-dim-len-line').setAttribute('x1', this.moonX);
+    this.logContainer.querySelector('#svg-dim-len-line').setAttribute('x2', apexX);
+    this.logContainer.querySelector('#svg-dim-len-tick1').setAttribute('x1', this.moonX);
+    this.logContainer.querySelector('#svg-dim-len-tick1').setAttribute('x2', this.moonX);
+    this.logContainer.querySelector('#svg-dim-len-tick2').setAttribute('x1', apexX);
+    this.logContainer.querySelector('#svg-dim-len-tick2').setAttribute('x2', apexX);
+    this.logContainer.querySelector('#svg-dim-len-text').setAttribute('x', this.moonX + (apexX - this.moonX) / 2);
+ 
+    // Update dynamic status bar
+    const statusBar = this.logContainer.querySelector('#log-status-bar');
+    if (isTotalEclipse) {
+      statusBar.className = 'absolute bottom-4 right-4 px-4 py-2.5 rounded-xl border backdrop-blur-md shadow-2xl max-w-[240px] transition-colors bg-red-950/80 border-red-900/50 text-red-200';
+      statusBar.innerHTML = `
+        <h4 class="text-xs font-bold text-white mb-1 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Eclipse Status
+        </h4>
+        <p class="text-[10px] leading-relaxed opacity-90">
+          The Umbra touches Earth! A Total Solar Eclipse is occurring.
+        </p>
+      `;
+    } else {
+      statusBar.className = 'absolute bottom-4 right-4 px-4 py-2.5 rounded-xl border backdrop-blur-md shadow-2xl max-w-[240px] transition-colors bg-slate-900/80 border-slate-700/50 text-slate-200';
+      statusBar.innerHTML = `
+        <h4 class="text-xs font-bold text-white mb-1 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Eclipse Status
+        </h4>
+        <p class="text-[10px] leading-relaxed opacity-90">
+          The Umbra falls short. Observers on Earth see an Annular Eclipse (Ring of Fire).
+        </p>
+      `;
+    }
   }
 
   destroy() {
