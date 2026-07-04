@@ -42,6 +42,7 @@ export class LevelUI {
     this.newton3Verified = false;
     this.blackholeVerified = false;
     this.gravityConstantVerified = false;
+    this.exoplanetVerified = false;
     gameState.subscribe((state) => {
       if (state.activeLevel === 1) {
         this.renderLevel1();
@@ -118,30 +119,30 @@ export class LevelUI {
 
     this.container.innerHTML = `
       <!-- Left sidebar card -->
-      <div class="absolute top-6 left-6 w-[420px] max-h-[calc(100%-48px)] overflow-y-auto bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-2xl shadow-xl pointer-events-auto flex flex-col gap-4 text-slate-800" style="z-index: 100;">
+      <div class="level-panel" style="position: absolute; top: 24px; left: 24px; width: 420px; max-height: calc(100% - 48px); z-index: 100;">
         <div class="flex justify-between items-center">
-          <h2 class="text-xl font-bold text-slate-900 tracking-tight">Calendar Systems</h2>
-          <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs border border-slate-200 transition" id="exit-btn">Exit to Orbit</button>
+          <h2 class="text-base font-bold text-sky-400">Calendar Systems</h2>
+          <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
         </div>
-        <p class="text-[11px] leading-relaxed text-slate-500">
+        <p class="text-[11px] leading-relaxed text-slate-400">
           Calendar systems were crucial to ancient civilizations for agriculture, tracking seasons, and religious organization. Lacking any modern understanding of how the solar system is physically structured, early astronomers could only rely on direct observations of the Sun and the Moon's rise and fall across the sky to structure time.
         </p>
         
         <!-- Tabs Header -->
-        <div class="flex border-b border-slate-200 gap-1 pb-1">
+        <div class="flex border-b border-slate-800 gap-1 pb-1">
           <button id="tab-babylonian" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: rgb(59, 130, 246); color: white;">Babylonian</button>
-          <button id="tab-chinese" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(71, 85, 105);">Chinese</button>
-          <button id="tab-julian" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(71, 85, 105);">Julian</button>
-          <button id="tab-modern" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(71, 85, 105);">Modern</button>
+          <button id="tab-chinese" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Chinese</button>
+          <button id="tab-julian" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Julian</button>
+          <button id="tab-modern" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Modern</button>
         </div>
 
         <!-- Tab Contents Card -->
-        <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl flex flex-col gap-3">
-          <h3 id="tab-title" class="text-xs font-bold text-slate-800 uppercase tracking-wider">Babylonian Calendar</h3>
-          <p id="tab-desc" class="text-[11px] leading-relaxed text-slate-500">...</p>
+        <div class="bg-slate-950/40 border border-slate-800/80 p-4 rounded-xl flex flex-col gap-3">
+          <h3 id="tab-title" class="text-xs font-bold text-sky-400 uppercase tracking-wider">Babylonian Calendar</h3>
+          <p id="tab-desc" class="text-[11px] leading-relaxed text-slate-300">...</p>
           
-          <div class="border-t border-slate-100 pt-3 flex flex-col gap-2">
-            <span class="text-[11px] font-semibold text-slate-700" id="tab-question">...</span>
+          <div class="border-t border-slate-800/80 pt-3 flex flex-col gap-2">
+            <span class="text-[11px] font-semibold text-slate-200" id="tab-question">...</span>
             <div id="tab-inputs-container" class="flex flex-col gap-2 pointer-events-auto">
               <!-- Dynamically populated inputs -->
             </div>
@@ -153,32 +154,32 @@ export class LevelUI {
         </div>
 
         <!-- Sub-tasks Checklist -->
-        <div class="border-t border-slate-100 pt-3.5 flex flex-col gap-1.5">
-          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Calendar Sub-tasks:</span>
-          <div id="check-babylonian" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium transition">
+        <div class="border-t border-slate-800/80 pt-3.5 flex flex-col gap-1.5">
+          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Calendar Sub-tasks:</span>
+          <div id="check-babylonian" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check-tw text-red-500">❌</span>
             <span>Babylonian Metonic Cycle Verified</span>
           </div>
-          <div id="check-chinese" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium transition">
+          <div id="check-chinese" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check-tw text-red-500">❌</span>
             <span>Chinese Runyue Cycle Verified</span>
           </div>
-          <div id="check-julian" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium transition">
+          <div id="check-julian" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check-tw text-red-500">❌</span>
             <span>Julian Drift Calculation Verified</span>
           </div>
-          <div id="check-modern" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium transition">
+          <div id="check-modern" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check-tw text-red-500">❌</span>
             <span>Modern Gregorian Leap Rule Verified</span>
           </div>
         </div>
 
         <!-- Final Unlock Button -->
-        <button id="final-submit-btn" disabled class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold transition cursor-not-allowed text-xs border border-slate-200">Verify & Unlock Next Level</button>
+        <button id="final-submit-btn" disabled class="w-full py-2.5 rounded-xl bg-slate-950/30 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-800/80">Verify & Unlock Next Level</button>
       </div>
 
       <!-- Right parameter panel (horizontal, placed bottom-right below the canvas) -->
-      <div class="absolute bottom-6 right-6 left-[460px] bg-white/95 backdrop-blur-md border border-slate-200/80 p-4 rounded-2xl shadow-xl pointer-events-auto flex flex-col gap-3 text-slate-800" style="z-index: 100;">
+      <div class="level-panel flex flex-col gap-3 pointer-events-auto" style="position: absolute; bottom: 24px; right: 24px; left: 460px; width: auto; z-index: 100; padding: 16px;">
         <div class="flex gap-4">
           <!-- Column 1: Legend & Dashboard (w-32%) -->
           <div class="w-[32%] flex flex-col gap-2">
@@ -203,21 +204,21 @@ export class LevelUI {
 
             <!-- Dashboard 2x2 Grid -->
             <div class="grid grid-cols-2 gap-1.5">
-              <div class="bg-slate-50 border border-slate-100 rounded-lg p-1.5 flex flex-col justify-center">
-                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Day of Year</span>
-                <span id="dash-day" class="text-xs font-bold text-slate-800 mt-0.5">172.0</span>
+              <div class="bg-slate-950/40 border border-slate-800/80 rounded-lg p-1.5 flex flex-col justify-center">
+                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-500">Day of Year</span>
+                <span id="dash-day" class="text-xs font-bold text-slate-200 mt-0.5">172.0</span>
               </div>
-              <div class="bg-slate-50 border border-slate-100 rounded-lg p-1.5 flex flex-col justify-center">
-                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Sun Peak Alt</span>
-                <span id="dash-sun-alt" class="text-xs font-bold text-slate-800 mt-0.5">72.4°</span>
+              <div class="bg-slate-950/40 border border-slate-800/80 rounded-lg p-1.5 flex flex-col justify-center">
+                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-500">Sun Peak Alt</span>
+                <span id="dash-sun-alt" class="text-xs font-bold text-slate-200 mt-0.5">72.4°</span>
               </div>
-              <div class="bg-slate-50 border border-slate-100 rounded-lg p-1.5 flex flex-col justify-center">
-                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Moon Peak Alt</span>
-                <span id="dash-moon-alt" class="text-xs font-bold text-slate-800 mt-0.5">40.1°</span>
+              <div class="bg-slate-950/40 border border-slate-800/80 rounded-lg p-1.5 flex flex-col justify-center">
+                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-500">Moon Peak Alt</span>
+                <span id="dash-moon-alt" class="text-xs font-bold text-slate-200 mt-0.5">40.1°</span>
               </div>
-              <div class="bg-slate-50 border border-slate-100 rounded-lg p-1.5 flex flex-col justify-center">
-                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-400">Moon Boundary</span>
-                <span id="dash-moon-path" class="text-[10px] font-bold text-slate-600 mt-0.5 truncate">Within boundaries</span>
+              <div class="bg-slate-950/40 border border-slate-800/80 rounded-lg p-1.5 flex flex-col justify-center">
+                <span class="text-[8px] uppercase font-bold tracking-wider text-slate-500">Moon Boundary</span>
+                <span id="dash-moon-path" class="text-[10px] font-bold text-slate-400 mt-0.5 truncate">Within boundaries</span>
               </div>
             </div>
           </div>
@@ -225,32 +226,32 @@ export class LevelUI {
           <!-- Column 2: Sliders (w-46%) -->
           <div class="w-[46%] flex flex-col justify-between py-0.5 gap-2">
             <div class="flex flex-col gap-0.5">
-              <div class="flex justify-between text-[10px] font-bold text-slate-600">
+              <div class="flex justify-between text-[10px] font-bold text-slate-400">
                 <span>Day of Year:</span>
-                <span id="slider-day-val" class="text-blue-600">172.0</span>
+                <span id="slider-day-val" class="text-sky-400">172.0</span>
               </div>
-              <input type="range" id="slider-day" min="0" max="365" step="0.1" value="172" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+              <input type="range" id="slider-day" min="0" max="365" step="0.1" value="172" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
 
             <div class="flex flex-col gap-0.5">
-              <div class="flex justify-between text-[10px] font-bold text-slate-600">
+              <div class="flex justify-between text-[10px] font-bold text-slate-400">
                 <span>Time of Day (Hours):</span>
-                <span id="slider-time-val" class="text-blue-600">12.0</span>
+                <span id="slider-time-val" class="text-sky-400">12.0</span>
               </div>
-              <input type="range" id="slider-time" min="0" max="24" step="0.1" value="12" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+              <input type="range" id="slider-time" min="0" max="24" step="0.1" value="12" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
 
             <div class="flex flex-col gap-0.5">
-              <div class="flex justify-between text-[10px] font-bold text-slate-600">
+              <div class="flex justify-between text-[10px] font-bold text-slate-400">
                 <span>Latitude:</span>
-                <span id="slider-lat-val" class="text-blue-600">30°</span>
+                <span id="slider-lat-val" class="text-sky-400">30°</span>
               </div>
-              <input type="range" id="slider-lat" min="0" max="90" step="1" value="30" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+              <input type="range" id="slider-lat" min="0" max="90" step="1" value="30" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
           </div>
 
           <!-- Column 3: Play Controls (w-22%) -->
-          <div class="w-[22%] border-l border-slate-200/60 pl-4 flex flex-col justify-between py-1 gap-2">
+          <div class="w-[22%] border-l border-slate-800/80 pl-4 flex flex-col justify-between py-1 gap-2">
             <!-- Play/Pause Button -->
             <button id="play-btn" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-[0.98]">
               <span id="play-icon">▶</span>
@@ -261,9 +262,9 @@ export class LevelUI {
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[9px] font-bold text-slate-500">
                 <span>Play Speed:</span>
-                <span id="speed-val" class="text-blue-600 font-semibold">15.0x</span>
+                <span id="speed-val" class="text-sky-400 font-semibold">15.0x</span>
               </div>
-              <input type="range" id="slider-speed" min="0.1" max="30.0" step="0.1" value="15.0" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+              <input type="range" id="slider-speed" min="0.1" max="30.0" step="0.1" value="15.0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
           </div>
         </div>
@@ -296,16 +297,16 @@ export class LevelUI {
         inputsContainer.innerHTML = `
           <div class="flex flex-col gap-1">
             <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Babylonian Yearly Drift (days)</span>
-            <input type="number" id="calc-input-bab" class="bg-white border border-slate-200 text-slate-800 text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="e.g. 0.003" step="0.00001">
+            <input type="number" id="calc-input-bab" class="bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="e.g. 0.003" step="0.00001">
           </div>
           <div class="flex flex-col gap-1">
             <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Chinese Daming Yearly Drift (days)</span>
-            <input type="number" id="calc-input-chi" class="bg-white border border-slate-200 text-slate-800 text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="e.g. 0.0005" step="0.00001">
+            <input type="number" id="calc-input-chi" class="bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="e.g. 0.0005" step="0.00001">
           </div>
         `;
       } else {
         inputsContainer.innerHTML = `
-          <input type="number" id="calc-input" class="w-full bg-white border border-slate-200 text-slate-800 text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="${data.placeholder}">
+          <input type="number" id="calc-input" class="w-full bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-blue-500 transition" placeholder="${data.placeholder}">
         `;
       }
       
@@ -317,7 +318,7 @@ export class LevelUI {
           btn.style.color = 'white';
         } else {
           btn.style.background = 'transparent';
-          btn.style.color = 'rgb(71, 85, 105)';
+          btn.style.color = 'rgb(148, 163, 184)';
         }
       });
     };
@@ -329,12 +330,12 @@ export class LevelUI {
         const iconEl = itemEl.querySelector('.status-check-tw');
         if (this.calendarVerified[key]) {
           iconEl.textContent = '✅';
-          itemEl.classList.remove('text-slate-400');
-          itemEl.classList.add('text-green-600');
+          itemEl.classList.remove('text-slate-500');
+          itemEl.classList.add('text-green-400');
         } else {
           iconEl.textContent = '❌';
-          itemEl.classList.remove('text-green-600');
-          itemEl.classList.add('text-slate-400');
+          itemEl.classList.remove('text-green-400');
+          itemEl.classList.add('text-slate-500');
           allVerified = false;
         }
       });
@@ -344,12 +345,12 @@ export class LevelUI {
         finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
         finalSubmitBtn.style.color = 'white';
         finalSubmitBtn.style.cursor = 'pointer';
-        finalSubmitBtn.classList.remove('bg-slate-100', 'text-slate-400', 'cursor-not-allowed');
+        finalSubmitBtn.classList.remove('bg-slate-950/30', 'text-slate-500', 'cursor-not-allowed', 'border-slate-800/80');
         finalSubmitBtn.classList.add('hover:bg-green-600');
       } else {
         finalSubmitBtn.disabled = true;
-        finalSubmitBtn.style.background = 'rgb(241, 245, 249)'; // slate-100
-        finalSubmitBtn.style.color = 'rgb(148, 163, 184)';
+        finalSubmitBtn.style.background = 'rgba(2, 6, 23, 0.3)'; // bg-slate-950/30
+        finalSubmitBtn.style.color = 'rgb(100, 116, 139)'; // text-slate-500
         finalSubmitBtn.style.cursor = 'not-allowed';
       }
     };
@@ -372,12 +373,12 @@ export class LevelUI {
         const ansChi = tabData.chinese.answerChi;
         if (Math.abs(valBab - ansBab) < 0.0001 && Math.abs(valChi - ansChi) < 0.0001) {
           tabFeedback.textContent = "Correct! Both drift calculations are accurate.";
-          tabFeedback.className = "text-[11px] font-semibold text-green-600 mt-1";
+          tabFeedback.className = "text-[11px] font-semibold text-green-400 mt-1";
           this.calendarVerified[activeTab] = true;
           updateChecklist();
         } else {
           tabFeedback.textContent = "Incorrect calculations. Try again!";
-          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+          tabFeedback.className = "text-[11px] font-semibold text-red-400 mt-1";
         }
       } else {
         const calcInput = document.getElementById('calc-input');
@@ -385,12 +386,12 @@ export class LevelUI {
         const data = tabData[activeTab];
         if (Math.abs(val - data.answer) < 0.0001) {
           tabFeedback.textContent = "Correct!";
-          tabFeedback.className = "text-[11px] font-semibold text-green-600 mt-1";
+          tabFeedback.className = "text-[11px] font-semibold text-green-400 mt-1";
           this.calendarVerified[activeTab] = true;
           updateChecklist();
         } else {
           tabFeedback.textContent = "Incorrect. Try again!";
-          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+          tabFeedback.className = "text-[11px] font-semibold text-red-400 mt-1";
         }
       }
     });
@@ -456,11 +457,11 @@ export class LevelUI {
         dashMoonAlt.textContent = inst.moonPeakAlt.toFixed(1) + '°';
         dashMoonPath.textContent = inst.moonPathStatus;
         if (inst.moonPathStatus === "Higher than Summer Sun") {
-          dashMoonPath.className = "text-[11px] font-bold text-red-500 mt-0.5";
+          dashMoonPath.className = "text-[11px] font-bold text-red-400 mt-0.5";
         } else if (inst.moonPathStatus === "Lower than Winter Sun") {
-          dashMoonPath.className = "text-[11px] font-bold text-blue-500 mt-0.5";
+          dashMoonPath.className = "text-[11px] font-bold text-blue-400 mt-0.5";
         } else {
-          dashMoonPath.className = "text-[11px] font-bold text-slate-600 mt-0.5";
+          dashMoonPath.className = "text-[11px] font-bold text-slate-400 mt-0.5";
         }
       }
     };
@@ -3123,9 +3124,15 @@ export class LevelUI {
           <h2 class="text-base font-bold text-violet-400">Level 11: Gravity Constant</h2>
           <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
         </div>
-        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">How the Gravity Constant and the density of earth is measured</p>
+        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">Measure G and estimate exoplanet orbital parameters</p>
 
-        <div class="flex flex-col gap-2 mt-2">
+        <!-- Tabs Header -->
+        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 flex-wrap">
+          <button id="tab-measuring-g" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: rgb(139, 92, 246); color: white;">Measuring G</button>
+          <button id="tab-exoplanet" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Exoplanet Orbit</button>
+        </div>
+
+        <div id="section-measuring-g" class="flex flex-col gap-2 mt-2">
           <!-- Background Section -->
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
             <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Cavendish Torsion Balance</h3>
@@ -3159,11 +3166,40 @@ export class LevelUI {
           </div>
         </div>
 
+        <div id="section-exoplanet" class="flex flex-col gap-2 mt-2" style="display: none;">
+          <!-- Host Star spectroscopy explanation -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5 text-[10px] leading-relaxed text-slate-300">
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">The Host Star (Size and Mass)</h3>
+            <p>
+              Before we can understand the planet, we must understand the star. Astronomers use Stellar Spectroscopy to analyze the light emitted by the star. By looking at the spectrum (the specific colors of light absorbed by the star's atmosphere), they can determine the star's surface temperature and chemical composition. Using well-established models of stellar evolution, this temperature and spectrum allow astronomers to calculate the star's Mass (<i>M<sub>*</sub></i>) and Radius (<i>R<sub>*</sub></i>). Everything else about the planet is measured relative to these two stellar numbers.
+            </p>
+          </div>
+
+          <!-- Challenge Section -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Orbit Size Challenge:</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              Suppose astronomers observe a transit with a period of <strong>100 days</strong> around a host star with a mass of <strong>1.0 Solar Mass</strong>.
+              Using the formula derived on the right, calculate the orbital radius <i>r</i> in Astronomical Units (AU).
+              <br><i>Hint: Adjust the sliders in the parameters panel on the right to Period = 100 days and Mass = 1.0 Solar Mass, then read the calculated radius.</i>
+            </p>
+            <span class="text-[10.5px] font-semibold text-slate-200">Orbit Radius r (in AU):</span>
+            <div class="flex gap-2">
+              <input type="number" id="exo-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.42" step="0.01">
+              <button id="exo-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="exo-feedback" class="text-[10.5px] font-medium hidden font-sans"></div>
+          </div>
+        </div>
+
         <!-- Checklist -->
         <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 mt-2">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
           <div id="check-gc" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Earth Density Verified</span>
+          </div>
+          <div id="check-exo" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Exoplanet Orbit Size Verified</span>
           </div>
         </div>
 
@@ -3176,27 +3212,50 @@ export class LevelUI {
 
     const exitBtn = document.getElementById('exit-btn');
     exitBtn.addEventListener('click', () => {
-      gameState.completeLevel(11);
+      gameState.activeLevel = null;
+      gameState.notify();
     });
 
     const verifyBtn = document.getElementById('gc-verify-btn');
     const input = document.getElementById('gc-input');
     const feedback = document.getElementById('gc-feedback');
-    const checkGc = document.getElementById('check-gc');
     const finalBtn = document.getElementById('gc-final-submit-btn');
 
+    const exoVerifyBtn = document.getElementById('exo-verify-btn');
+    const exoInput = document.getElementById('exo-input');
+    const exoFeedback = document.getElementById('exo-feedback');
+
     const refreshCheck = () => {
+      const checkGc = document.getElementById('check-gc');
+      const checkExo = document.getElementById('check-exo');
+      
       if (this.gravityConstantVerified) {
         checkGc.querySelector('.status-check').textContent = '✅';
         checkGc.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      } else {
+        checkGc.querySelector('.status-check').textContent = '❌';
+        checkGc.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+      }
+
+      if (this.exoplanetVerified) {
+        checkExo.querySelector('.status-check').textContent = '✅';
+        checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      } else {
+        checkExo.querySelector('.status-check').textContent = '❌';
+        checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+      }
+
+      if (this.gravityConstantVerified && this.exoplanetVerified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
+      } else {
+        finalBtn.disabled = true;
+        finalBtn.className = 'w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2';
       }
     };
 
     verifyBtn.addEventListener('click', () => {
       const val = parseFloat(input.value);
-      // Theoretical: rho = 3*9.8 / (4*pi*6.674e-11*6.371e6) = 5502 kg/m3
       if (val >= 5450 && val <= 5550) {
         feedback.textContent = '✓ Correct! The average density is about 5500 kg/m³, which is quite a bit larger than the average surface rock density (~3000 kg/m³). This difference is how scientists figured out that Earth must have a very dense metallic core (composed of iron and nickel)!';
         feedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
@@ -3209,10 +3268,55 @@ export class LevelUI {
       feedback.classList.remove('hidden');
     });
 
+    exoVerifyBtn.addEventListener('click', () => {
+      const val = parseFloat(exoInput.value);
+      if (val >= 0.41 && val <= 0.43) {
+        exoFeedback.textContent = '✓ Correct! The orbit radius is approximately 0.42 AU, placing the planet about 63 million kilometers from its host star.';
+        exoFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+        this.exoplanetVerified = true;
+        refreshCheck();
+      } else {
+        exoFeedback.textContent = '❌ Incorrect. Hint: Set period to 100 days and star mass to 1.0 Solar Mass on the right, then read the calculated radius (r ≈ 0.42 AU).';
+        exoFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+      }
+      exoFeedback.classList.remove('hidden');
+    });
+
     finalBtn.addEventListener('click', () => {
       alert("Congratulations! You have completed all levels, including measuring G and calculating the average density of the Earth, confirming the existence of its dense metallic core!");
       gameState.completeLevel(11);
     });
+
+    // Tab buttons event listeners
+    const switchTab = (tab) => {
+      const tabMeasuringG = document.getElementById('tab-measuring-g');
+      const tabExoplanet = document.getElementById('tab-exoplanet');
+      const sectG = document.getElementById('section-measuring-g');
+      const sectExo = document.getElementById('section-exoplanet');
+
+      if (tab === 'measuring-g') {
+        tabMeasuringG.style.background = 'rgb(139, 92, 246)';
+        tabMeasuringG.style.color = 'white';
+        tabExoplanet.style.background = 'transparent';
+        tabExoplanet.style.color = 'rgb(148, 163, 184)';
+        sectG.style.display = 'flex';
+        sectExo.style.display = 'none';
+      } else {
+        tabExoplanet.style.background = 'rgb(139, 92, 246)';
+        tabExoplanet.style.color = 'white';
+        tabMeasuringG.style.background = 'transparent';
+        tabMeasuringG.style.color = 'rgb(148, 163, 184)';
+        sectG.style.display = 'none';
+        sectExo.style.display = 'flex';
+      }
+
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setTab === 'function') {
+        window.activeLevelInstance.setTab(tab);
+      }
+    };
+
+    document.getElementById('tab-measuring-g').addEventListener('click', () => switchTab('measuring-g'));
+    document.getElementById('tab-exoplanet').addEventListener('click', () => switchTab('exoplanet'));
 
     refreshCheck();
   }
