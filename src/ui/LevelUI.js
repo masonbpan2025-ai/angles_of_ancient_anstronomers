@@ -3018,12 +3018,18 @@ export class LevelUI {
     this.container.innerHTML = `
       <div class="level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
         <div class="flex justify-between items-center">
-          <h2 class="text-base font-bold text-violet-400">Level 10: Black Hole</h2>
+          <h2 class="text-base font-bold text-violet-400">Level 10: Applying Newton's Law</h2>
           <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
         </div>
-        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">Find black hole condition using Newtonian physics</p>
+        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">Use Newton's law to solve astronomy problems</p>
 
-        <div class="flex flex-col gap-2 mt-2">
+        <!-- Tabs Header -->
+        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 flex-wrap">
+          <button id="tab-black-hole" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: rgb(139, 92, 246); color: white;">Black Hole</button>
+          <button id="tab-exoplanet" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Exoplanet Orbit</button>
+        </div>
+
+        <div id="section-black-hole" class="flex flex-col gap-2 mt-2">
           <!-- Background Section -->
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
             <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Historical Background</h3>
@@ -3059,11 +3065,40 @@ export class LevelUI {
           </div>
         </div>
 
+        <div id="section-exoplanet" class="flex flex-col gap-2 mt-2" style="display: none;">
+          <!-- Host Star spectroscopy explanation -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5 text-[10px] leading-relaxed text-slate-300">
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">The Host Star (Size and Mass)</h3>
+            <p>
+              Before we can understand the planet, we must understand the star. Astronomers use Stellar Spectroscopy to analyze the light emitted by the star. By looking at the spectrum (the specific colors of light absorbed by the star's atmosphere), they can determine the star's surface temperature and chemical composition. Using well-established models of stellar evolution, this temperature and spectrum allow astronomers to calculate the star's Mass (<i>M<sub>*</sub></i>) and Radius (<i>R<sub>*</sub></i>). Everything else about the planet is measured relative to these two stellar numbers.
+            </p>
+          </div>
+
+          <!-- Challenge Section -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Orbit Size Challenge:</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              Suppose astronomers observe a transit with a period of <strong>100 days</strong> around a host star with a mass of <strong>1.0 Solar Mass</strong>.
+              Using the proportional formula derived on the right, calculate the orbital radius <i>r</i> in Astronomical Units (AU).
+              <br><i>Hint: Adjust the sliders in the parameters panel on the right to Period = 100 days and Mass = 1.0 Solar Mass, then read the calculated radius.</i>
+            </p>
+            <span class="text-[10.5px] font-semibold text-slate-200">Orbit Radius r (in AU):</span>
+            <div class="flex gap-2">
+              <input type="number" id="exo-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.42" step="0.01">
+              <button id="exo-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="exo-feedback" class="text-[10.5px] font-medium hidden font-sans"></div>
+          </div>
+        </div>
+
         <!-- Checklist -->
         <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 mt-2">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
           <div id="check-bh" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Black Hole Radius Verified</span>
+          </div>
+          <div id="check-exo" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Exoplanet Orbit Size Verified</span>
           </div>
         </div>
 
@@ -3076,27 +3111,50 @@ export class LevelUI {
 
     const exitBtn = document.getElementById('exit-btn');
     exitBtn.addEventListener('click', () => {
-      gameState.completeLevel(10);
+      gameState.activeLevel = null;
+      gameState.notify();
     });
 
     const verifyBtn = document.getElementById('bh-verify-btn');
     const input = document.getElementById('bh-input');
     const feedback = document.getElementById('bh-feedback');
-    const checkBh = document.getElementById('check-bh');
     const finalBtn = document.getElementById('bh-final-submit-btn');
 
+    const exoVerifyBtn = document.getElementById('exo-verify-btn');
+    const exoInput = document.getElementById('exo-input');
+    const exoFeedback = document.getElementById('exo-feedback');
+
     const refreshCheck = () => {
+      const checkBh = document.getElementById('check-bh');
+      const checkExo = document.getElementById('check-exo');
+      
       if (this.blackholeVerified) {
         checkBh.querySelector('.status-check').textContent = '✅';
         checkBh.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      } else {
+        checkBh.querySelector('.status-check').textContent = '❌';
+        checkBh.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+      }
+
+      if (this.exoplanetVerified) {
+        checkExo.querySelector('.status-check').textContent = '✅';
+        checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      } else {
+        checkExo.querySelector('.status-check').textContent = '❌';
+        checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+      }
+
+      if (this.blackholeVerified && this.exoplanetVerified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
+      } else {
+        finalBtn.disabled = true;
+        finalBtn.className = 'w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2';
       }
     };
 
     verifyBtn.addEventListener('click', () => {
       const val = parseFloat(input.value);
-      // Theoretical: r = (1022^2 * 3.844e8) / (299792000^2) = 4.467 mm
       if (val >= 4.3 && val <= 4.6) {
         feedback.textContent = '✓ Correct! The Earth would need to be compressed to a radius of ~4.47 millimeters for its orbital velocity to equal the speed of light.';
         feedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
@@ -3109,10 +3167,55 @@ export class LevelUI {
       feedback.classList.remove('hidden');
     });
 
+    exoVerifyBtn.addEventListener('click', () => {
+      const val = parseFloat(exoInput.value);
+      if (val >= 0.41 && val <= 0.43) {
+        exoFeedback.textContent = '✓ Correct! The orbit radius is approximately 0.42 AU, placing the planet about 63 million kilometers from its host star.';
+        exoFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+        this.exoplanetVerified = true;
+        refreshCheck();
+      } else {
+        exoFeedback.textContent = '❌ Incorrect. Hint: Set period to 100 days and star mass to 1.0 Solar Mass on the right, then read the calculated radius (r ≈ 0.42 AU).';
+        exoFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+      }
+      exoFeedback.classList.remove('hidden');
+    });
+
     finalBtn.addEventListener('click', () => {
-      alert("Congratulations! You have completed all levels, unlocking the mysteries of ancient astronomical calculations and reaching the black hole horizon using Newtonian physics!");
+      alert("Congratulations! You have completed all tasks in Level 10, demonstrating the power of Newton's laws in explaining black holes and mapping exoplanet orbits!");
       gameState.completeLevel(10);
     });
+
+    // Tab buttons event listeners
+    const switchTab = (tab) => {
+      const tabBlackHole = document.getElementById('tab-black-hole');
+      const tabExoplanet = document.getElementById('tab-exoplanet');
+      const sectBH = document.getElementById('section-black-hole');
+      const sectExo = document.getElementById('section-exoplanet');
+
+      if (tab === 'black-hole') {
+        tabBlackHole.style.background = 'rgb(139, 92, 246)';
+        tabBlackHole.style.color = 'white';
+        tabExoplanet.style.background = 'transparent';
+        tabExoplanet.style.color = 'rgb(148, 163, 184)';
+        sectBH.style.display = 'flex';
+        sectExo.style.display = 'none';
+      } else {
+        tabExoplanet.style.background = 'rgb(139, 92, 246)';
+        tabExoplanet.style.color = 'white';
+        tabBlackHole.style.background = 'transparent';
+        tabBlackHole.style.color = 'rgb(148, 163, 184)';
+        sectBH.style.display = 'none';
+        sectExo.style.display = 'flex';
+      }
+
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setTab === 'function') {
+        window.activeLevelInstance.setTab(tab);
+      }
+    };
+
+    document.getElementById('tab-black-hole').addEventListener('click', () => switchTab('black-hole'));
+    document.getElementById('tab-exoplanet').addEventListener('click', () => switchTab('exoplanet'));
 
     refreshCheck();
   }
@@ -3124,15 +3227,9 @@ export class LevelUI {
           <h2 class="text-base font-bold text-violet-400">Level 11: Gravity Constant</h2>
           <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
         </div>
-        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">Measure G and estimate exoplanet orbital parameters</p>
+        <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">How the Gravity Constant and the density of earth is measured</p>
 
-        <!-- Tabs Header -->
-        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 flex-wrap">
-          <button id="tab-measuring-g" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: rgb(139, 92, 246); color: white;">Measuring G</button>
-          <button id="tab-exoplanet" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Exoplanet Orbit</button>
-        </div>
-
-        <div id="section-measuring-g" class="flex flex-col gap-2 mt-2">
+        <div class="flex flex-col gap-2 mt-2">
           <!-- Background Section -->
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
             <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Cavendish Torsion Balance</h3>
@@ -3166,40 +3263,11 @@ export class LevelUI {
           </div>
         </div>
 
-        <div id="section-exoplanet" class="flex flex-col gap-2 mt-2" style="display: none;">
-          <!-- Host Star spectroscopy explanation -->
-          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5 text-[10px] leading-relaxed text-slate-300">
-            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">The Host Star (Size and Mass)</h3>
-            <p>
-              Before we can understand the planet, we must understand the star. Astronomers use Stellar Spectroscopy to analyze the light emitted by the star. By looking at the spectrum (the specific colors of light absorbed by the star's atmosphere), they can determine the star's surface temperature and chemical composition. Using well-established models of stellar evolution, this temperature and spectrum allow astronomers to calculate the star's Mass (<i>M<sub>*</sub></i>) and Radius (<i>R<sub>*</sub></i>). Everything else about the planet is measured relative to these two stellar numbers.
-            </p>
-          </div>
-
-          <!-- Challenge Section -->
-          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
-            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Orbit Size Challenge:</span>
-            <p class="text-[10px] text-slate-300 leading-relaxed">
-              Suppose astronomers observe a transit with a period of <strong>100 days</strong> around a host star with a mass of <strong>1.0 Solar Mass</strong>.
-              Using the formula derived on the right, calculate the orbital radius <i>r</i> in Astronomical Units (AU).
-              <br><i>Hint: Adjust the sliders in the parameters panel on the right to Period = 100 days and Mass = 1.0 Solar Mass, then read the calculated radius.</i>
-            </p>
-            <span class="text-[10.5px] font-semibold text-slate-200">Orbit Radius r (in AU):</span>
-            <div class="flex gap-2">
-              <input type="number" id="exo-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.42" step="0.01">
-              <button id="exo-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
-            </div>
-            <div id="exo-feedback" class="text-[10.5px] font-medium hidden font-sans"></div>
-          </div>
-        </div>
-
         <!-- Checklist -->
         <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 mt-2">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
           <div id="check-gc" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Earth Density Verified</span>
-          </div>
-          <div id="check-exo" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
-            <span class="status-check">❌</span><span>Exoplanet Orbit Size Verified</span>
           </div>
         </div>
 
@@ -3219,36 +3287,18 @@ export class LevelUI {
     const verifyBtn = document.getElementById('gc-verify-btn');
     const input = document.getElementById('gc-input');
     const feedback = document.getElementById('gc-feedback');
+    const checkGc = document.getElementById('check-gc');
     const finalBtn = document.getElementById('gc-final-submit-btn');
 
-    const exoVerifyBtn = document.getElementById('exo-verify-btn');
-    const exoInput = document.getElementById('exo-input');
-    const exoFeedback = document.getElementById('exo-feedback');
-
     const refreshCheck = () => {
-      const checkGc = document.getElementById('check-gc');
-      const checkExo = document.getElementById('check-exo');
-      
       if (this.gravityConstantVerified) {
         checkGc.querySelector('.status-check').textContent = '✅';
         checkGc.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
-      } else {
-        checkGc.querySelector('.status-check').textContent = '❌';
-        checkGc.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
-      }
-
-      if (this.exoplanetVerified) {
-        checkExo.querySelector('.status-check').textContent = '✅';
-        checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
-      } else {
-        checkExo.querySelector('.status-check').textContent = '❌';
-        checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
-      }
-
-      if (this.gravityConstantVerified && this.exoplanetVerified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
       } else {
+        checkGc.querySelector('.status-check').textContent = '❌';
+        checkGc.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
         finalBtn.disabled = true;
         finalBtn.className = 'w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2';
       }
@@ -3268,55 +3318,10 @@ export class LevelUI {
       feedback.classList.remove('hidden');
     });
 
-    exoVerifyBtn.addEventListener('click', () => {
-      const val = parseFloat(exoInput.value);
-      if (val >= 0.41 && val <= 0.43) {
-        exoFeedback.textContent = '✓ Correct! The orbit radius is approximately 0.42 AU, placing the planet about 63 million kilometers from its host star.';
-        exoFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
-        this.exoplanetVerified = true;
-        refreshCheck();
-      } else {
-        exoFeedback.textContent = '❌ Incorrect. Hint: Set period to 100 days and star mass to 1.0 Solar Mass on the right, then read the calculated radius (r ≈ 0.42 AU).';
-        exoFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
-      }
-      exoFeedback.classList.remove('hidden');
-    });
-
     finalBtn.addEventListener('click', () => {
       alert("Congratulations! You have completed all levels, including measuring G and calculating the average density of the Earth, confirming the existence of its dense metallic core!");
       gameState.completeLevel(11);
     });
-
-    // Tab buttons event listeners
-    const switchTab = (tab) => {
-      const tabMeasuringG = document.getElementById('tab-measuring-g');
-      const tabExoplanet = document.getElementById('tab-exoplanet');
-      const sectG = document.getElementById('section-measuring-g');
-      const sectExo = document.getElementById('section-exoplanet');
-
-      if (tab === 'measuring-g') {
-        tabMeasuringG.style.background = 'rgb(139, 92, 246)';
-        tabMeasuringG.style.color = 'white';
-        tabExoplanet.style.background = 'transparent';
-        tabExoplanet.style.color = 'rgb(148, 163, 184)';
-        sectG.style.display = 'flex';
-        sectExo.style.display = 'none';
-      } else {
-        tabExoplanet.style.background = 'rgb(139, 92, 246)';
-        tabExoplanet.style.color = 'white';
-        tabMeasuringG.style.background = 'transparent';
-        tabMeasuringG.style.color = 'rgb(148, 163, 184)';
-        sectG.style.display = 'none';
-        sectExo.style.display = 'flex';
-      }
-
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setTab === 'function') {
-        window.activeLevelInstance.setTab(tab);
-      }
-    };
-
-    document.getElementById('tab-measuring-g').addEventListener('click', () => switchTab('measuring-g'));
-    document.getElementById('tab-exoplanet').addEventListener('click', () => switchTab('exoplanet'));
 
     refreshCheck();
   }

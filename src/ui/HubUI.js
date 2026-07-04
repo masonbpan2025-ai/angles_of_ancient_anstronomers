@@ -96,11 +96,11 @@ export class HubUI {
       },
       { 
         id: 10, 
-        title: 'Level 10: Black Hole', 
+        title: "Level 10: Applying Newton's Law", 
         target: 'earth-moon', 
-        desc: 'Find black hole condition using Newtonian physics', 
-        briefingTitle: 'Dark Stars & Black Holes', 
-        briefingText: 'Explore the Newtonian concept of a "Dark Star" — an object so massive or dense that its orbital velocity at the surface matches the speed of light, preventing light from escaping.' 
+        desc: "Use Newton's law to solve astronomy problems", 
+        briefingTitle: "Applying Newton's Law", 
+        briefingText: "Explore how Newton's laws of motion and universal gravitation can be applied to solve key astronomy problems, from determining the critical radius of a black hole to measuring the distance of far-away exoplanets using transit curves." 
       },
       { 
         id: 11, 
