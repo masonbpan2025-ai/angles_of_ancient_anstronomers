@@ -29,7 +29,8 @@ export class LevelUI {
 
     this.ptolemyVerified = {
       parallax: false,
-      epicycles: false
+      epicycles: false,
+      solvingEpicycles: false
     };
     this.copernicusVerified = false;
     this.kepler1Verified = false;
@@ -1653,7 +1654,48 @@ export class LevelUI {
     });
   }
 
+  verifySolvingEpicycle(challengeId, solvedList) {
+    const solvedCount = solvedList.length;
+    const checkSolving = document.getElementById('check-solving-epicycles');
+    if (checkSolving) {
+      const iconEl = checkSolving.querySelector('.status-check');
+      const progEl = checkSolving.querySelector('.progress-text');
+      
+      if (solvedCount === 4) {
+        iconEl.textContent = '✅';
+        checkSolving.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+        progEl.textContent = 'Solving Epicycles (4/4 Solved)';
+        this.ptolemyVerified.solvingEpicycles = true;
+      } else {
+        iconEl.textContent = '❌';
+        checkSolving.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+        progEl.textContent = `Solving Epicycles (${solvedCount}/4 Solved)`;
+        this.ptolemyVerified.solvingEpicycles = false;
+      }
+    }
+    
+    // Refresh final button state
+    const finalSubmitBtn = document.getElementById('final-submit-btn');
+    if (finalSubmitBtn) {
+      if (this.ptolemyVerified.parallax && this.ptolemyVerified.epicycles && this.ptolemyVerified.solvingEpicycles) {
+        finalSubmitBtn.disabled = false;
+        finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
+        finalSubmitBtn.style.color = 'white';
+        finalSubmitBtn.style.cursor = 'pointer';
+        finalSubmitBtn.classList.remove('bg-slate-800', 'text-slate-500', 'cursor-not-allowed');
+        finalSubmitBtn.classList.add('hover:bg-green-600');
+      } else {
+        finalSubmitBtn.disabled = true;
+        finalSubmitBtn.style.background = 'rgb(30, 41, 59)'; // slate-800
+        finalSubmitBtn.style.color = 'rgb(100, 116, 139)';
+        finalSubmitBtn.style.cursor = 'not-allowed';
+        finalSubmitBtn.classList.remove('hover:bg-green-600');
+      }
+    }
+  }
+
   renderLevel6() {
+    window.activeLevelUIInstance = this;
     let activeTab = 'parallax';
     const tabData = {
       parallax: {
@@ -1666,7 +1708,7 @@ export class LevelUI {
               "<div class='math-block text-center bg-slate-950/60 border border-slate-800/80 p-2 py-1.5 rounded my-1.5 font-mono text-[11px] text-sky-400'>p_deg = p / 3600 = 1 / (d × 3600)</div>" +
               "<p class='text-[10px] text-slate-400 mt-2'>Refer to the LCO page: <a href='https://lco.global/spacebook/distance/parallax-and-distance-measurement/' target='_blank' class='text-sky-400 underline hover:text-sky-300'>Stellar Parallax and Distance Measurement</a>.</p>",
         question: "Using the realistic distance to the closest star, Proxima Centauri (1.30 pc), calculate what is the parallax angle in degrees. Round to 6 decimal places.",
-        placeholder: "e.g. 0.00015",
+        placeholder: "e.g. 0.000214",
         answer: 0.000214
       },
       epicycles: {
@@ -1687,11 +1729,21 @@ export class LevelUI {
                   "• <strong>Saturn</strong>: 9.58 AU (ratio = 9.58 / 1.0)",
         placeholder: "Calculations",
         answer: null
+      },
+      'solving-epicycles': {
+        title: "3. Solving Epicycles",
+        desc: "Ptolemy's model used epicycles—smaller orbits moving along a larger deferent orbit—to explain planetary retrograde motion.<br><br>" +
+              "By using complex vector addition, we can describe planetary coordinates at any time:<br>" +
+              "<div class='math-block text-center bg-slate-950/60 border border-slate-800/80 p-2 py-1.5 rounded my-1.5 font-mono text-[11px] text-sky-400'>Z(t) = R·e<sup>i&omega;<sub>1</sub>t</sup> + r·e<sup>i&omega;<sub>2</sub>t</sup></div>" +
+              "Solve the parameters (R, r, &omega;₁, &omega;₂) for all 4 pattern challenges on the right to complete this task. Adjust the sliders to match the yellow dashed curves.",
+        question: "Challenge Progress:",
+        placeholder: "",
+        answer: null
       }
     };
 
     this.container.innerHTML = `
-      <div class="level-panel" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
+      <div class="level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
         <div class="flex justify-between items-center">
           <h2 class="text-base font-bold text-sky-400">Level 6: Ptolemy</h2>
           <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
@@ -1699,9 +1751,10 @@ export class LevelUI {
         <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">The Geocentric Model</p>
         
         <!-- Tabs Header -->
-        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1">
+        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1 flex-wrap">
           <button id="tab-parallax" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: rgb(56, 189, 248); color: black;">Stellar Parallax</button>
           <button id="tab-epicycles" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Retrograde & Epicycles</button>
+          <button id="tab-solving-epicycles" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Solving Epicycles</button>
         </div>
 
         <!-- Tab Contents Card -->
@@ -1767,10 +1820,14 @@ export class LevelUI {
             <span class="status-check text-red-500">❌</span>
             <span>Epicycle Calculations Verified</span>
           </div>
+          <div id="check-solving-epicycles" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check text-red-500">❌</span>
+            <span class="progress-text">Solving Epicycles (0/4 Solved)</span>
+          </div>
         </div>
 
         <!-- Final Unlock Button -->
-        <button id="final-submit-btn" disabled class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2">Verify & Unlock Next Level</button>
+        <button id="final-submit-btn" disabled class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2">Verify &amp; Unlock Next Level</button>
       </div>
 
       <!-- Parameter panel positioned at bottom right below the illustration -->
@@ -1793,20 +1850,10 @@ export class LevelUI {
     const finalSubmitBtn = document.getElementById('final-submit-btn');
     const paramPanel = document.getElementById('param-panel');
 
-    const progressSlider = document.getElementById('progress-slider');
-    const progressVal = document.getElementById('progress-val');
-
-    progressSlider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      progressVal.textContent = Math.round(val) + '%';
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setProgress === 'function') {
-        window.activeLevelInstance.setProgress(val);
-      }
-    });
-
     const updateChecklist = () => {
       const pItem = document.getElementById('check-parallax');
       const eItem = document.getElementById('check-epicycles');
+      const checkSolving = document.getElementById('check-solving-epicycles');
       
       if (pItem) {
         const iconEl = pItem.querySelector('.status-check');
@@ -1834,7 +1881,25 @@ export class LevelUI {
         }
       }
 
-      if (this.ptolemyVerified.parallax && this.ptolemyVerified.epicycles) {
+      if (checkSolving) {
+        const iconEl = checkSolving.querySelector('.status-check');
+        const progEl = checkSolving.querySelector('.progress-text');
+        const solvedCount = window.activeLevelInstance && window.activeLevelInstance.solvedChallenges ? window.activeLevelInstance.solvedChallenges.length : 0;
+        
+        if (this.ptolemyVerified.solvingEpicycles) {
+          iconEl.textContent = '✅';
+          checkSolving.classList.remove('text-slate-500');
+          checkSolving.classList.add('text-green-500');
+          progEl.textContent = 'Solving Epicycles (4/4 Solved)';
+        } else {
+          iconEl.textContent = '❌';
+          checkSolving.classList.remove('text-green-500');
+          checkSolving.classList.add('text-slate-500');
+          progEl.textContent = `Solving Epicycles (${solvedCount}/4 Solved)`;
+        }
+      }
+
+      if (this.ptolemyVerified.parallax && this.ptolemyVerified.epicycles && this.ptolemyVerified.solvingEpicycles) {
         finalSubmitBtn.disabled = false;
         finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
         finalSubmitBtn.style.color = 'white';
@@ -1853,23 +1918,9 @@ export class LevelUI {
     const updateEpicycleControls = () => {
       if (!window.activeLevelInstance) return;
       const inst = window.activeLevelInstance;
-      
-      const planetSelect = document.getElementById('planet-select');
-      if (planetSelect) {
-        planetSelect.value = inst.selectedPlanetName;
-      }
-
-      const playPauseIcon = document.getElementById('play-pause-icon');
-      const playPauseText = document.getElementById('play-pause-text');
-      if (playPauseIcon && playPauseText) {
-        playPauseIcon.textContent = inst.isSimPlaying ? '❚❚' : '▶';
-        playPauseText.textContent = inst.isSimPlaying ? 'Pause' : 'Play';
-      }
-
       const readoutEpiR = document.getElementById('readout-epi-r');
       const readoutDefSpeed = document.getElementById('readout-def-speed');
       const readoutEpiSpeed = document.getElementById('readout-epi-speed');
-      
       if (readoutEpiR) readoutEpiR.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.epicycleRadius.toFixed(1);
       if (readoutDefSpeed) readoutDefSpeed.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.deferentSpeed.toFixed(2);
       if (readoutEpiSpeed) readoutEpiSpeed.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.epicycleSpeed.toFixed(2);
@@ -1900,35 +1951,17 @@ export class LevelUI {
           tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
           tabFeedback.classList.remove('hidden');
         }
-        
-        // Hide parameter panel for the parallax tab since there is no parameter to tune
         paramPanel.style.display = 'none';
         
-      } else {
-        // Epicycles Tab
+      } else if (activeTab === 'epicycles') {
         verifyArea.classList.remove('hidden');
         parallaxInputContainer.classList.add('hidden');
         epicyclesInputContainer.classList.remove('hidden');
         parallaxSliderArea.classList.add('hidden');
         tabFeedback.classList.add('hidden');
-
-        if (this.ptolemyVerified.epicycles) {
-          document.getElementById('calc-venus').value = '43.1';
-          document.getElementById('calc-mars').value = '39.5';
-          document.getElementById('calc-jupiter').value = '11.5';
-          document.getElementById('calc-saturn').value = '6.5';
-          tabFeedback.textContent = "Correct! Epicycle sizes match the Keplerian/Ptolemaic scale ratios.";
-          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
-          tabFeedback.classList.remove('hidden');
-        }
-        
-        // Show parameter panel for epicycles
         paramPanel.style.display = 'flex';
-        
-        // Render Epicycle Controls
         paramPanel.innerHTML = `
           <div class="flex flex-wrap items-center justify-between gap-4 w-full">
-            <!-- Planet Select Dropdown -->
             <div class="flex items-center gap-2">
               <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Planet:</span>
               <select id="planet-select" class="bg-slate-950 border border-slate-800 text-sky-400 font-semibold text-xs px-3 py-1.5 rounded-lg outline-none focus:border-sky-500 transition cursor-pointer">
@@ -1939,8 +1972,6 @@ export class LevelUI {
                 <option value="Venus">Venus</option>
               </select>
             </div>
-
-            <!-- Play/Pause & Reset Controls -->
             <div class="flex items-center gap-2">
               <button id="play-pause-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5">
                 <span id="play-pause-icon">▶</span>
@@ -1950,93 +1981,72 @@ export class LevelUI {
                 Reset
               </button>
             </div>
-
-            <!-- Ratios Readout values -->
-            <div class="flex gap-4 text-[10px] font-mono">
-              <div class="flex flex-col">
-                <span class="text-[9px] text-slate-500 uppercase font-bold">Deferent R</span>
-                <span class="text-slate-300 font-semibold">60.0</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-[9px] text-slate-500 uppercase font-bold">Epicycle R</span>
-                <span id="readout-epi-r" class="text-sky-400 font-bold">-</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-[9px] text-slate-500 uppercase font-bold">Deferent Speed</span>
-                <span id="readout-def-speed" class="text-slate-300 font-semibold">-</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-[9px] text-slate-500 uppercase font-bold">Epicycle Speed</span>
-                <span id="readout-epi-speed" class="text-sky-400 font-bold">-</span>
-              </div>
+            <div class="flex gap-4 text-xs font-medium">
+              <div>Epicycle R: <span class="text-sky-400 font-mono" id="readout-epi-r">All</span></div>
+              <div>Deferent Speed: <span class="text-sky-400 font-mono" id="readout-def-speed">All</span></div>
+              <div>Epicycle Speed: <span class="text-sky-400 font-mono" id="readout-epi-speed">All</span></div>
             </div>
           </div>
         `;
-        
-        const planetSelect = document.getElementById('planet-select');
-        const playPauseBtn = document.getElementById('play-pause-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        
-        planetSelect.addEventListener('change', (e) => {
-          const val = e.target.value;
-          if (window.activeLevelInstance && typeof window.activeLevelInstance.selectPlanet === 'function') {
-            window.activeLevelInstance.selectPlanet(val);
-            updateEpicycleControls();
-          }
-        });
-        
-        playPauseBtn.addEventListener('click', () => {
-          if (window.activeLevelInstance && typeof window.activeLevelInstance.togglePlay === 'function') {
-            window.activeLevelInstance.togglePlay();
-            updateEpicycleControls();
-          }
-        });
-        
-        resetBtn.addEventListener('click', () => {
-          if (window.activeLevelInstance && typeof window.activeLevelInstance.resetSimulation === 'function') {
-            window.activeLevelInstance.resetSimulation();
-            updateEpicycleControls();
-          }
-        });
-        
-        updateEpicycleControls();
-      }
 
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        const tabId = btn.id.replace('tab-', '');
-        if (tabId === activeTab) {
-          btn.style.background = 'rgb(56, 189, 248)';
-          btn.style.color = 'black';
-        } else {
-          btn.style.background = 'transparent';
-          btn.style.color = 'rgb(148, 163, 184)';
+        const inst = window.activeLevelInstance;
+        if (inst) {
+          document.getElementById('planet-select').addEventListener('change', (e) => {
+            inst.selectPlanet(e.target.value);
+            updateEpicycleControls();
+          });
+          document.getElementById('play-pause-btn').addEventListener('click', () => {
+            inst.togglePlay();
+            updateEpicycleControls();
+          });
+          document.getElementById('reset-btn').addEventListener('click', () => {
+            inst.resetSimulation();
+            updateEpicycleControls();
+          });
+          updateEpicycleControls();
         }
-      });
-
-      // Notify canvas model of tab change
-      console.log("LevelUI: activeTab is:", activeTab, "activeLevelInstance:", window.activeLevelInstance);
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
-        window.activeLevelInstance.setSubtask(activeTab);
       } else {
-        console.warn("LevelUI: window.activeLevelInstance is not set or lacks setSubtask!");
+        // Solving Epicycles Tab
+        verifyArea.classList.add('hidden');
+        parallaxSliderArea.classList.add('hidden');
+        tabFeedback.classList.add('hidden');
+        paramPanel.style.display = 'flex';
+        const inst = window.activeLevelInstance;
+        if (inst && typeof inst.updateSolvingEpicyclesUI === 'function') {
+          inst.updateSolvingEpicyclesUI();
+        }
       }
     };
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        activeTab = e.target.id.replace('tab-', '');
-        updateTabContent();
-      });
-    });
+    const switchTab = (tab) => {
+      activeTab = tab;
+      const tabP = document.getElementById('tab-parallax');
+      const tabE = document.getElementById('tab-epicycles');
+      const tabS = document.getElementById('tab-solving-epicycles');
+      
+      tabP.style.background = tab === 'parallax' ? 'rgb(56, 189, 248)' : 'transparent';
+      tabP.style.color = tab === 'parallax' ? 'black' : 'rgb(148, 163, 184)';
+      tabE.style.background = tab === 'epicycles' ? 'rgb(56, 189, 248)' : 'transparent';
+      tabE.style.color = tab === 'epicycles' ? 'black' : 'rgb(148, 163, 184)';
+      tabS.style.background = tab === 'solving-epicycles' ? 'rgb(56, 189, 248)' : 'transparent';
+      tabS.style.color = tab === 'solving-epicycles' ? 'black' : 'rgb(148, 163, 184)';
+      
+      if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
+        window.activeLevelInstance.setSubtask(tab);
+      }
+      updateTabContent();
+      updateChecklist();
+    };
+
+    document.getElementById('tab-parallax').addEventListener('click', () => switchTab('parallax'));
+    document.getElementById('tab-epicycles').addEventListener('click', () => switchTab('epicycles'));
+    document.getElementById('tab-solving-epicycles').addEventListener('click', () => switchTab('solving-epicycles'));
 
     verifyTabBtn.addEventListener('click', () => {
       const val = parseFloat(calcInput.value);
       if (isNaN(val)) return;
-
       tabFeedback.classList.remove('hidden');
-
       if (activeTab === 'parallax') {
-        // Correct answer: 0.000214. Accept within [0.000212, 0.000216]
         if (Math.abs(val - 0.000214) <= 0.000002) {
           tabFeedback.textContent = "Correct! The parallax angle is extremely tiny (~0.000214°).";
           tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
@@ -2049,32 +2059,18 @@ export class LevelUI {
       }
     });
 
-    // Epicycles verification handler
     const verifyEpiBtn = document.getElementById('verify-epi-btn');
-    const calcVenus = document.getElementById('calc-venus');
-    const calcMars = document.getElementById('calc-mars');
-    const calcJupiter = document.getElementById('calc-jupiter');
-    const calcSaturn = document.getElementById('calc-saturn');
-
     verifyEpiBtn.addEventListener('click', () => {
-      const v = parseFloat(calcVenus.value);
-      const m = parseFloat(calcMars.value);
-      const j = parseFloat(calcJupiter.value);
-      const s = parseFloat(calcSaturn.value);
-
+      const v = parseFloat(document.getElementById('calc-venus').value);
+      const m = parseFloat(document.getElementById('calc-mars').value);
+      const j = parseFloat(document.getElementById('calc-jupiter').value);
+      const s = parseFloat(document.getElementById('calc-saturn').value);
       if (isNaN(v) || isNaN(m) || isNaN(j) || isNaN(s)) return;
-
       tabFeedback.classList.remove('hidden');
-
-      // Venus expected: 43.1 or 43.4
-      // Mars expected: 39.5
-      // Jupiter expected: 11.5
-      // Saturn expected: 6.5 or 6.3
       const vOk = Math.abs(v - 43.1) <= 0.45 || Math.abs(v - 43.38) <= 0.1;
       const mOk = Math.abs(m - 39.5) <= 0.15 || Math.abs(m - 39.47) <= 0.1;
       const jOk = Math.abs(j - 11.5) <= 0.15 || Math.abs(j - 11.54) <= 0.1;
       const sOk = Math.abs(s - 6.5) <= 0.25 || Math.abs(s - 6.26) <= 0.1;
-
       if (vOk && mOk && jOk && sOk) {
         tabFeedback.textContent = "Correct! Epicycle sizes match the Keplerian/Ptolemaic scale ratios.";
         tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
@@ -2093,10 +2089,11 @@ export class LevelUI {
     updateTabContent();
     updateChecklist();
   }
+
   renderLevel7() {
     this.container.innerHTML = `
-      <div class="level-panel" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
-        <div class="flex justify-between items-center">
+      <div class="level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
+        <div class="flex justify-between items-center flex-wrap">
           <h2 class="text-base font-bold text-sky-400">Level 7: Copernicus</h2>
           <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-2 py-1 rounded text-[10px] border border-slate-700 transition" id="exit-btn">Exit to Orbit</button>
         </div>

@@ -1,3 +1,42 @@
+const CHALLENGES = [
+  { 
+    id: 'c1', 
+    name: "The Cardioid", 
+    R: 80, 
+    r: 80, 
+    w1: 1.0, 
+    w2: 2.0,
+    hint: "Deferent and epicycle radii are equal (R = r = 80). They rotate in the same direction, with the epicycle spinning twice as fast as the deferent."
+  },
+  { 
+    id: 'c2', 
+    name: "Five-Petal Star", 
+    R: 120, 
+    r: 40, 
+    w1: 1.0, 
+    w2: -4.0,
+    hint: "Deferent radius is three times the epicycle radius (R = 120, r = 40). They spin in opposite directions, with the epicycle rotating four times faster."
+  },
+  { 
+    id: 'c3', 
+    name: "The Hexagram", 
+    R: 100, 
+    r: 50, 
+    w1: 2.0, 
+    w2: -4.0,
+    hint: "Deferent radius is twice the epicycle radius (R = 100, r = 50). They spin in opposite directions, with epicycle velocity twice the deferent speed."
+  },
+  { 
+    id: 'c4', 
+    name: "Nested Loops", 
+    R: 140, 
+    r: 60, 
+    w1: 1.0, 
+    w2: 4.5,
+    hint: "Deferent is larger than the epicycle (R = 140, r = 60). They rotate in the same direction with a fractional epicycle-to-deferent speed ratio."
+  }
+];
+
 export class Level6 {
   constructor(container) {
     this.instanceId = Math.random();
@@ -29,6 +68,23 @@ export class Level6 {
     this.sunAngle = 0;
     this.prevAlpha = 0;
     this.angleVelocity = 0;
+
+    // Solving Epicycles state
+    this.solvingEpicyclesR = 120;
+    this.solvingEpicyclesr = 45;
+    this.solvingEpicyclesw1 = 1.0;
+    this.solvingEpicyclesw2 = -3.0;
+    this.solvingEpicyclesPath = [];
+    this.solvingEpicyclesTime = 0;
+    this.solvingEpicyclesPlaying = true;
+    this.solvingEpicyclesMode = 'freeplay'; // 'freeplay' or 'challenge'
+    this.showCircles = true;
+    this.showVectors = true;
+
+    // Challenge state
+    this.selectedChallengeId = 'c1';
+    this.solvedChallenges = []; // list of solved IDs, e.g. ['c1']
+    this.targetPath = [];
 
     // Interactive 3D Orbit Camera view parameters
     this.pitch = -0.3; // Angle of elevation (pitch)
@@ -144,6 +200,15 @@ export class Level6 {
     console.log("Level6: setSubtask called on instance:", this.instanceId, "with:", tab);
     this.subtask = tab;
     this.resetSimulation();
+    if (tab === 'solving-epicycles') {
+      this.solvingEpicyclesPath = [];
+      this.solvingEpicyclesTime = 0;
+      if (this.solvingEpicyclesMode === 'challenge') {
+        const challenge = CHALLENGES.find(c => c.id === this.selectedChallengeId);
+        if (challenge) this.generateTargetPath(challenge);
+      }
+      setTimeout(() => this.updateSolvingEpicyclesUI(), 50);
+    }
   }
 
   setupMouseControls() {
@@ -1301,8 +1366,10 @@ export class Level6 {
       // Dispatch draw calls according to subtask
       if (this.subtask === 'parallax') {
         this.drawParallaxView();
-      } else {
+      } else if (this.subtask === 'epicycles') {
         this.drawEpicycleView();
+      } else if (this.subtask === 'solving-epicycles') {
+        this.drawSolvingEpicyclesView();
       }
 
       // Update simulation logic for epicycles tab
@@ -1325,6 +1392,571 @@ export class Level6 {
       this.animationId = requestAnimationFrame(this.animate);
     } catch (err) {
       console.error("Level6: ERROR IN ANIMATE LOOP:", err);
+    }
+  }
+
+  drawSolvingEpicyclesView() {
+    const ctx = this.ctx;
+    const taskPanelWidth = 400;
+    const W_illus = this.canvas.width - taskPanelWidth;
+    const H_illus = this.canvas.height;
+    
+    // We draw inside a single full panel on the right side of the screen
+    const cx = taskPanelWidth + W_illus / 2 - 130;
+    const cy = H_illus / 2;
+
+    let R = this.solvingEpicyclesR;
+    let r = this.solvingEpicyclesr;
+    let w1 = this.solvingEpicyclesw1;
+    let w2 = this.solvingEpicyclesw2;
+
+    // Snapping points on the correct parameters if in challenge mode
+    if (this.solvingEpicyclesMode === 'challenge') {
+      const challenge = CHALLENGES.find(c => c.id === this.selectedChallengeId);
+      if (challenge) {
+        if (Math.abs(R - challenge.R) <= 3) R = challenge.R;
+        if (Math.abs(r - challenge.r) <= 3) r = challenge.r;
+        if (Math.abs(w1 - challenge.w1) <= 0.15) w1 = challenge.w1;
+        if (Math.abs(w2 - challenge.w2) <= 0.15) w2 = challenge.w2;
+      }
+    }
+
+    // Increment time
+    if (this.solvingEpicyclesPlaying) {
+      this.solvingEpicyclesTime += 0.025;
+    }
+
+    const t = this.solvingEpicyclesTime;
+
+    // Calculate positions using complex number vector addition:
+    // Z(t) = R * e^(i*w1*t) + r * e^(i*w2*t)
+    const defX = R * Math.cos(w1 * t);
+    const defY = R * Math.sin(w1 * t);
+    
+    const epiX = r * Math.cos(w2 * t);
+    const epiY = r * Math.sin(w2 * t);
+
+    const finalX = cx + defX + epiX;
+    const finalY = cy + defY + epiY;
+
+    // Record trace
+    if (this.solvingEpicyclesPlaying) {
+      this.solvingEpicyclesPath.push({ x: finalX, y: finalY });
+      if (this.solvingEpicyclesPath.length > 800) {
+        this.solvingEpicyclesPath.shift();
+      }
+    }
+
+    // 1. Draw grid axes (slate-700 / slate-800 style)
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(taskPanelWidth, cy); ctx.lineTo(this.canvas.width, cy);
+    ctx.moveTo(cx, 0); ctx.lineTo(cx, this.canvas.height);
+    ctx.stroke();
+
+    // 2. Draw Target Path (dashed line) if in challenge mode
+    if (this.solvingEpicyclesMode === 'challenge' && this.targetPath.length > 0) {
+      ctx.save();
+      const challenge = CHALLENGES.find(c => c.id === this.selectedChallengeId);
+      const isMatched = (R === challenge.R && r === challenge.r && w1 === challenge.w1 && w2 === challenge.w2);
+
+      ctx.strokeStyle = isMatched ? '#10b981' : '#eab308'; // Solid emerald if matched, dashed yellow otherwise
+      ctx.lineWidth = isMatched ? 3 : 2;
+      if (!isMatched) {
+        ctx.setLineDash([4, 4]);
+      }
+      
+      ctx.beginPath();
+      this.targetPath.forEach((pt, i) => {
+        const tx = cx + pt.x;
+        const ty = cy + pt.y;
+        if (i === 0) ctx.moveTo(tx, ty);
+        else ctx.lineTo(tx, ty);
+      });
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 3. Draw Orbit Circles
+    if (this.showCircles) {
+      // Deferent circle centered at Earth (cx, cy)
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Epicycle circle centered at Deferent vector tip (cx + defX, cy + defY)
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx + defX, cy + defY, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // 4. Draw Trace Path
+    if (this.solvingEpicyclesPath.length > 1) {
+      ctx.save();
+      ctx.strokeStyle = '#f472b6'; // pink-400
+      ctx.lineWidth = 2.2;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#f472b6';
+      ctx.beginPath();
+      ctx.moveTo(this.solvingEpicyclesPath[0].x, this.solvingEpicyclesPath[0].y);
+      for (let i = 1; i < this.solvingEpicyclesPath.length; i++) {
+        ctx.lineTo(this.solvingEpicyclesPath[i].x, this.solvingEpicyclesPath[i].y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 5. Draw Vectors
+    if (this.showVectors) {
+      // Deferent Vector: Earth (cx, cy) to Epicycle Center (cx + defX, cy + defY)
+      ctx.strokeStyle = '#38bdf8'; // sky-400
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + defX, cy + defY);
+      ctx.stroke();
+
+      // Epicycle Center node
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(cx + defX, cy + defY, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Epicycle Vector: Epicycle Center to Planet (finalX, finalY)
+      ctx.strokeStyle = '#a78bfa'; // violet-400
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + defX, cy + defY);
+      ctx.lineTo(finalX, finalY);
+      ctx.stroke();
+    }
+
+    // 6. Draw Earth (Center)
+    ctx.save();
+    ctx.fillStyle = '#10b981'; // emerald-500
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#10b981';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    // 7. Draw Planet
+    ctx.save();
+    ctx.fillStyle = '#f472b6'; // pink-400
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#f472b6';
+    ctx.beginPath();
+    ctx.arc(finalX, finalY, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    // Real-time Equation glassmorphic Card Overlay (absolute card in top-left)
+    ctx.save();
+    const boxX = taskPanelWidth + 20;
+    const boxY = 80;
+    const boxW = 280;
+    const boxH = 55;
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
+    ctx.lineWidth = 1.5;
+    this.drawRoundedRect(ctx, boxX, boxY, boxW, boxH, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText("COMPLEX VECTOR ORBIT EQUATION", boxX + 12, boxY + 16);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 10px monospace';
+    ctx.fillText(`Z(t) = ${R}·e^(i·${w1.toFixed(1)}t) + ${r}·e^(i·${w2.toFixed(1)}t)`, boxX + 12, boxY + 36);
+    ctx.restore();
+
+    // Legends & Titles
+    ctx.fillStyle = '#ffffff'; ctx.font = '600 13px Outfit,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText("Ptolemaic Epicycle Simulator (Solving Epicycles)", taskPanelWidth + W_illus / 2, 40);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 10px Outfit,sans-serif';
+    ctx.fillText("Tune the deferent & epicycle radii and speeds to match the target curves.", taskPanelWidth + W_illus / 2, 57);
+  }
+
+  generateTargetPath(challenge) {
+    this.targetPath = [];
+    const steps = 1500;
+    const maxT = 40 * Math.PI; // Ensure loops close
+    const R = challenge.R;
+    const r = challenge.r;
+    const w1 = challenge.w1;
+    const w2 = challenge.w2;
+
+    for (let i = 0; i <= steps; i++) {
+      const t = (i / steps) * maxT;
+      const x = R * Math.cos(w1 * t) + r * Math.cos(w2 * t);
+      const y = R * Math.sin(w1 * t) + r * Math.sin(w2 * t);
+      this.targetPath.push({ x, y });
+    }
+  }
+
+  selectChallenge(challengeId) {
+    this.selectedChallengeId = challengeId;
+    const challenge = CHALLENGES.find(c => c.id === challengeId);
+    if (challenge) {
+      this.generateTargetPath(challenge);
+      
+      // Scramble parameters to a random starting position
+      // Ensure they don't accidentally start at the target
+      this.solvingEpicyclesR = Math.round(50 + Math.random() * 80);
+      while (Math.abs(this.solvingEpicyclesR - challenge.R) <= 5) {
+        this.solvingEpicyclesR = Math.round(50 + Math.random() * 80);
+      }
+      this.solvingEpicyclesr = Math.round(20 + Math.random() * 40);
+      while (Math.abs(this.solvingEpicyclesr - challenge.r) <= 5) {
+        this.solvingEpicyclesr = Math.round(20 + Math.random() * 40);
+      }
+      this.solvingEpicyclesw1 = parseFloat((0.5 + Math.random() * 2).toFixed(1));
+      while (Math.abs(this.solvingEpicyclesw1 - challenge.w1) <= 0.2) {
+        this.solvingEpicyclesw1 = parseFloat((0.5 + Math.random() * 2).toFixed(1));
+      }
+      this.solvingEpicyclesw2 = parseFloat((-6 + Math.random() * 12).toFixed(1));
+      while (Math.abs(this.solvingEpicyclesw2 - challenge.w2) <= 0.5) {
+        this.solvingEpicyclesw2 = parseFloat((-6 + Math.random() * 12).toFixed(1));
+      }
+
+      // Clear trace and time
+      this.solvingEpicyclesPath = [];
+      this.solvingEpicyclesTime = 0;
+      
+      this.updateSolvingEpicyclesUI();
+    }
+  }
+
+  updateSolvingEpicyclesUI() {
+    if (this.subtask !== 'solving-epicycles') return;
+
+    let R = this.solvingEpicyclesR;
+    let r = this.solvingEpicyclesr;
+    let w1 = this.solvingEpicyclesw1;
+    let w2 = this.solvingEpicyclesw2;
+
+    if (this.solvingEpicyclesMode === 'challenge') {
+      const challenge = CHALLENGES.find(c => c.id === this.selectedChallengeId);
+      if (challenge) {
+        // Snapping logic:
+        if (Math.abs(R - challenge.R) <= 3) {
+          R = challenge.R;
+          this.solvingEpicyclesR = R;
+        }
+        if (Math.abs(r - challenge.r) <= 3) {
+          r = challenge.r;
+          this.solvingEpicyclesr = r;
+        }
+        if (Math.abs(w1 - challenge.w1) <= 0.15) {
+          w1 = challenge.w1;
+          this.solvingEpicyclesw1 = w1;
+        }
+        if (Math.abs(w2 - challenge.w2) <= 0.15) {
+          w2 = challenge.w2;
+          this.solvingEpicyclesw2 = w2;
+        }
+      }
+    }
+    
+    // Check if matched
+    let matched = false;
+    if (this.solvingEpicyclesMode === 'challenge') {
+      const challenge = CHALLENGES.find(c => c.id === this.selectedChallengeId);
+      if (challenge) {
+        matched = (R === challenge.R && r === challenge.r && w1 === challenge.w1 && w2 === challenge.w2);
+        if (matched && !this.solvedChallenges.includes(this.selectedChallengeId)) {
+          this.solvedChallenges.push(this.selectedChallengeId);
+          if (window.activeLevelUIInstance && typeof window.activeLevelUIInstance.verifySolvingEpicycle === 'function') {
+            window.activeLevelUIInstance.verifySolvingEpicycle(this.selectedChallengeId, this.solvedChallenges);
+          }
+        }
+      }
+    }
+
+    const paramPanel = document.getElementById('param-panel');
+    if (paramPanel) {
+      paramPanel.innerHTML = this.getSolvingEpicyclesParamPanelHTML(R, r, w1, w2, matched);
+      this.attachSolvingEpicyclesEventListeners();
+    }
+  }
+
+  getSolvingEpicyclesParamPanelHTML(R, r, w1, w2, matched) {
+    const isChallenge = this.solvingEpicyclesMode === 'challenge';
+    const challenge = CHALLENGES.find(c => c.id === this.selectedChallengeId);
+
+    let chalSelectorHTML = '';
+    if (isChallenge) {
+      chalSelectorHTML = `
+        <div class="space-y-1.5 mt-1 w-full">
+          <span class="text-[9px] uppercase font-bold text-amber-400 tracking-wider">Select a Pattern:</span>
+          <div class="grid grid-cols-2 gap-1.5">
+            ${CHALLENGES.map(c => {
+              const solved = this.solvedChallenges.includes(c.id);
+              const active = this.selectedChallengeId === c.id;
+              const borderClass = active ? 'border-amber-500 bg-amber-950/30 text-amber-300' : 'border-slate-800 bg-slate-950/40 text-slate-400';
+              return `
+                <button data-chal-id="${c.id}" class="chal-select-btn border text-[10px] py-1 px-1.5 rounded transition hover:bg-slate-800 flex items-center justify-between ${borderClass}">
+                  <span>${c.name}</span>
+                  ${solved ? '<span class="text-green-500 text-[9px]">✓</span>' : ''}
+                </button>
+              `;
+            }).join('')}
+          </div>
+          <div class="bg-slate-950/50 border border-slate-850 p-2.5 rounded text-[10px] leading-relaxed text-slate-355 mt-1">
+            <span class="font-bold text-amber-400 block mb-0.5">Hint:</span>
+            ${challenge ? challenge.hint : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    const playPauseIcon = this.solvingEpicyclesPlaying ? 
+      `<svg class="w-3.5 h-3.5 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>` : 
+      `<svg class="w-3.5 h-3.5 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+
+    return `
+      <div class="flex flex-col gap-2 font-sans w-full font-sans">
+        <!-- Header & Playback controls -->
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <div class="flex items-center gap-1.5">
+            <h4 class="text-xs font-bold text-sky-400">Ptolemaic Epicycle Simulator</h4>
+            <span class="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded uppercase font-semibold">${this.solvingEpicyclesMode}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="eso-play-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-1.5 rounded-lg transition">
+              ${playPauseIcon}
+            </button>
+            <button id="eso-reset-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-1.5 rounded-lg transition" title="Reset Trace">
+              <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode Toggles (Freeplay / Challenges) -->
+        <div class="flex bg-slate-950/60 rounded-lg p-0.5 border border-slate-850">
+          <button id="mode-freeplay-btn" class="flex-1 text-[10px] py-1 rounded transition ${!isChallenge ? 'bg-slate-800 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Freeplay</button>
+          <button id="mode-challenge-btn" class="flex-1 text-[10px] py-1 rounded transition flex items-center justify-center gap-1.5 ${isChallenge ? 'bg-slate-800 text-amber-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
+            Challenges
+          </button>
+        </div>
+
+        <!-- Preset buttons for Freeplay -->
+        ${!isChallenge ? `
+          <div class="space-y-1.5 mt-1">
+            <span class="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Historical Presets:</span>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button id="preset-mars-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Mars</button>
+              <button id="preset-jupiter-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Jupiter</button>
+              <button id="preset-fourier-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition text-pink-300 border-pink-955/30">Fourier</button>
+            </div>
+          </div>
+        ` : chalSelectorHTML}
+
+        <!-- Show/Hide Toggles -->
+        <div class="flex gap-4 items-center justify-between border-t border-slate-850 pt-2 mt-1">
+          <label class="flex items-center gap-1.5 text-[10px] text-slate-400 cursor-pointer hover:text-slate-200 transition">
+            <input type="checkbox" id="toggle-vectors-chk" ${this.showVectors ? 'checked' : ''} class="rounded bg-slate-850 border-slate-700 accent-sky-400 w-3.5 h-3.5">
+            <span>Show Vectors</span>
+          </label>
+          <label class="flex items-center gap-1.5 text-[10px] text-slate-400 cursor-pointer hover:text-slate-200 transition">
+            <input type="checkbox" id="toggle-circles-chk" ${this.showCircles ? 'checked' : ''} class="rounded bg-slate-850 border-slate-700 accent-sky-400 w-3.5 h-3.5">
+            <span>Show Orbits</span>
+          </label>
+        </div>
+
+        <!-- Success Message -->
+        ${isChallenge && matched ? `
+          <div class="bg-emerald-950/40 border border-emerald-500/30 text-green-400 p-2 rounded-lg flex items-center gap-2 mt-1 shadow-md">
+            <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <span class="font-semibold text-[10px]">Perfect Match! Parameter solved.</span>
+          </div>
+        ` : ''}
+
+        <!-- Sliders -->
+        <div class="space-y-2 border-t border-slate-850 pt-2 mt-1">
+          <div class="space-y-0.5">
+            <div class="flex justify-between text-[10px] font-medium">
+              <span class="text-sky-300">Deferent Radius (R):</span>
+              <span class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${R} px</span>
+            </div>
+            <input type="range" id="slider-eso-R" min="10" max="200" step="1" value="${R}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+          </div>
+
+          <div class="space-y-0.5">
+            <div class="flex justify-between text-[10px] font-medium">
+              <span class="text-violet-350">Epicycle Radius (r):</span>
+              <span class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${r} px</span>
+            </div>
+            <input type="range" id="slider-eso-r" min="0" max="150" step="1" value="${r}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
+          </div>
+
+          <div class="space-y-0.5">
+            <div class="flex justify-between text-[10px] font-medium">
+              <span class="text-sky-300">Deferent Speed (&omega;₁):</span>
+              <span class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${w1.toFixed(1)}</span>
+            </div>
+            <input type="range" id="slider-eso-w1" min="-5" max="5" step="0.1" value="${w1}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+          </div>
+
+          <div class="space-y-0.5">
+            <div class="flex justify-between text-[10px] font-medium">
+              <span class="text-violet-350">Epicycle Speed (&omega;₂):</span>
+              <span class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${w2.toFixed(1)}</span>
+            </div>
+            <input type="range" id="slider-eso-w2" min="-15" max="15" step="0.1" value="${w2}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  attachSolvingEpicyclesEventListeners() {
+    const playBtn = document.getElementById('eso-play-btn');
+    if (playBtn) {
+      playBtn.addEventListener('click', () => {
+        this.solvingEpicyclesPlaying = !this.solvingEpicyclesPlaying;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const resetBtn = document.getElementById('eso-reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const freeplayBtn = document.getElementById('mode-freeplay-btn');
+    if (freeplayBtn) {
+      freeplayBtn.addEventListener('click', () => {
+        this.solvingEpicyclesMode = 'freeplay';
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const challengeBtn = document.getElementById('mode-challenge-btn');
+    if (challengeBtn) {
+      challengeBtn.addEventListener('click', () => {
+        this.solvingEpicyclesMode = 'challenge';
+        this.selectChallenge(this.selectedChallengeId);
+      });
+    }
+
+    const marsBtn = document.getElementById('preset-mars-btn');
+    if (marsBtn) {
+      marsBtn.addEventListener('click', () => {
+        this.solvingEpicyclesR = 130;
+        this.solvingEpicyclesr = 85;
+        this.solvingEpicyclesw1 = 1.0;
+        this.solvingEpicyclesw2 = 2.14;
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const jupiterBtn = document.getElementById('preset-jupiter-btn');
+    if (jupiterBtn) {
+      jupiterBtn.addEventListener('click', () => {
+        this.solvingEpicyclesR = 150;
+        this.solvingEpicyclesr = 28;
+        this.solvingEpicyclesw1 = 1.0;
+        this.solvingEpicyclesw2 = 12.0;
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const fourierBtn = document.getElementById('preset-fourier-btn');
+    if (fourierBtn) {
+      fourierBtn.addEventListener('click', () => {
+        this.solvingEpicyclesR = 100;
+        this.solvingEpicyclesr = 33;
+        this.solvingEpicyclesw1 = 1.0;
+        this.solvingEpicyclesw2 = -2.0;
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const chalButtons = document.querySelectorAll('.chal-select-btn');
+    chalButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const chalId = e.currentTarget.getAttribute('data-chal-id');
+        this.selectChallenge(chalId);
+      });
+    });
+
+    const vectorsChk = document.getElementById('toggle-vectors-chk');
+    if (vectorsChk) {
+      vectorsChk.addEventListener('change', (e) => {
+        this.showVectors = e.target.checked;
+      });
+    }
+
+    const circlesChk = document.getElementById('toggle-circles-chk');
+    if (circlesChk) {
+      circlesChk.addEventListener('change', (e) => {
+        this.showCircles = e.target.checked;
+      });
+    }
+
+    const R_slider = document.getElementById('slider-eso-R');
+    if (R_slider) {
+      R_slider.addEventListener('input', (e) => {
+        this.solvingEpicyclesR = parseInt(e.target.value);
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const r_slider = document.getElementById('slider-eso-r');
+    if (r_slider) {
+      r_slider.addEventListener('input', (e) => {
+        this.solvingEpicyclesr = parseInt(e.target.value);
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const w1_slider = document.getElementById('slider-eso-w1');
+    if (w1_slider) {
+      w1_slider.addEventListener('input', (e) => {
+        this.solvingEpicyclesw1 = parseFloat(e.target.value);
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const w2_slider = document.getElementById('slider-eso-w2');
+    if (w2_slider) {
+      w2_slider.addEventListener('input', (e) => {
+        this.solvingEpicyclesw2 = parseFloat(e.target.value);
+        this.updateSolvingEpicyclesUI();
+      });
     }
   }
 
