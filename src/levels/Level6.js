@@ -1398,11 +1398,11 @@ export class Level6 {
   drawSolvingEpicyclesView() {
     const ctx = this.ctx;
     const taskPanelWidth = 400;
-    const W_illus = this.canvas.width - taskPanelWidth;
+    const rightPanelWidth = 400;
+    const W_illus = this.canvas.width - taskPanelWidth - rightPanelWidth;
     const H_illus = this.canvas.height;
     
-    // We draw inside a single full panel on the right side of the screen
-    const cx = taskPanelWidth + W_illus / 2 - 130;
+    const cx = taskPanelWidth + W_illus / 2;
     const cy = H_illus / 2;
 
     let R = this.solvingEpicyclesR;
@@ -1564,10 +1564,10 @@ export class Level6 {
 
     // Real-time Equation glassmorphic Card Overlay (absolute card in top-left)
     ctx.save();
-    const boxX = taskPanelWidth + 20;
-    const boxY = 80;
     const boxW = 280;
     const boxH = 55;
+    const boxX = taskPanelWidth + W_illus / 2 - boxW / 2;
+    const boxY = 80;
 
     ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
     ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';

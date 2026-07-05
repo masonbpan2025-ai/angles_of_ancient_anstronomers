@@ -1959,7 +1959,16 @@ export class LevelUI {
         epicyclesInputContainer.classList.remove('hidden');
         parallaxSliderArea.classList.add('hidden');
         tabFeedback.classList.add('hidden');
+        
         paramPanel.style.display = 'flex';
+        paramPanel.className = "absolute bottom-6 right-6 left-[420px] bg-slate-900/90 backdrop-blur-md border border-slate-800 p-4 rounded-xl shadow-xl flex flex-col gap-2.5 text-slate-200 pointer-events-auto shadow-2xl";
+        paramPanel.style.width = "";
+        paramPanel.style.maxHeight = "";
+        paramPanel.style.bottom = "";
+        paramPanel.style.right = "";
+        paramPanel.style.left = "";
+        paramPanel.style.top = "";
+
         paramPanel.innerHTML = `
           <div class="flex flex-wrap items-center justify-between gap-4 w-full">
             <div class="flex items-center gap-2">
@@ -2010,7 +2019,16 @@ export class LevelUI {
         verifyArea.classList.add('hidden');
         parallaxSliderArea.classList.add('hidden');
         tabFeedback.classList.add('hidden');
+        
         paramPanel.style.display = 'flex';
+        paramPanel.className = "level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800 pointer-events-auto p-4 rounded-xl flex flex-col gap-2.5 text-slate-200 overflow-y-auto";
+        paramPanel.style.width = "380px";
+        paramPanel.style.maxHeight = "calc(100% - 60px)";
+        paramPanel.style.bottom = "20px";
+        paramPanel.style.right = "20px";
+        paramPanel.style.left = "auto";
+        paramPanel.style.top = "auto";
+
         const inst = window.activeLevelInstance;
         if (inst && typeof inst.updateSolvingEpicyclesUI === 'function') {
           inst.updateSolvingEpicyclesUI();
