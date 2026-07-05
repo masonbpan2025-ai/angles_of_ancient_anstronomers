@@ -1636,15 +1636,13 @@ export class Level6 {
         this.solvingEpicyclesw2 = parseFloat((-6 + Math.random() * 12).toFixed(1));
       }
 
-      // Clear trace and time
       this.solvingEpicyclesPath = [];
       this.solvingEpicyclesTime = 0;
-      
       this.updateSolvingEpicyclesUI();
     }
   }
 
-  updateSolvingEpicyclesUI() {
+  updateSolvingEpicyclesUI(fromDrag = false) {
     if (this.subtask !== 'solving-epicycles') return;
 
     let R = this.solvingEpicyclesR;
@@ -1686,14 +1684,48 @@ export class Level6 {
           if (window.activeLevelUIInstance && typeof window.activeLevelUIInstance.verifySolvingEpicycle === 'function') {
             window.activeLevelUIInstance.verifySolvingEpicycle(this.selectedChallengeId, this.solvedChallenges);
           }
+          // Force full redraw on match to checkmark the challenge selector button
+          fromDrag = false;
         }
       }
     }
 
-    const paramPanel = document.getElementById('param-panel');
-    if (paramPanel) {
-      paramPanel.innerHTML = this.getSolvingEpicyclesParamPanelHTML(R, r, w1, w2, matched);
-      this.attachSolvingEpicyclesEventListeners();
+    if (fromDrag) {
+      // Direct DOM updates for text readouts and snapping values
+      const readoutR = document.getElementById('readout-eso-R');
+      const readout_r = document.getElementById('readout-eso-r');
+      const readout_w1 = document.getElementById('readout-eso-w1');
+      const readout_w2 = document.getElementById('readout-eso-w2');
+      
+      const sliderR = document.getElementById('slider-eso-R');
+      const slider_r = document.getElementById('slider-eso-r');
+      const slider_w1 = document.getElementById('slider-eso-w1');
+      const slider_w2 = document.getElementById('slider-eso-w2');
+
+      if (readoutR) readoutR.textContent = `${R} px`;
+      if (readout_r) readout_r.textContent = `${r} px`;
+      if (readout_w1) readout_w1.textContent = w1.toFixed(1);
+      if (readout_w2) readout_w2.textContent = w2.toFixed(1);
+
+      if (sliderR) sliderR.value = R;
+      if (slider_r) slider_r.value = r;
+      if (slider_w1) slider_w1.value = w1;
+      if (slider_w2) slider_w2.value = w2;
+
+      const successMsg = document.getElementById('eso-success-msg');
+      if (successMsg) {
+        if (matched) {
+          successMsg.classList.remove('hidden');
+        } else {
+          successMsg.classList.add('hidden');
+        }
+      }
+    } else {
+      const paramPanel = document.getElementById('param-panel');
+      if (paramPanel) {
+        paramPanel.innerHTML = this.getSolvingEpicyclesParamPanelHTML(R, r, w1, w2, matched);
+        this.attachSolvingEpicyclesEventListeners();
+      }
     }
   }
 
@@ -1732,7 +1764,7 @@ export class Level6 {
       `<svg class="w-3.5 h-3.5 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
 
     return `
-      <div class="flex flex-col gap-2 font-sans w-full font-sans">
+      <div class="flex flex-col gap-2 font-sans w-full">
         <!-- Header & Playback controls -->
         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
           <div class="flex items-center gap-1.5">
@@ -1785,19 +1817,17 @@ export class Level6 {
         </div>
 
         <!-- Success Message -->
-        ${isChallenge && matched ? `
-          <div class="bg-emerald-950/40 border border-emerald-500/30 text-green-400 p-2 rounded-lg flex items-center gap-2 mt-1 shadow-md">
-            <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-            <span class="font-semibold text-[10px]">Perfect Match! Parameter solved.</span>
-          </div>
-        ` : ''}
+        <div id="eso-success-msg" class="${isChallenge && matched ? '' : 'hidden'} bg-emerald-950/40 border border-emerald-500/30 text-green-400 p-2 rounded-lg flex items-center gap-2 mt-1 shadow-md">
+          <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          <span class="font-semibold text-[10px]">Perfect Match! Parameter solved.</span>
+        </div>
 
         <!-- Sliders -->
         <div class="space-y-2 border-t border-slate-850 pt-2 mt-1">
           <div class="space-y-0.5">
             <div class="flex justify-between text-[10px] font-medium">
               <span class="text-sky-300">Deferent Radius (R):</span>
-              <span class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${R} px</span>
+              <span id="readout-eso-R" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${R} px</span>
             </div>
             <input type="range" id="slider-eso-R" min="10" max="200" step="1" value="${R}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
           </div>
@@ -1805,7 +1835,7 @@ export class Level6 {
           <div class="space-y-0.5">
             <div class="flex justify-between text-[10px] font-medium">
               <span class="text-violet-350">Epicycle Radius (r):</span>
-              <span class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${r} px</span>
+              <span id="readout-eso-r" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${r} px</span>
             </div>
             <input type="range" id="slider-eso-r" min="0" max="150" step="1" value="${r}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
           </div>
@@ -1813,7 +1843,7 @@ export class Level6 {
           <div class="space-y-0.5">
             <div class="flex justify-between text-[10px] font-medium">
               <span class="text-sky-300">Deferent Speed (&omega;₁):</span>
-              <span class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${w1.toFixed(1)}</span>
+              <span id="readout-eso-w1" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${w1.toFixed(1)}</span>
             </div>
             <input type="range" id="slider-eso-w1" min="-5" max="5" step="0.1" value="${w1}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
           </div>
@@ -1821,7 +1851,7 @@ export class Level6 {
           <div class="space-y-0.5">
             <div class="flex justify-between text-[10px] font-medium">
               <span class="text-violet-350">Epicycle Speed (&omega;₂):</span>
-              <span class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${w2.toFixed(1)}</span>
+              <span id="readout-eso-w2" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${w2.toFixed(1)}</span>
             </div>
             <input type="range" id="slider-eso-w2" min="-15" max="15" step="0.1" value="${w2}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
           </div>
@@ -1931,7 +1961,7 @@ export class Level6 {
     if (R_slider) {
       R_slider.addEventListener('input', (e) => {
         this.solvingEpicyclesR = parseInt(e.target.value);
-        this.updateSolvingEpicyclesUI();
+        this.updateSolvingEpicyclesUI(true);
       });
     }
 
@@ -1939,7 +1969,7 @@ export class Level6 {
     if (r_slider) {
       r_slider.addEventListener('input', (e) => {
         this.solvingEpicyclesr = parseInt(e.target.value);
-        this.updateSolvingEpicyclesUI();
+        this.updateSolvingEpicyclesUI(true);
       });
     }
 
@@ -1947,7 +1977,7 @@ export class Level6 {
     if (w1_slider) {
       w1_slider.addEventListener('input', (e) => {
         this.solvingEpicyclesw1 = parseFloat(e.target.value);
-        this.updateSolvingEpicyclesUI();
+        this.updateSolvingEpicyclesUI(true);
       });
     }
 
@@ -1955,7 +1985,7 @@ export class Level6 {
     if (w2_slider) {
       w2_slider.addEventListener('input', (e) => {
         this.solvingEpicyclesw2 = parseFloat(e.target.value);
-        this.updateSolvingEpicyclesUI();
+        this.updateSolvingEpicyclesUI(true);
       });
     }
   }
