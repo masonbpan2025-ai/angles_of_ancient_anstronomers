@@ -1763,6 +1763,30 @@ export class Level6 {
       `<svg class="w-3.5 h-3.5 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>` : 
       `<svg class="w-3.5 h-3.5 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
 
+    // Snap tick mark setup for challenge mode
+    let rDatalist = '';
+    let rTargetListAttr = '';
+    let epirDatalist = '';
+    let epirTargetListAttr = '';
+    let w1Datalist = '';
+    let w1TargetListAttr = '';
+    let w2Datalist = '';
+    let w2TargetListAttr = '';
+
+    if (isChallenge && challenge) {
+      rDatalist = `<datalist id="eso-R-ticks"><option value="${challenge.R}"></option></datalist>`;
+      rTargetListAttr = `list="eso-R-ticks"`;
+      
+      epirDatalist = `<datalist id="eso-r-ticks"><option value="${challenge.r}"></option></datalist>`;
+      epirTargetListAttr = `list="eso-r-ticks"`;
+
+      w1Datalist = `<datalist id="eso-w1-ticks"><option value="${challenge.w1}"></option></datalist>`;
+      w1TargetListAttr = `list="eso-w1-ticks"`;
+
+      w2Datalist = `<datalist id="eso-w2-ticks"><option value="${challenge.w2}"></option></datalist>`;
+      w2TargetListAttr = `list="eso-w2-ticks"`;
+    }
+
     return `
       <div class="flex flex-col gap-2 font-sans w-full">
         <!-- Header & Playback controls -->
@@ -1775,7 +1799,7 @@ export class Level6 {
             <button id="eso-play-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-1.5 rounded-lg transition">
               ${playPauseIcon}
             </button>
-            <button id="eso-reset-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-1.5 rounded-lg transition" title="Reset Trace">
+            <button id="eso-reset-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-1.5 rounded-lg transition" title="Reset Trace (Refresh)">
               <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"/>
               </svg>
@@ -1829,7 +1853,8 @@ export class Level6 {
               <span class="text-sky-300">Deferent Radius (R):</span>
               <span id="readout-eso-R" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${R} px</span>
             </div>
-            <input type="range" id="slider-eso-R" min="10" max="200" step="1" value="${R}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+            <input type="range" id="slider-eso-R" min="10" max="200" step="1" value="${R}" ${rTargetListAttr} class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+            ${rDatalist}
           </div>
 
           <div class="space-y-0.5">
@@ -1837,7 +1862,8 @@ export class Level6 {
               <span class="text-violet-350">Epicycle Radius (r):</span>
               <span id="readout-eso-r" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${r} px</span>
             </div>
-            <input type="range" id="slider-eso-r" min="0" max="150" step="1" value="${r}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
+            <input type="range" id="slider-eso-r" min="0" max="150" step="1" value="${r}" ${epirTargetListAttr} class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
+            ${epirDatalist}
           </div>
 
           <div class="space-y-0.5">
@@ -1845,7 +1871,8 @@ export class Level6 {
               <span class="text-sky-300">Deferent Speed (&omega;₁):</span>
               <span id="readout-eso-w1" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${w1.toFixed(1)}</span>
             </div>
-            <input type="range" id="slider-eso-w1" min="-5" max="5" step="0.1" value="${w1}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+            <input type="range" id="slider-eso-w1" min="-5" max="5" step="0.1" value="${w1}" ${w1TargetListAttr} class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+            ${w1Datalist}
           </div>
 
           <div class="space-y-0.5">
@@ -1853,7 +1880,8 @@ export class Level6 {
               <span class="text-violet-350">Epicycle Speed (&omega;₂):</span>
               <span id="readout-eso-w2" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${w2.toFixed(1)}</span>
             </div>
-            <input type="range" id="slider-eso-w2" min="-15" max="15" step="0.1" value="${w2}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
+            <input type="range" id="slider-eso-w2" min="-15" max="15" step="0.1" value="${w2}" ${w2TargetListAttr} class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
+            ${w2Datalist}
           </div>
         </div>
       </div>
@@ -1874,6 +1902,31 @@ export class Level6 {
       resetBtn.addEventListener('click', () => {
         this.solvingEpicyclesPath = [];
         this.solvingEpicyclesTime = 0;
+
+        // Also trigger check if matched and not solved yet when clicking refresh/reset
+        if (this.solvingEpicyclesMode === 'challenge') {
+          const challenge = CHALLENGES.find(c => c.id === this.selectedChallengeId);
+          if (challenge) {
+            let R = this.solvingEpicyclesR;
+            let r = this.solvingEpicyclesr;
+            let w1 = this.solvingEpicyclesw1;
+            let w2 = this.solvingEpicyclesw2;
+
+            if (Math.abs(R - challenge.R) <= 3) R = challenge.R;
+            if (Math.abs(r - challenge.r) <= 3) r = challenge.r;
+            if (Math.abs(w1 - challenge.w1) <= 0.15) w1 = challenge.w1;
+            if (Math.abs(w2 - challenge.w2) <= 0.15) w2 = challenge.w2;
+
+            const matched = (R === challenge.R && r === challenge.r && w1 === challenge.w1 && w2 === challenge.w2);
+            if (matched && !this.solvedChallenges.includes(this.selectedChallengeId)) {
+              this.solvedChallenges.push(this.selectedChallengeId);
+              if (window.activeLevelUIInstance && typeof window.activeLevelUIInstance.verifySolvingEpicycle === 'function') {
+                window.activeLevelUIInstance.verifySolvingEpicycle(this.selectedChallengeId, this.solvedChallenges);
+              }
+            }
+          }
+        }
+
         this.updateSolvingEpicyclesUI();
       });
     }

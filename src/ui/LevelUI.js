@@ -1735,7 +1735,8 @@ export class LevelUI {
         desc: "Ptolemy's model used epicycles—smaller orbits moving along a larger deferent orbit—to explain planetary retrograde motion.<br><br>" +
               "By using complex vector addition, we can describe planetary coordinates at any time:<br>" +
               "<div class='math-block text-center bg-slate-950/60 border border-slate-800/80 p-2 py-1.5 rounded my-1.5 font-mono text-[11px] text-sky-400'>Z(t) = R·e<sup>i&omega;<sub>1</sub>t</sup> + r·e<sup>i&omega;<sub>2</sub>t</sup></div>" +
-              "Solve the parameters (R, r, &omega;₁, &omega;₂) for all 4 pattern challenges on the right to complete this task. Adjust the sliders to match the yellow dashed curves.",
+              "Solve the parameters (R, r, &omega;₁, &omega;₂) for all 4 pattern challenges on the right to complete this task. Adjust the sliders to match the yellow dashed curves.<br><br>" +
+              "This is essentially a <strong>Fourier expansion</strong> in the complex plane! By adding more epicycles (harmonic terms), any closed curve can be drawn. There is an algorithm to determine each epicycle's amplitude and frequency. Watch this excellent video explaining the math: <a href='https://www.youtube.com/watch?v=r6sGWTCMz2k' target='_blank' class='text-sky-400 underline hover:text-sky-300 font-semibold transition'>Fourier Series Animation (YouTube)</a>.",
         question: "Challenge Progress:",
         placeholder: "",
         answer: null
