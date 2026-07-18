@@ -1748,9 +1748,10 @@ export class LevelUI {
               "<strong>Heliocentric Ellipse vs. Geocentric Epicycles</strong>:<br>" +
               "Kepler showed that planets move in ellipses (focus at Sun) with eccentricity <i>e</i>. Using Fourier expansion, we can approximate an elliptical orbit using a chain of circular epicycles rotating at multiples of the mean motion frequency (&omega;, 2&omega;, -&omega;).<br><br>" +
               "<em>Note: Planetary eccentricities in this simulator are exaggerated (e.g. Mercury e = 0.55 instead of 0.206) to make the visual effect of adding more epicycles clearly visible!</em><br><br>" +
-              "• Increase the epicycle count slider on the right to see how additional terms approximate the actual elliptical orbit (dashed white path).<br>" +
+              "• Use the **Reference Frame** dropdown to switch between Heliocentric (Sun Center) and Geocentric (Earth Center) modes.<br>" +
+              "• Increase the epicycle count slider on the right to see how additional terms approximate the actual elliptical or geocentric loop orbits.<br>" +
               "• Try **Freeplay Draw Mode**! Click, drag, and draw any closed loop in the panel, then watch the Fourier Transform compute the exact epicycle chain to reproduce your drawing!",
-        question: "Using the simulator on the right, select Mercury (Exaggerated e = 0.55) in Ellipse Mode. What is the minimum number of epicycles needed to closely approximate its actual elliptical path (reducing visual error to &lt;1%)?",
+        question: "Using the simulator on the right, select Mercury (Exaggerated e = 0.55) in Ellipse Mode, Heliocentric reference frame. What is the minimum number of epicycles needed to closely approximate its actual elliptical path (reducing visual error to &lt;1%)?",
         placeholder: "e.g. 3",
         answer: 3
       }

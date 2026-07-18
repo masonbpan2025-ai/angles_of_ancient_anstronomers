@@ -91,6 +91,7 @@ export class Level6 {
     this.fourierTime = 0;
     this.fourierNumVectors = 30;
     this.fourierPlaying = true;
+    this.fourierFrame = 'helio'; // 'helio' or 'geo'
 
     // Challenge state
     this.selectedChallengeId = 'c1';
@@ -224,6 +225,7 @@ export class Level6 {
       this.fourierTime = 0;
       this.drawPoints = [];
       this.fourierCoefficients = [];
+      this.fourierFrame = 'helio';
       setTimeout(() => this.updateFourierUI(), 50);
     }
   }
@@ -236,8 +238,8 @@ export class Level6 {
       if (this.subtask === 'fourier' && this.fourierMode === 'draw') {
         const taskPanelWidth = 400;
         const W_illus = this.canvas.width - taskPanelWidth;
-        const cx = taskPanelWidth + W_illus / 2;
-        const cy = this.canvas.height / 2;
+        const cx = taskPanelWidth + W_illus * 0.42;
+        const cy = this.canvas.height * 0.42;
         
         this.isDrawingCustom = true;
         this.drawPoints = [{ x: e.clientX - cx, y: e.clientY - cy }];
@@ -254,8 +256,8 @@ export class Level6 {
       if (this.subtask === 'fourier' && this.fourierMode === 'draw' && this.isDrawingCustom) {
         const taskPanelWidth = 400;
         const W_illus = this.canvas.width - taskPanelWidth;
-        const cx = taskPanelWidth + W_illus / 2;
-        const cy = this.canvas.height / 2;
+        const cx = taskPanelWidth + W_illus * 0.42;
+        const cy = this.canvas.height * 0.42;
         
         this.drawPoints.push({ x: e.clientX - cx, y: e.clientY - cy });
         return;
@@ -2192,6 +2194,54 @@ export class Level6 {
     return points;
   }
 
+  generateKeplerGeocentric(planetName) {
+    const points = [];
+    const N = 128;
+    
+    let e = 0.55;
+    let a = 45;
+    let w_planet = 4.0;
+    let w_sun = 1.0;
+    let T = Math.PI * 2; // common period
+    
+    if (planetName === 'Mercury') {
+      e = 0.55; a = 45; w_planet = 4.0; w_sun = 1.0; T = Math.PI * 2;
+    } else if (planetName === 'Mars') {
+      e = 0.40; a = 60; w_planet = 0.5; w_sun = 1.0; T = Math.PI * 4;
+    } else if (planetName === 'Jupiter') {
+      e = 0.30; a = 80; w_planet = 0.25; w_sun = 1.0; T = Math.PI * 8;
+    } else if (planetName === 'Earth') {
+      // Just Sun orbiting Earth in an ellipse
+      e = 0.20; a = 120; w_planet = 0; w_sun = 1.0; T = Math.PI * 2;
+    }
+
+    const R_sun = (planetName === 'Earth') ? 0 : 100;
+
+    for (let i = 0; i < N; i++) {
+      const t = (T * i) / N;
+      
+      // 1. Sun's position around Earth (circle)
+      const sunX = R_sun * Math.cos(w_sun * t);
+      const sunY = R_sun * Math.sin(w_sun * t);
+      
+      // 2. Planet's position around Sun (ellipse)
+      const M = w_planet * t;
+      let E = M;
+      for (let iter = 0; iter < 5; iter++) {
+        E = E - (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+      }
+      const b = a * Math.sqrt(1 - e * e);
+      const planetRelX = a * (Math.cos(E) - e);
+      const planetRelY = b * Math.sin(E);
+      
+      // 3. Combined Geocentric Position
+      const x = sunX + planetRelX;
+      const y = sunY + planetRelY;
+      points.push({ x, y });
+    }
+    return points;
+  }
+
   computeDFT(points) {
     const N = points.length;
     const result = [];
@@ -2251,8 +2301,8 @@ export class Level6 {
     const ctx = this.ctx;
     const taskPanelWidth = 400;
     const W_illus = this.canvas.width - taskPanelWidth;
-    const cx = taskPanelWidth + W_illus / 2;
-    const cy = this.canvas.height / 2;
+    const cx = taskPanelWidth + W_illus * 0.42;
+    const cy = this.canvas.height * 0.42;
 
     // 1. Draw grid axes
     ctx.strokeStyle = '#1e293b';
@@ -2264,12 +2314,15 @@ export class Level6 {
 
     let targetPoints = [];
     if (this.fourierMode === 'ellipse') {
-      let e = 0.55; // Mercury (Exaggerated)
-      if (this.fourierPlanet === 'Mars') e = 0.40;
-      else if (this.fourierPlanet === 'Earth') e = 0.20;
-      else if (this.fourierPlanet === 'Jupiter') e = 0.30;
-      
-      targetPoints = this.generateKeplerEllipse(e);
+      if (this.fourierFrame === 'helio') {
+        let e = 0.55; // Mercury (Exaggerated)
+        if (this.fourierPlanet === 'Mars') e = 0.40;
+        else if (this.fourierPlanet === 'Earth') e = 0.20;
+        else if (this.fourierPlanet === 'Jupiter') e = 0.30;
+        targetPoints = this.generateKeplerEllipse(e);
+      } else {
+        targetPoints = this.generateKeplerGeocentric(this.fourierPlanet);
+      }
       this.fourierCoefficients = this.computeDFT(targetPoints);
     } else {
       // Draw Mode
@@ -2371,27 +2424,138 @@ export class Level6 {
         ctx.restore();
       }
 
-      // 5. Draw Sun Focus for Ellipse mode
+      // 5. Draw Reference Bodies (Sun/Earth/Planet)
       if (this.fourierMode === 'ellipse') {
-        ctx.save();
-        const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 8);
-        glow.addColorStop(0, '#ffffff');
-        glow.addColorStop(0.3, '#fbbf24');
-        glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(cx, cy, 8, 0, Math.PI * 2);
-        ctx.fill();
+        if (this.fourierFrame === 'helio') {
+          // HELIOCENTRIC: Sun at center
+          ctx.save();
+          const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 8);
+          glow.addColorStop(0, '#ffffff');
+          glow.addColorStop(0.3, '#fbbf24');
+          glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+          ctx.fill();
 
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath();
-        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
 
-        ctx.fillStyle = '#eab308';
-        ctx.font = '600 9px Outfit';
-        ctx.fillText("Sun (Focus)", cx + 8, cy - 4);
+          ctx.fillStyle = '#eab308';
+          ctx.font = '600 9px Outfit';
+          ctx.fillText("Sun (Focus)", cx + 8, cy - 4);
+        } else {
+          // GEOCENTRIC: Earth at center, Sun orbiting Earth
+          ctx.save();
+          // Earth (Center)
+          const earthGlow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 8);
+          earthGlow.addColorStop(0, '#ffffff');
+          earthGlow.addColorStop(0.3, '#38bdf8');
+          earthGlow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+          ctx.fillStyle = earthGlow;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          ctx.fillStyle = '#0ea5e9';
+          ctx.font = '600 9px Outfit';
+          ctx.fillText("Earth (Center)", cx + 8, cy - 4);
+
+          // Calculate Sun's position
+          let sunX = 0;
+          let sunY = 0;
+          if (this.fourierPlanet === 'Earth') {
+            // Sun orbits Earth in an ellipse
+            const e_sun = 0.20;
+            const a_sun = 120;
+            const b_sun = a_sun * Math.sqrt(1 - e_sun * e_sun);
+            const M = this.fourierTime;
+            let E = M;
+            for (let iter = 0; iter < 5; iter++) {
+              E = E - (E - e_sun * Math.sin(E) - M) / (1 - e_sun * Math.cos(E));
+            }
+            sunX = a_sun * (Math.cos(E) - e_sun);
+            sunY = b_sun * Math.sin(E);
+          } else {
+            // Sun orbits Earth in a circle
+            sunX = 100 * Math.cos(this.fourierTime);
+            sunY = 100 * Math.sin(this.fourierTime);
+          }
+
+          const sX = cx + sunX;
+          const sY = cy + sunY;
+
+          // Draw Sun
+          ctx.save();
+          const sunGlow = ctx.createRadialGradient(sX, sY, 1, sX, sY, 8);
+          sunGlow.addColorStop(0, '#ffffff');
+          sunGlow.addColorStop(0.3, '#fbbf24');
+          sunGlow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+          ctx.fillStyle = sunGlow;
+          ctx.beginPath();
+          ctx.arc(sX, sY, 8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.arc(sX, sY, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          ctx.fillStyle = '#eab308';
+          ctx.font = '600 9px Outfit';
+          ctx.fillText("Sun", sX + 8, sY - 4);
+
+          // Draw physical lines: Earth to Sun and Sun to Planet
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)'; // golden line Earth-Sun
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(sX, sY);
+          ctx.stroke();
+
+          if (this.fourierPlanet !== 'Earth') {
+            // Draw Sun to Planet line
+            ctx.strokeStyle = 'rgba(244, 114, 182, 0.45)'; // pinkish line Sun-Planet
+            ctx.beginPath();
+            ctx.moveTo(sX, sY);
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+            
+            // Draw Planet's relative elliptical orbit outline centered at Sun
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 0.8;
+            ctx.setLineDash([3, 5]);
+            ctx.beginPath();
+            let e_planet = 0.55;
+            let a_planet = 45;
+            if (this.fourierPlanet === 'Mars') { e_planet = 0.40; a_planet = 60; }
+            else if (this.fourierPlanet === 'Jupiter') { e_planet = 0.30; a_planet = 80; }
+            const b_planet = a_planet * Math.sqrt(1 - e_planet * e_planet);
+            
+            // Draw relative ellipse coordinates rotated
+            const steps = 64;
+            for (let s = 0; s <= steps; s++) {
+              const theta_e = (Math.PI * 2 * s) / steps;
+              const relX = a_planet * (Math.cos(theta_e) - e_planet);
+              const relY = b_planet * Math.sin(theta_e);
+              if (s === 0) ctx.moveTo(sX + relX, sY + relY);
+              else ctx.lineTo(sX + relX, sY + relY);
+            }
+            ctx.stroke();
+          }
+          ctx.setLineDash([]);
+        }
       }
 
       // 6. Draw Planet Focus at the tip of the vector chain
@@ -2460,6 +2624,14 @@ export class Level6 {
                 <option value="Mars" ${this.fourierPlanet === 'Mars' ? 'selected' : ''}>Mars (Exaggerated e = 0.40)</option>
                 <option value="Jupiter" ${this.fourierPlanet === 'Jupiter' ? 'selected' : ''}>Jupiter (Exaggerated e = 0.30)</option>
                 <option value="Earth" ${this.fourierPlanet === 'Earth' ? 'selected' : ''}>Earth (Exaggerated e = 0.20)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Reference Frame:</span>
+              <select id="four-frame-select" class="bg-slate-950 border border-slate-800 text-amber-400 font-semibold text-xs px-3 py-1.5 rounded-lg outline-none focus:border-sky-500 transition cursor-pointer">
+                <option value="helio" ${this.fourierFrame === 'helio' ? 'selected' : ''}>Heliocentric (Sun Center)</option>
+                <option value="geo" ${this.fourierFrame === 'geo' ? 'selected' : ''}>Geocentric (Earth Center)</option>
               </select>
             </div>
             
@@ -2576,6 +2748,15 @@ export class Level6 {
     if (planetSelect) {
       planetSelect.addEventListener('change', (e) => {
         this.fourierPlanet = e.target.value;
+        this.fourierPath = [];
+        this.fourierTime = 0;
+      });
+    }
+
+    const frameSelect = document.getElementById('four-frame-select');
+    if (frameSelect) {
+      frameSelect.addEventListener('change', (e) => {
+        this.fourierFrame = e.target.value;
         this.fourierPath = [];
         this.fourierTime = 0;
       });
