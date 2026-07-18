@@ -694,12 +694,13 @@ export class Level6 {
     let alpha = 0;
 
     if (isAll) {
-      const R_base = wPanel * 0.23;
+      const R_base = wPanel * 0.07;
+      const R_sun = R_base * 0.6;
       const allPlanets = [
-        { name: 'Venus', r_def: R_base * 0.45, r_epi: R_base * 0.45 * 0.723, defSpeed: 1.0, epiSpeed: 1.6, color: '#10b981' },
-        { name: 'Mars', r_def: R_base * 0.8, r_epi: R_base * 0.8 / 1.52, defSpeed: 0.5, epiSpeed: 1.0, color: '#f59e0b' },
-        { name: 'Jupiter', r_def: R_base * 1.1, r_epi: R_base * 1.1 / 5.20, defSpeed: 0.08, epiSpeed: 1.0, color: '#ef4444' },
-        { name: 'Saturn', r_def: R_base * 1.4, r_epi: R_base * 1.4 / 9.58, defSpeed: 0.03, epiSpeed: 1.0, color: '#a78bfa' }
+        { name: 'Venus', r_def: R_sun, r_epi: R_sun * 0.723, defSpeed: 1.0, epiSpeed: 1.6, color: '#10b981' },
+        { name: 'Mars', r_def: R_sun * 1.52, r_epi: R_sun, defSpeed: 0.5, epiSpeed: 1.0, color: '#f59e0b' },
+        { name: 'Jupiter', r_def: R_sun * 5.20, r_epi: R_sun, defSpeed: 0.08, epiSpeed: 1.0, color: '#ef4444' },
+        { name: 'Saturn', r_def: R_sun * 9.58, r_epi: R_sun, defSpeed: 0.03, epiSpeed: 1.0, color: '#a78bfa' }
       ];
 
       // Draw Title
@@ -723,7 +724,6 @@ export class Level6 {
       ctx.fillText("Earth", cx_left, cy_left - 10);
 
       // Draw Sun's geocentric orbit
-      const R_sun = R_base * 0.6;
       ctx.strokeStyle = 'rgba(251, 191, 36, 0.15)';
       ctx.lineWidth = 1.2;
       ctx.setLineDash([3, 3]);
@@ -954,7 +954,7 @@ export class Level6 {
       ctx.fillText("Epicycle", epiLabelX, epiLabelY);
 
       // Sun's orbit (dashed orange/yellow circle)
-      const R_sun = R_deferent * 0.75;
+      const R_sun = (this.selectedPlanetName === 'Venus') ? R_deferent : R_epicycle;
       ctx.strokeStyle = 'rgba(251, 191, 36, 0.15)';
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
@@ -1016,6 +1016,14 @@ export class Level6 {
       ctx.beginPath();
       ctx.moveTo(cx_left, cy_left);
       ctx.lineTo(planetX, planetY);
+      ctx.stroke();
+
+      // Line from Planet to Sun (showing constant distance)
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.75)'; // golden yellow
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(planetX, planetY);
+      ctx.lineTo(sunX, sunY);
       ctx.stroke();
 
       // Earth
@@ -1163,13 +1171,14 @@ export class Level6 {
     ctx.stroke();
 
     if (isAll) {
-      const R_base = wPanel * 0.23;
+      const R_base = wPanel * 0.07;
+      const R_sun = R_base * 0.6;
       const skyObjects = [
-        { name: 'Venus', r_def: R_base * 0.45, r_epi: R_base * 0.45 * 0.723, defSpeed: 1.0, epiSpeed: 1.6, color: '#10b981', yOffset: -50, type: 'planet' },
-        { name: 'Sun', r_def: R_base * 0.6, r_epi: 0, defSpeed: 1.0, epiSpeed: 0, color: '#fbbf24', yOffset: -25, type: 'sun' },
-        { name: 'Mars', r_def: R_base * 0.8, r_epi: R_base * 0.8 / 1.52, defSpeed: 0.5, epiSpeed: 1.0, color: '#f59e0b', yOffset: 0, type: 'planet' },
-        { name: 'Jupiter', r_def: R_base * 1.1, r_epi: R_base * 1.1 / 5.20, defSpeed: 0.08, epiSpeed: 1.0, color: '#ef4444', yOffset: 25, type: 'planet' },
-        { name: 'Saturn', r_def: R_base * 1.4, r_epi: R_base * 1.4 / 9.58, defSpeed: 0.03, epiSpeed: 1.0, color: '#a78bfa', yOffset: 50, type: 'planet' }
+        { name: 'Venus', r_def: R_sun, r_epi: R_sun * 0.723, defSpeed: 1.0, epiSpeed: 1.6, color: '#10b981', yOffset: -50, type: 'planet' },
+        { name: 'Sun', r_def: R_sun, r_epi: 0, defSpeed: 1.0, epiSpeed: 0, color: '#fbbf24', yOffset: -25, type: 'sun' },
+        { name: 'Mars', r_def: R_sun * 1.52, r_epi: R_sun, defSpeed: 0.5, epiSpeed: 1.0, color: '#f59e0b', yOffset: 0, type: 'planet' },
+        { name: 'Jupiter', r_def: R_sun * 5.20, r_epi: R_sun, defSpeed: 0.08, epiSpeed: 1.0, color: '#ef4444', yOffset: 25, type: 'planet' },
+        { name: 'Saturn', r_def: R_sun * 9.58, r_epi: R_sun, defSpeed: 0.03, epiSpeed: 1.0, color: '#a78bfa', yOffset: 50, type: 'planet' }
       ];
 
       skyObjects.forEach(obj => {
@@ -1820,10 +1829,15 @@ export class Level6 {
         ${!isChallenge ? `
           <div class="space-y-1.5 mt-1">
             <span class="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Historical Presets:</span>
-            <div class="grid grid-cols-3 gap-1.5">
+            <div class="grid grid-cols-4 gap-1">
+              <button id="preset-moon-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Moon</button>
+              <button id="preset-mercury-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Mercury</button>
+              <button id="preset-venus-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Venus</button>
+              <button id="preset-sun-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Sun</button>
               <button id="preset-mars-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Mars</button>
               <button id="preset-jupiter-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Jupiter</button>
-              <button id="preset-fourier-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition text-pink-300 border-pink-955/30">Fourier</button>
+              <button id="preset-saturn-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Saturn</button>
+              <button id="preset-fourier-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition text-pink-300 border-pink-955/30 font-semibold">Fourier</button>
             </div>
           </div>
         ` : chalSelectorHTML}
@@ -1862,7 +1876,7 @@ export class Level6 {
               <span class="text-violet-350">Epicycle Radius (r):</span>
               <span id="readout-eso-r" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${r} px</span>
             </div>
-            <input type="range" id="slider-eso-r" min="0" max="150" step="1" value="${r}" ${epirTargetListAttr} class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
+            <input type="range" id="slider-eso-r" min="0" max="150" step="0.05" value="${r}" ${epirTargetListAttr} class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-violet-450">
             ${epirDatalist}
           </div>
 
@@ -1949,13 +1963,65 @@ export class Level6 {
       });
     }
 
+    const moonBtn = document.getElementById('preset-moon-btn');
+    if (moonBtn) {
+      moonBtn.addEventListener('click', () => {
+        this.solvingEpicyclesR = 60;
+        this.solvingEpicyclesr = 5.25;
+        this.solvingEpicyclesw1 = 1.0;
+        this.solvingEpicyclesw2 = 13.4;
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const mercuryBtn = document.getElementById('preset-mercury-btn');
+    if (mercuryBtn) {
+      mercuryBtn.addEventListener('click', () => {
+        this.solvingEpicyclesR = 60;
+        this.solvingEpicyclesr = 22.5;
+        this.solvingEpicyclesw1 = 1.0;
+        this.solvingEpicyclesw2 = 4.2;
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const venusBtn = document.getElementById('preset-venus-btn');
+    if (venusBtn) {
+      venusBtn.addEventListener('click', () => {
+        this.solvingEpicyclesR = 60;
+        this.solvingEpicyclesr = 43.2;
+        this.solvingEpicyclesw1 = 1.0;
+        this.solvingEpicyclesw2 = 1.6;
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const sunBtn = document.getElementById('preset-sun-btn');
+    if (sunBtn) {
+      sunBtn.addEventListener('click', () => {
+        this.solvingEpicyclesR = 60;
+        this.solvingEpicyclesr = 0;
+        this.solvingEpicyclesw1 = 1.0;
+        this.solvingEpicyclesw2 = 0.0;
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
     const marsBtn = document.getElementById('preset-mars-btn');
     if (marsBtn) {
       marsBtn.addEventListener('click', () => {
-        this.solvingEpicyclesR = 130;
-        this.solvingEpicyclesr = 85;
+        this.solvingEpicyclesR = 60;
+        this.solvingEpicyclesr = 39.5;
         this.solvingEpicyclesw1 = 1.0;
-        this.solvingEpicyclesw2 = 2.14;
+        this.solvingEpicyclesw2 = 2.1;
         this.solvingEpicyclesPath = [];
         this.solvingEpicyclesTime = 0;
         this.updateSolvingEpicyclesUI();
@@ -1965,9 +2031,22 @@ export class Level6 {
     const jupiterBtn = document.getElementById('preset-jupiter-btn');
     if (jupiterBtn) {
       jupiterBtn.addEventListener('click', () => {
-        this.solvingEpicyclesR = 150;
-        this.solvingEpicyclesr = 28;
+        this.solvingEpicyclesR = 60;
+        this.solvingEpicyclesr = 11.5;
         this.solvingEpicyclesw1 = 1.0;
+        this.solvingEpicyclesw2 = 12.0;
+        this.solvingEpicyclesPath = [];
+        this.solvingEpicyclesTime = 0;
+        this.updateSolvingEpicyclesUI();
+      });
+    }
+
+    const saturnBtn = document.getElementById('preset-saturn-btn');
+    if (saturnBtn) {
+      saturnBtn.addEventListener('click', () => {
+        this.solvingEpicyclesR = 60;
+        this.solvingEpicyclesr = 6.5;
+        this.solvingEpicyclesw1 = 0.4;
         this.solvingEpicyclesw2 = 12.0;
         this.solvingEpicyclesPath = [];
         this.solvingEpicyclesTime = 0;
@@ -2013,7 +2092,7 @@ export class Level6 {
     const R_slider = document.getElementById('slider-eso-R');
     if (R_slider) {
       R_slider.addEventListener('input', (e) => {
-        this.solvingEpicyclesR = parseInt(e.target.value);
+        this.solvingEpicyclesR = parseFloat(e.target.value);
         this.updateSolvingEpicyclesUI(true);
       });
     }
@@ -2021,7 +2100,7 @@ export class Level6 {
     const r_slider = document.getElementById('slider-eso-r');
     if (r_slider) {
       r_slider.addEventListener('input', (e) => {
-        this.solvingEpicyclesr = parseInt(e.target.value);
+        this.solvingEpicyclesr = parseFloat(e.target.value);
         this.updateSolvingEpicyclesUI(true);
       });
     }
