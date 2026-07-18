@@ -81,6 +81,17 @@ export class Level6 {
     this.showCircles = true;
     this.showVectors = true;
 
+    // Fourier & Ellipses state
+    this.fourierMode = 'ellipse'; // 'ellipse' or 'draw'
+    this.fourierPlanet = 'Mercury'; // 'Mercury', 'Mars', 'Earth', 'Jupiter'
+    this.fourierEpicycleCount = 3;
+    this.drawPoints = [];
+    this.fourierCoefficients = [];
+    this.fourierPath = [];
+    this.fourierTime = 0;
+    this.fourierNumVectors = 30;
+    this.fourierPlaying = true;
+
     // Challenge state
     this.selectedChallengeId = 'c1';
     this.solvedChallenges = []; // list of solved IDs, e.g. ['c1']
@@ -208,21 +219,48 @@ export class Level6 {
         if (challenge) this.generateTargetPath(challenge);
       }
       setTimeout(() => this.updateSolvingEpicyclesUI(), 50);
+    } else if (tab === 'fourier') {
+      this.fourierPath = [];
+      this.fourierTime = 0;
+      this.drawPoints = [];
+      this.fourierCoefficients = [];
+      setTimeout(() => this.updateFourierUI(), 50);
     }
   }
 
   setupMouseControls() {
     const onMouseDown = (e) => {
-      // Don't drag if clicked on the sidebar UI card
-      if (e.clientX < 420 && e.clientY > window.innerHeight - 500) return;
-      // Don't drag if clicked on parameter panels
-      if (e.clientY > window.innerHeight - 150 && e.clientX > 400) return;
+      // Don't drag/draw if clicked on the sidebar UI card
+      if (e.clientX < 420) return;
+
+      if (this.subtask === 'fourier' && this.fourierMode === 'draw') {
+        const taskPanelWidth = 400;
+        const W_illus = this.canvas.width - taskPanelWidth;
+        const cx = taskPanelWidth + W_illus / 2;
+        const cy = this.canvas.height / 2;
+        
+        this.isDrawingCustom = true;
+        this.drawPoints = [{ x: e.clientX - cx, y: e.clientY - cy }];
+        this.fourierPath = [];
+        this.fourierTime = 0;
+        return;
+      }
 
       this.isDragging = true;
       this.previousMousePosition = { x: e.clientX, y: e.clientY };
     };
 
     const onMouseMove = (e) => {
+      if (this.subtask === 'fourier' && this.fourierMode === 'draw' && this.isDrawingCustom) {
+        const taskPanelWidth = 400;
+        const W_illus = this.canvas.width - taskPanelWidth;
+        const cx = taskPanelWidth + W_illus / 2;
+        const cy = this.canvas.height / 2;
+        
+        this.drawPoints.push({ x: e.clientX - cx, y: e.clientY - cy });
+        return;
+      }
+
       if (!this.isDragging) return;
 
       const deltaX = e.clientX - this.previousMousePosition.x;
@@ -235,6 +273,16 @@ export class Level6 {
     };
 
     const onMouseUp = () => {
+      if (this.subtask === 'fourier' && this.fourierMode === 'draw' && this.isDrawingCustom) {
+        this.isDrawingCustom = false;
+        if (this.drawPoints.length > 5) {
+          const resampled = this.resamplePoints(this.drawPoints, 128);
+          this.fourierCoefficients = this.computeDFT(resampled);
+          this.fourierPath = [];
+          this.fourierTime = 0;
+        }
+        return;
+      }
       this.isDragging = false;
     };
 
@@ -1379,6 +1427,8 @@ export class Level6 {
         this.drawEpicycleView();
       } else if (this.subtask === 'solving-epicycles') {
         this.drawSolvingEpicyclesView();
+      } else if (this.subtask === 'fourier') {
+        this.drawFourierView();
       }
 
       // Update simulation logic for epicycles tab
@@ -2118,6 +2168,459 @@ export class Level6 {
       w2_slider.addEventListener('input', (e) => {
         this.solvingEpicyclesw2 = parseFloat(e.target.value);
         this.updateSolvingEpicyclesUI(true);
+      });
+    }
+  }
+
+  generateKeplerEllipse(e) {
+    const points = [];
+    const N = 128;
+    const a = 140; // semi-major axis
+    const b = a * Math.sqrt(1 - e * e);
+    for (let i = 0; i < N; i++) {
+      const M = (Math.PI * 2 * i) / N;
+      // Solve Kepler's equation M = E - e sin E
+      let E = M;
+      for (let iter = 0; iter < 5; iter++) {
+        E = E - (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+      }
+      // Focus centered: focus is at (-ae, 0), so subtracting ae shifts focus to (0,0)
+      const x = a * (Math.cos(E) - e);
+      const y = b * Math.sin(E);
+      points.push({ x, y });
+    }
+    return points;
+  }
+
+  computeDFT(points) {
+    const N = points.length;
+    const result = [];
+    for (let k = 0; k < N; k++) {
+      let re = 0;
+      let im = 0;
+      for (let n = 0; n < N; n++) {
+        const phi = (Math.PI * 2 * k * n) / N;
+        re += points[n].x * Math.cos(phi) + points[n].y * Math.sin(phi);
+        im += -points[n].x * Math.sin(phi) + points[n].y * Math.cos(phi);
+      }
+      re = re / N;
+      im = im / N;
+      let freq = k;
+      if (freq > N / 2) {
+        freq = freq - N;
+      }
+      const amp = Math.sqrt(re * re + im * im);
+      const phase = Math.atan2(im, re);
+      result.push({ freq, re, im, amp, phase });
+    }
+    // Sort by amplitude (descending)
+    result.sort((a, b) => b.amp - a.amp);
+    return result;
+  }
+
+  resamplePoints(points, N) {
+    if (points.length === 0) return [];
+    const dists = [0];
+    for (let i = 1; i < points.length; i++) {
+      const dx = points[i].x - points[i - 1].x;
+      const dy = points[i].y - points[i - 1].y;
+      dists.push(dists[i - 1] + Math.sqrt(dx * dx + dy * dy));
+    }
+    const totalLength = dists[dists.length - 1] || 1;
+    const resampled = [];
+    for (let i = 0; i < N; i++) {
+      const targetDist = (i * totalLength) / (N - 1 || 1);
+      let index = 0;
+      while (index < dists.length - 2 && dists[index + 1] < targetDist) {
+        index++;
+      }
+      const d0 = dists[index];
+      const d1 = dists[index + 1];
+      const t = (d1 - d0 === 0) ? 0 : (targetDist - d0) / (d1 - d0);
+      const p0 = points[index];
+      const p1 = points[index + 1];
+      resampled.push({
+        x: p0.x + (p1.x - p0.x) * t,
+        y: p0.y + (p1.y - p0.y) * t
+      });
+    }
+    return resampled;
+  }
+
+  drawFourierView() {
+    const ctx = this.ctx;
+    const taskPanelWidth = 400;
+    const W_illus = this.canvas.width - taskPanelWidth;
+    const cx = taskPanelWidth + W_illus / 2;
+    const cy = this.canvas.height / 2;
+
+    // 1. Draw grid axes
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(taskPanelWidth, cy); ctx.lineTo(this.canvas.width, cy);
+    ctx.moveTo(cx, 0); ctx.lineTo(cx, this.canvas.height);
+    ctx.stroke();
+
+    let targetPoints = [];
+    if (this.fourierMode === 'ellipse') {
+      let e = 0.55; // Mercury (Exaggerated)
+      if (this.fourierPlanet === 'Mars') e = 0.40;
+      else if (this.fourierPlanet === 'Earth') e = 0.20;
+      else if (this.fourierPlanet === 'Jupiter') e = 0.30;
+      
+      targetPoints = this.generateKeplerEllipse(e);
+      this.fourierCoefficients = this.computeDFT(targetPoints);
+    } else {
+      // Draw Mode
+      if (this.isDrawingCustom && this.drawPoints.length > 1) {
+        // User is currently drawing
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cx + this.drawPoints[0].x, cy + this.drawPoints[0].y);
+        for (let i = 1; i < this.drawPoints.length; i++) {
+          ctx.lineTo(cx + this.drawPoints[i].x, cy + this.drawPoints[i].y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // If we have coefficients, animate the epicycles
+    if (this.fourierCoefficients.length > 0) {
+      // Select how many vectors to draw
+      const maxK = (this.fourierMode === 'ellipse') ? this.fourierEpicycleCount : this.fourierNumVectors;
+      const limit = Math.min(this.fourierCoefficients.length, maxK);
+
+      // 2. Draw Target Path (dashed line)
+      if (this.fourierMode === 'ellipse') {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        targetPoints.forEach((pt, i) => {
+          if (i === 0) ctx.moveTo(cx + pt.x, cy + pt.y);
+          else ctx.lineTo(cx + pt.x, cy + pt.y);
+        });
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // 3. Chain of Epicycles calculations
+      let currentX = cx;
+      let currentY = cy;
+
+      if (this.fourierPlaying) {
+        this.fourierTime += 0.015; // speed factor
+      }
+
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)'; // epicycle circles
+      ctx.lineWidth = 1;
+
+      for (let i = 0; i < limit; i++) {
+        const coeff = this.fourierCoefficients[i];
+        const theta = coeff.freq * this.fourierTime + coeff.phase;
+        const nextX = currentX + coeff.amp * Math.cos(theta);
+        const nextY = currentY + coeff.amp * Math.sin(theta);
+
+        // Draw epicycle circle
+        if (this.showCircles && coeff.amp > 0.5) {
+          ctx.beginPath();
+          ctx.arc(currentX, currentY, coeff.amp, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Draw vector line
+        if (this.showVectors) {
+          ctx.strokeStyle = (i === 0) ? '#38bdf8' : 'rgba(167, 139, 250, 0.65)';
+          ctx.lineWidth = (i === 0) ? 2 : 1.2;
+          ctx.beginPath();
+          ctx.moveTo(currentX, currentY);
+          ctx.lineTo(nextX, nextY);
+          ctx.stroke();
+        }
+
+        currentX = nextX;
+        currentY = nextY;
+      }
+
+      // Record trace path
+      if (this.fourierPlaying) {
+        this.fourierPath.push({ x: currentX, y: currentY });
+        if (this.fourierPath.length > 800) {
+          this.fourierPath.shift();
+        }
+      }
+
+      // 4. Draw Trace Path
+      if (this.fourierPath.length > 1) {
+        ctx.save();
+        ctx.strokeStyle = '#f472b6'; // pink-400
+        ctx.lineWidth = 2.5;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = '#f472b6';
+        ctx.beginPath();
+        ctx.moveTo(this.fourierPath[0].x, this.fourierPath[0].y);
+        for (let i = 1; i < this.fourierPath.length; i++) {
+          ctx.lineTo(this.fourierPath[i].x, this.fourierPath[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 5. Draw Sun Focus for Ellipse mode
+      if (this.fourierMode === 'ellipse') {
+        ctx.save();
+        const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 8);
+        glow.addColorStop(0, '#ffffff');
+        glow.addColorStop(0.3, '#fbbf24');
+        glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = '#eab308';
+        ctx.font = '600 9px Outfit';
+        ctx.fillText("Sun (Focus)", cx + 8, cy - 4);
+      }
+
+      // 6. Draw Planet Focus at the tip of the vector chain
+      ctx.save();
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.arc(currentX, currentY, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Info label overlay
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 13px Outfit,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.fourierMode === 'ellipse' ? "Epicycle & Fourier Transform (Planetary Ellipses)" : "Epicycle & Fourier Transform (Freeplay Draw Mode)", taskPanelWidth + W_illus / 2, 40);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 10px Outfit,sans-serif';
+    ctx.fillText(this.fourierMode === 'ellipse' ? "Deconstruct Keplerian elliptical orbits into circular epicycle approximations." : "Draw any shape on the canvas using mouse drag to approximate it using epicycles.", taskPanelWidth + W_illus / 2, 57);
+  }
+
+  getFourierParamPanelHTML() {
+    const isEllipse = this.fourierMode === 'ellipse';
+    const playPauseIcon = this.fourierPlaying ? 
+      `<svg class="w-3.5 h-3.5 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>` : 
+      `<svg class="w-3.5 h-3.5 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+
+    return `
+      <div class="flex flex-col gap-2 font-sans w-full">
+        <!-- Header & Playback controls -->
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <div class="flex items-center gap-1.5">
+            <h4 class="text-xs font-bold text-sky-400">Fourier Transform Simulator</h4>
+            <span class="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded uppercase font-semibold">${this.fourierMode}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="four-play-btn" class="bg-slate-850 hover:bg-slate-750 border border-slate-700 p-1.5 rounded-lg transition">
+              ${playPauseIcon}
+            </button>
+            <button id="four-reset-btn" class="bg-slate-850 hover:bg-slate-750 border border-slate-700 p-1.5 rounded-lg transition" title="Clear path trace">
+              <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode Toggles (Planetary Ellipses / Freeplay Draw) -->
+        <div class="flex bg-slate-950/60 rounded-lg p-0.5 border border-slate-850">
+          <button id="four-mode-ellipse-btn" class="flex-1 text-[10px] py-1 rounded transition ${isEllipse ? 'bg-slate-800 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Planetary Ellipses</button>
+          <button id="four-mode-draw-btn" class="flex-1 text-[10px] py-1 rounded transition flex items-center justify-center gap-1.5 ${!isEllipse ? 'bg-slate-800 text-amber-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            Freeplay Draw
+          </button>
+        </div>
+
+        <!-- Preset options for Planet Mode -->
+        ${isEllipse ? `
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Planet:</span>
+              <select id="four-planet-select" class="bg-slate-950 border border-slate-800 text-sky-400 font-semibold text-xs px-3 py-1.5 rounded-lg outline-none focus:border-sky-500 transition cursor-pointer">
+                <option value="Mercury" ${this.fourierPlanet === 'Mercury' ? 'selected' : ''}>Mercury (Exaggerated e = 0.55)</option>
+                <option value="Mars" ${this.fourierPlanet === 'Mars' ? 'selected' : ''}>Mars (Exaggerated e = 0.40)</option>
+                <option value="Jupiter" ${this.fourierPlanet === 'Jupiter' ? 'selected' : ''}>Jupiter (Exaggerated e = 0.30)</option>
+                <option value="Earth" ${this.fourierPlanet === 'Earth' ? 'selected' : ''}>Earth (Exaggerated e = 0.20)</option>
+              </select>
+            </div>
+            
+            <!-- Epicycles Count Slider -->
+            <div class="space-y-0.5 border-t border-slate-850 pt-2">
+              <div class="flex justify-between text-[10px] font-medium">
+                <span class="text-sky-300">Number of Epicycles:</span>
+                <span id="readout-four-epi-count" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${this.fourierEpicycleCount}</span>
+              </div>
+              <input type="range" id="slider-four-epi-count" min="1" max="5" step="1" value="${this.fourierEpicycleCount}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+            </div>
+          </div>
+        ` : `
+          <div class="flex flex-col gap-2">
+            <div class="bg-slate-950/50 border border-slate-850 p-2 rounded text-[10px] leading-relaxed text-slate-400">
+              <span class="font-bold text-amber-400 block mb-0.5">Instructions:</span>
+              Click and drag anywhere on the right-hand canvas to draw your custom path. When you release, a Discrete Fourier Transform (DFT) will compute the chain of epicycles to trace it.
+            </div>
+            
+            <!-- Vector count Slider -->
+            <div class="space-y-0.5">
+              <div class="flex justify-between text-[10px] font-medium">
+                <span class="text-sky-300">Number of Epicycle Vectors:</span>
+                <span id="readout-four-vectors" class="text-slate-300 font-mono text-[9px] bg-slate-950/50 px-1.5 py-0.5 rounded">${this.fourierNumVectors}</span>
+              </div>
+              <input type="range" id="slider-four-vectors" min="1" max="100" step="1" value="${this.fourierNumVectors}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+            </div>
+            
+            <button id="four-clear-btn" class="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold py-2 rounded text-xs transition shadow-md">
+              Clear &amp; Draw New Shape
+            </button>
+          </div>
+        `}
+
+        <!-- Show/Hide Toggles -->
+        <div class="flex gap-4 items-center justify-between border-t border-slate-850 pt-2 mt-1">
+          <label class="flex items-center gap-1.5 text-[10px] text-slate-400 cursor-pointer hover:text-slate-200 transition">
+            <input type="checkbox" id="four-toggle-vectors" ${this.showVectors ? 'checked' : ''} class="rounded bg-slate-850 border-slate-700 accent-sky-400 w-3.5 h-3.5">
+            <span>Show Vectors</span>
+          </label>
+          <label class="flex items-center gap-1.5 text-[10px] text-slate-400 cursor-pointer hover:text-slate-200 transition">
+            <input type="checkbox" id="four-toggle-circles" ${this.showCircles ? 'checked' : ''} class="rounded bg-slate-850 border-slate-700 accent-sky-400 w-3.5 h-3.5">
+            <span>Show Circles</span>
+          </label>
+        </div>
+      </div>
+    `;
+  }
+
+  updateFourierUI(fromDrag = false) {
+    if (this.subtask !== 'fourier') return;
+    if (fromDrag) {
+      const readoutCount = document.getElementById('readout-four-epi-count');
+      const sliderCount = document.getElementById('slider-four-epi-count');
+      if (readoutCount && sliderCount) {
+        readoutCount.textContent = sliderCount.value;
+      }
+      const readoutVectors = document.getElementById('readout-four-vectors');
+      const sliderVectors = document.getElementById('slider-four-vectors');
+      if (readoutVectors && sliderVectors) {
+        readoutVectors.textContent = sliderVectors.value;
+      }
+    } else {
+      const paramPanel = document.getElementById('param-panel');
+      if (paramPanel) {
+        paramPanel.innerHTML = this.getFourierParamPanelHTML();
+        this.attachFourierEventListeners();
+      }
+    }
+  }
+
+  attachFourierEventListeners() {
+    const playBtn = document.getElementById('four-play-btn');
+    if (playBtn) {
+      playBtn.addEventListener('click', () => {
+        this.fourierPlaying = !this.fourierPlaying;
+        this.updateFourierUI();
+      });
+    }
+
+    const resetBtn = document.getElementById('four-reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        this.fourierPath = [];
+        this.fourierTime = 0;
+      });
+    }
+
+    const modeEllipseBtn = document.getElementById('four-mode-ellipse-btn');
+    if (modeEllipseBtn) {
+      modeEllipseBtn.addEventListener('click', () => {
+        this.fourierMode = 'ellipse';
+        this.fourierPath = [];
+        this.fourierTime = 0;
+        this.drawPoints = [];
+        this.fourierCoefficients = [];
+        this.updateFourierUI();
+      });
+    }
+
+    const modeDrawBtn = document.getElementById('four-mode-draw-btn');
+    if (modeDrawBtn) {
+      modeDrawBtn.addEventListener('click', () => {
+        this.fourierMode = 'draw';
+        this.fourierPath = [];
+        this.fourierTime = 0;
+        this.drawPoints = [];
+        this.fourierCoefficients = [];
+        this.updateFourierUI();
+      });
+    }
+
+    const planetSelect = document.getElementById('four-planet-select');
+    if (planetSelect) {
+      planetSelect.addEventListener('change', (e) => {
+        this.fourierPlanet = e.target.value;
+        this.fourierPath = [];
+        this.fourierTime = 0;
+      });
+    }
+
+    const sliderCount = document.getElementById('slider-four-epi-count');
+    if (sliderCount) {
+      sliderCount.addEventListener('input', (e) => {
+        this.fourierEpicycleCount = parseInt(e.target.value);
+        this.updateFourierUI(true);
+        this.fourierPath = [];
+        this.fourierTime = 0;
+      });
+    }
+
+    const sliderVectors = document.getElementById('slider-four-vectors');
+    if (sliderVectors) {
+      sliderVectors.addEventListener('input', (e) => {
+        this.fourierNumVectors = parseInt(e.target.value);
+        this.updateFourierUI(true);
+      });
+    }
+
+    const clearBtn = document.getElementById('four-clear-btn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        this.drawPoints = [];
+        this.fourierCoefficients = [];
+        this.fourierPath = [];
+        this.fourierTime = 0;
+        this.updateFourierUI();
+      });
+    }
+
+    const toggleVectors = document.getElementById('four-toggle-vectors');
+    if (toggleVectors) {
+      toggleVectors.addEventListener('change', (e) => {
+        this.showVectors = e.target.checked;
+      });
+    }
+
+    const toggleCircles = document.getElementById('four-toggle-circles');
+    if (toggleCircles) {
+      toggleCircles.addEventListener('change', (e) => {
+        this.showCircles = e.target.checked;
       });
     }
   }

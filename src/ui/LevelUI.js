@@ -30,7 +30,8 @@ export class LevelUI {
     this.ptolemyVerified = {
       parallax: false,
       epicycles: false,
-      solvingEpicycles: false
+      solvingEpicycles: false,
+      fourier: false
     };
     this.copernicusVerified = false;
     this.kepler1Verified = false;
@@ -1740,6 +1741,18 @@ export class LevelUI {
         question: "Challenge Progress:",
         placeholder: "",
         answer: null
+      },
+      fourier: {
+        title: "4. Epicycle & Fourier",
+        desc: "Fourier analysis shows that any closed curve can be drawn by adding enough epicycles. In fact, Copernicus' and Ptolemy's epicycles were early, discrete Fourier approximations of elliptical planetary motion!<br><br>" +
+              "<strong>Heliocentric Ellipse vs. Geocentric Epicycles</strong>:<br>" +
+              "Kepler showed that planets move in ellipses (focus at Sun) with eccentricity <i>e</i>. Using Fourier expansion, we can approximate an elliptical orbit using a chain of circular epicycles rotating at multiples of the mean motion frequency (&omega;, 2&omega;, -&omega;).<br><br>" +
+              "<em>Note: Planetary eccentricities in this simulator are exaggerated (e.g. Mercury e = 0.55 instead of 0.206) to make the visual effect of adding more epicycles clearly visible!</em><br><br>" +
+              "• Increase the epicycle count slider on the right to see how additional terms approximate the actual elliptical orbit (dashed white path).<br>" +
+              "• Try **Freeplay Draw Mode**! Click, drag, and draw any closed loop in the panel, then watch the Fourier Transform compute the exact epicycle chain to reproduce your drawing!",
+        question: "Using the simulator on the right, select Mercury (Exaggerated e = 0.55) in Ellipse Mode. What is the minimum number of epicycles needed to closely approximate its actual elliptical path (reducing visual error to &lt;1%)?",
+        placeholder: "e.g. 3",
+        answer: 3
       }
     };
 
@@ -1756,6 +1769,7 @@ export class LevelUI {
           <button id="tab-parallax" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: rgb(56, 189, 248); color: black;">Stellar Parallax</button>
           <button id="tab-epicycles" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Retrograde & Epicycles</button>
           <button id="tab-solving-epicycles" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Solving Epicycles</button>
+          <button id="tab-fourier" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Fourier &amp; Ellipses</button>
         </div>
 
         <!-- Tab Contents Card -->
@@ -1795,6 +1809,12 @@ export class LevelUI {
               <button id="verify-epi-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-semibold w-full py-1.5 rounded-lg text-xs transition">Verify Epicycles</button>
             </div>
 
+            <!-- Fourier Input -->
+            <div class="flex gap-2 hidden" id="fourier-input-container">
+              <input type="number" id="calc-fourier" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-sky-500 transition" placeholder="e.g. 3" step="1">
+              <button id="verify-four-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+
             <div id="tab-feedback" class="text-[11px] font-semibold hidden"></div>
           </div>
 
@@ -1824,6 +1844,10 @@ export class LevelUI {
           <div id="check-solving-epicycles" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check text-red-500">❌</span>
             <span class="progress-text">Solving Epicycles (0/4 Solved)</span>
+          </div>
+          <div id="check-fourier" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check text-red-500">❌</span>
+            <span>Epicycle &amp; Fourier Transform Verified</span>
           </div>
         </div>
 
@@ -1856,6 +1880,8 @@ export class LevelUI {
       const eItem = document.getElementById('check-epicycles');
       const checkSolving = document.getElementById('check-solving-epicycles');
       
+      const checkFourier = document.getElementById('check-fourier');
+
       if (pItem) {
         const iconEl = pItem.querySelector('.status-check');
         if (this.ptolemyVerified.parallax) {
@@ -1900,7 +1926,20 @@ export class LevelUI {
         }
       }
 
-      if (this.ptolemyVerified.parallax && this.ptolemyVerified.epicycles && this.ptolemyVerified.solvingEpicycles) {
+      if (checkFourier) {
+        const iconEl = checkFourier.querySelector('.status-check');
+        if (this.ptolemyVerified.fourier) {
+          iconEl.textContent = '✅';
+          checkFourier.classList.remove('text-slate-500');
+          checkFourier.classList.add('text-green-500');
+        } else {
+          iconEl.textContent = '❌';
+          checkFourier.classList.remove('text-green-500');
+          checkFourier.classList.add('text-slate-500');
+        }
+      }
+
+      if (this.ptolemyVerified.parallax && this.ptolemyVerified.epicycles && this.ptolemyVerified.solvingEpicycles && this.ptolemyVerified.fourier) {
         finalSubmitBtn.disabled = false;
         finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
         finalSubmitBtn.style.color = 'white';
@@ -1937,11 +1976,13 @@ export class LevelUI {
       const parallaxSliderArea = document.getElementById('parallax-slider-area');
       const parallaxInputContainer = document.getElementById('parallax-input-container');
       const epicyclesInputContainer = document.getElementById('epicycles-input-container');
+      const fourierInputContainer = document.getElementById('fourier-input-container');
       
       if (activeTab === 'parallax') {
         verifyArea.classList.remove('hidden');
         parallaxInputContainer.classList.remove('hidden');
         epicyclesInputContainer.classList.add('hidden');
+        fourierInputContainer.classList.add('hidden');
         parallaxSliderArea.classList.remove('hidden');
         calcInput.placeholder = data.placeholder;
         calcInput.value = '';
@@ -1958,6 +1999,7 @@ export class LevelUI {
         verifyArea.classList.remove('hidden');
         parallaxInputContainer.classList.add('hidden');
         epicyclesInputContainer.classList.remove('hidden');
+        fourierInputContainer.classList.add('hidden');
         parallaxSliderArea.classList.add('hidden');
         tabFeedback.classList.add('hidden');
         
@@ -2015,8 +2057,7 @@ export class LevelUI {
           });
           updateEpicycleControls();
         }
-      } else {
-        // Solving Epicycles Tab
+      } else if (activeTab === 'solving-epicycles') {
         verifyArea.classList.add('hidden');
         parallaxSliderArea.classList.add('hidden');
         tabFeedback.classList.add('hidden');
@@ -2034,6 +2075,27 @@ export class LevelUI {
         if (inst && typeof inst.updateSolvingEpicyclesUI === 'function') {
           inst.updateSolvingEpicyclesUI();
         }
+      } else if (activeTab === 'fourier') {
+        verifyArea.classList.remove('hidden');
+        parallaxInputContainer.classList.add('hidden');
+        epicyclesInputContainer.classList.add('hidden');
+        fourierInputContainer.classList.remove('hidden');
+        parallaxSliderArea.classList.add('hidden');
+        tabFeedback.classList.add('hidden');
+        
+        paramPanel.style.display = 'flex';
+        paramPanel.className = "level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800 pointer-events-auto p-4 rounded-xl flex flex-col gap-2.5 text-slate-200 overflow-y-auto";
+        paramPanel.style.width = "380px";
+        paramPanel.style.maxHeight = "calc(100% - 60px)";
+        paramPanel.style.bottom = "20px";
+        paramPanel.style.right = "20px";
+        paramPanel.style.left = "auto";
+        paramPanel.style.top = "auto";
+
+        const inst = window.activeLevelInstance;
+        if (inst && typeof inst.updateFourierUI === 'function') {
+          inst.updateFourierUI();
+        }
       }
     };
 
@@ -2042,6 +2104,7 @@ export class LevelUI {
       const tabP = document.getElementById('tab-parallax');
       const tabE = document.getElementById('tab-epicycles');
       const tabS = document.getElementById('tab-solving-epicycles');
+      const tabF = document.getElementById('tab-fourier');
       
       tabP.style.background = tab === 'parallax' ? 'rgb(56, 189, 248)' : 'transparent';
       tabP.style.color = tab === 'parallax' ? 'black' : 'rgb(148, 163, 184)';
@@ -2049,6 +2112,8 @@ export class LevelUI {
       tabE.style.color = tab === 'epicycles' ? 'black' : 'rgb(148, 163, 184)';
       tabS.style.background = tab === 'solving-epicycles' ? 'rgb(56, 189, 248)' : 'transparent';
       tabS.style.color = tab === 'solving-epicycles' ? 'black' : 'rgb(148, 163, 184)';
+      tabF.style.background = tab === 'fourier' ? 'rgb(56, 189, 248)' : 'transparent';
+      tabF.style.color = tab === 'fourier' ? 'black' : 'rgb(148, 163, 184)';
       
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
         window.activeLevelInstance.setSubtask(tab);
@@ -2060,6 +2125,7 @@ export class LevelUI {
     document.getElementById('tab-parallax').addEventListener('click', () => switchTab('parallax'));
     document.getElementById('tab-epicycles').addEventListener('click', () => switchTab('epicycles'));
     document.getElementById('tab-solving-epicycles').addEventListener('click', () => switchTab('solving-epicycles'));
+    document.getElementById('tab-fourier').addEventListener('click', () => switchTab('fourier'));
 
     verifyTabBtn.addEventListener('click', () => {
       const val = parseFloat(calcInput.value);
@@ -2100,6 +2166,25 @@ export class LevelUI {
         tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
       }
     });
+
+    const verifyFourBtn = document.getElementById('verify-four-btn');
+    if (verifyFourBtn) {
+      verifyFourBtn.addEventListener('click', () => {
+        const val = parseFloat(document.getElementById('calc-fourier').value);
+        if (isNaN(val)) return;
+        const tabFeedback = document.getElementById('tab-feedback');
+        tabFeedback.classList.remove('hidden');
+        if (val === 3) {
+          tabFeedback.textContent = "Correct! 3 epicycles (deferent + 2 harmonic epicycles) approximate Mercury's ellipse to <1% error.";
+          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+          this.ptolemyVerified.fourier = true;
+          updateChecklist();
+        } else {
+          tabFeedback.textContent = "Incorrect. Mercury's high eccentricity requires at least 3 terms (1 deferent, 2 epicycles) to get a close fit. Try 3.";
+          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+        }
+      });
+    }
 
     finalSubmitBtn.addEventListener('click', () => {
       gameState.completeLevel(6);
