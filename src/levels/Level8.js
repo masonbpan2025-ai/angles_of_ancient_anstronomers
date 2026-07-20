@@ -18,6 +18,12 @@ export class Level8 {
     this.keplerAngle = 0;
     this.meanAnomaly = 0;
 
+    // Orbit equations subtask state
+    this.orbitEq_e = 0.60;
+    this.orbitEq_E = 45; // in degrees
+    this.orbitEq_highlight = 'all'; // 'sector' | 'triangle' | 'swept' | 'ideal' | 'all'
+
+
     // Tycho Brahe observation points for Mars (e = 0.40)
     this.tychoPoints = [];
     const eMars = 0.40;
@@ -153,6 +159,19 @@ export class Level8 {
       this.time += 1;
       this.keplerAngle += 0.015;
       this.meanAnomaly += 0.012;
+
+      if (this.subtask === 'orbit_equations') {
+        // Solve eccentric anomaly from mean anomaly
+        const E_rad = this.solveKepler(this.meanAnomaly, this.orbitEq_e);
+        this.orbitEq_E = (E_rad * 180 / Math.PI) % 360;
+        if (this.orbitEq_E < 0) this.orbitEq_E += 360;
+
+        // Synchronize DOM elements
+        const sliderE = document.getElementById('slider-k8-E');
+        const valE = document.getElementById('slider-k8-E-val');
+        if (sliderE) sliderE.value = Math.round(this.orbitEq_E);
+        if (valE) valE.textContent = Math.round(this.orbitEq_E) + '°';
+      }
     }
 
     const TASK_W = 400;
@@ -163,6 +182,7 @@ export class Level8 {
     try {
       if      (this.subtask === 'kepler1')  this.drawKepler1(ctx, IX, IW, IH);
       else if (this.subtask === 'kepler23') this.drawKepler23(ctx, IX, IW, IH);
+      else if (this.subtask === 'orbit_equations') this.drawOrbitEquations(ctx, IX, IW, IH);
     } catch (e) {
       console.error('Level8 draw error:', e);
     }
@@ -836,6 +856,287 @@ export class Level8 {
           The Umbra falls short. Observers on Earth see an Annular Eclipse (Ring of Fire).
         </p>
       `;
+    }
+  }
+
+  drawOrbitEquations(ctx, IX, IW, IH) {
+    const pt = 80, ph = IH - 160;
+    const pw = IW * 0.94;
+    const panelX = IX + IW * 0.03;
+    const cx = panelX + pw / 2;
+    const cy = pt + ph / 2;
+    const R  = ph * 0.36;
+
+    const e = this.orbitEq_e;
+    const E_rad = this.orbitEq_E * Math.PI / 180;
+    const b = R * Math.sqrt(1 - e * e);
+    const focalDist = R * e;
+    const highlight = this.orbitEq_highlight;
+
+    // Card background
+    ctx.fillStyle = 'rgba(15,23,42,0.7)';
+    ctx.strokeStyle = 'rgba(139,92,246,0.25)';
+    ctx.lineWidth = 1.5;
+    this.rrect(ctx, panelX, pt, pw, ph, 14);
+    ctx.fill(); ctx.stroke();
+
+    // Key points
+    const qX = cx + R * Math.cos(E_rad);
+    const qY = cy - R * Math.sin(E_rad);
+    const pX = cx + R * Math.cos(E_rad);
+    const pY = cy - b * Math.sin(E_rad);
+    const sunX = cx + focalDist;
+    const sunY = cy;
+    const M_rad = E_rad - e * Math.sin(E_rad);
+    const M_deg = M_rad * 180 / Math.PI;
+    const mX = cx + R * Math.cos(M_rad);
+    const mY = cy - R * Math.sin(M_rad);
+    const periapsisX = cx + R;
+    const periapsisY = cy;
+
+    // ── Area Highlights (behind everything) ──
+    const drawSector = (fc, sc, sa, ea, rad, lw) => {
+      ctx.save(); ctx.fillStyle = fc; ctx.strokeStyle = sc; ctx.lineWidth = lw || 1.5;
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, rad, 0, -ea, true); ctx.lineTo(cx, cy); ctx.closePath();
+      ctx.fill(); ctx.stroke(); ctx.restore();
+    };
+    if (highlight === 'all' || highlight === 'sector')
+      drawSector('rgba(167,139,250,0.30)', 'rgba(167,139,250,0.8)', 0, E_rad, R, 2);
+    if (highlight === 'all' || highlight === 'triangle') {
+      ctx.save(); ctx.fillStyle = 'rgba(251,191,36,0.40)'; ctx.strokeStyle = 'rgba(251,191,36,0.9)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(sunX, sunY); ctx.lineTo(qX, qY); ctx.closePath();
+      ctx.fill(); ctx.stroke(); ctx.restore();
+    }
+    if (highlight === 'all' || highlight === 'swept') {
+      ctx.save(); ctx.fillStyle = 'rgba(56,189,248,0.30)'; ctx.strokeStyle = 'rgba(56,189,248,0.8)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sunX, sunY);
+      ctx.arc(cx, cy, R, 0, -E_rad, true); ctx.lineTo(sunX, sunY); ctx.closePath();
+      ctx.fill(); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.strokeStyle = 'rgba(56,189,248,0.5)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]); ctx.beginPath();
+      ctx.moveTo(sunX, sunY); ctx.lineTo(periapsisX, periapsisY); ctx.stroke(); ctx.restore();
+    }
+    if (highlight === 'all' || highlight === 'ideal')
+      drawSector('rgba(16,185,129,0.25)', 'rgba(16,185,129,0.7)', 0, M_rad, R, 2);
+
+    // Grid axes
+    ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(cx - R - 50, cy); ctx.lineTo(cx + R + 50, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - R - 30); ctx.lineTo(cx, cy + R + 30); ctx.stroke();
+    ctx.restore();
+
+    // Reference circle (dashed)
+    ctx.save(); ctx.strokeStyle = 'rgba(148,163,184,0.35)'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+
+    // Orbit ellipse
+    ctx.save(); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.ellipse(cx, cy, R, b, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+
+    // Q→axis drop
+    ctx.save(); ctx.strokeStyle = 'rgba(203,213,225,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(qX, qY); ctx.lineTo(qX, cy); ctx.stroke(); ctx.restore();
+
+    // Q→P lunula hint
+    ctx.save(); ctx.strokeStyle = 'rgba(239,68,68,0.2)'; ctx.lineWidth = 0.8; ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(qX, qY); ctx.lineTo(pX, pY); ctx.stroke(); ctx.restore();
+
+    // C→Q line
+    ctx.strokeStyle = 'rgba(167,139,250,0.6)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(qX, qY); ctx.stroke();
+
+    // S→P (r)
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(sunX, sunY); ctx.lineTo(pX, pY); ctx.stroke();
+
+    // Right triangle S–M–P
+    if (highlight === 'distance_derivation') {
+      ctx.save();
+      ctx.fillStyle = 'rgba(249,115,22,0.22)'; // warm transluscent orange
+      ctx.strokeStyle = '#f97316'; // solid orange
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(sunX, sunY);
+      ctx.lineTo(pX, sunY);
+      ctx.lineTo(pX, pY);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+      
+      // Draw right angle indicator
+      const dx = Math.sign(sunX - pX) || 1;
+      const dy = Math.sign(pY - sunY) || 1;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(249, 115, 22, 0.8)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      const sqSize = 8;
+      ctx.moveTo(pX + dx * sqSize, sunY);
+      ctx.lineTo(pX + dx * sqSize, sunY + dy * sqSize);
+      ctx.lineTo(pX, sunY + dy * sqSize);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.save(); ctx.strokeStyle = 'rgba(56,189,248,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(sunX, sunY); ctx.lineTo(pX, sunY); ctx.lineTo(pX, pY); ctx.stroke(); ctx.restore();
+      ctx.fillStyle = 'rgba(56,189,248,0.4)';
+      ctx.beginPath(); ctx.rect(pX - 3, sunY - 3, 3, 3); ctx.fill();
+    }
+
+    // E angle arc
+    drawSector('rgba(167,139,250,0.12)', '#a78bfa', 0, E_rad, 32, 1.2);
+
+    // M radius line
+    ctx.save(); ctx.strokeStyle = 'rgba(16,185,129,0.5)'; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(mX, mY); ctx.stroke(); ctx.restore();
+
+    // M angle arc
+    drawSector('rgba(16,185,129,0.1)', '#10b981', 0, M_rad, 20, 1.2);
+    // Points
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#a78bfa'; ctx.beginPath(); ctx.arc(qX, qY, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.save(); ctx.shadowColor = 'rgba(56,189,248,0.8)'; ctx.shadowBlur = 10;
+    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(pX, pY, 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+    this.sunAt(ctx, sunX, sunY, 6.5);
+    ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(mX, mY, 3.5, 0, Math.PI * 2); ctx.fill();
+
+    // Helper to draw a dashed bezier leader curve and a large caption label out to the side
+    const drawLeader = (label, startX, startY, endX, endY, color, textColor) => {
+      ctx.save();
+      // Draw leader line (dashed bezier curve)
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      const cpX = (startX + endX) / 2;
+      ctx.bezierCurveTo(cpX, startY, cpX, endY, endX, endY);
+      ctx.stroke();
+
+      // Draw starting point dot
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(startX, startY, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw underline under the label
+      ctx.beginPath();
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX + 15, endY);
+      ctx.stroke();
+
+      // Draw larger text
+      ctx.fillStyle = textColor;
+      ctx.font = 'bold italic 13px Georgia,serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, endX + 20, endY);
+      ctx.restore();
+    };
+
+    // Labels
+    ctx.fillStyle = '#f8fafc'; ctx.font = '500 13px Outfit,sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText('C', cx - 8, cy + 12);
+    ctx.textAlign = 'center'; ctx.fillText('Sun (S)', sunX, cy + 24);
+    ctx.textAlign = qX >= cx ? 'left' : 'right'; ctx.fillText('Q', qX + (qX >= cx ? 8 : -8), qY - 2);
+    ctx.textAlign = pX >= cx ? 'left' : 'right'; ctx.fillText('P', pX + (pX >= cx ? 8 : -8), pY + 14);
+    
+    const rLabelX = (sunX + pX) / 2, rLabelY = (sunY + pY) / 2;
+    ctx.fillStyle = '#fcd34d'; ctx.font = 'italic bold 15px Georgia,serif'; ctx.fillText('r', rLabelX + 8, rLabelY - 4);
+    
+    ctx.fillStyle = '#c084fc'; ctx.font = 'italic 14px Georgia,serif';
+    ctx.fillText('E', cx + 42 * Math.cos(E_rad / 2), cy - 42 * Math.sin(E_rad / 2));
+    
+    ctx.fillStyle = '#34d399'; ctx.font = 'italic 14px Georgia,serif';
+    ctx.fillText('M', cx + 26 * Math.cos(M_rad / 2), cy - 26 * Math.sin(M_rad / 2));
+    
+    ctx.fillStyle = '#34d399'; ctx.font = '500 12px Outfit,sans-serif';
+    ctx.textAlign = mX >= cx ? 'left' : 'right'; ctx.fillText('M', mX + (mX >= cx ? 6 : -6), mY - 4);
+    
+    ctx.fillStyle = '#94a3b8'; ctx.font = 'italic 12px Georgia,serif';
+    ctx.fillText('ae', cx + focalDist / 2, cy - 6);
+    
+    ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = '500 11px Outfit,sans-serif';
+    ctx.textAlign = 'center'; ctx.fillText('periapsis', periapsisX, cy + 16);
+
+    // Area labels out to the side
+    if (highlight === 'distance_derivation') {
+      const baseMidX = (sunX + pX) / 2, baseMidY = sunY;
+      const heightMidX = pX, heightMidY = (pY + sunY) / 2;
+      const hypMidX = (sunX + pX) / 2, hypMidY = (pY + sunY) / 2;
+      drawLeader('Base SM = a·cos E − ae', baseMidX, baseMidY, cx + R + 45, cy - 35, 'rgba(203,213,225,0.8)', '#cbd5e1');
+      drawLeader('Height MP = b·sin E', heightMidX, heightMidY, cx + R + 45, cy + 5, 'rgba(56,189,248,0.8)', '#38bdf8');
+      drawLeader('Hypotenuse r = a(1 − e·cos E)', hypMidX, hypMidY, cx + R + 45, cy + 45, 'rgba(251,191,36,0.8)', '#fbbf24');
+    } else {
+      if (highlight === 'all' || highlight === 'sector') {
+        const sX = cx + R * 0.5 * Math.cos(E_rad / 2);
+        const sY = cy - R * 0.5 * Math.sin(E_rad / 2);
+        drawLeader('Sector Area = ½a²E', sX, sY, cx + R + 45, cy - 65, 'rgba(167,139,250,0.8)', '#c084fc');
+      }
+      if (highlight === 'all' || highlight === 'triangle') {
+        const tx = (cx + sunX + qX) / 3, ty = (cy + sunY + qY) / 3;
+        drawLeader('Triangle Area = ½a²e·sin E', tx, ty, cx + R + 45, cy - 25, 'rgba(251,191,36,0.8)', '#fbbf24');
+      }
+      if (highlight === 'all' || highlight === 'swept') {
+        const sx = (pX + sunX) / 2, sy = (pY + sunY) / 2;
+        drawLeader('Swept Area = ½a²M', sx, sy, cx + R + 45, cy + 15, 'rgba(56,189,248,0.8)', '#38bdf8');
+      }
+      if (highlight === 'all' || highlight === 'ideal') {
+        const ix = cx + R * 0.45 * Math.cos(M_rad / 2);
+        const iy = cy - R * 0.45 * Math.sin(M_rad / 2);
+        drawLeader('Ideal Sector = ½a²M', ix, iy, cx + R + 45, cy + 55, 'rgba(16,185,129,0.8)', '#34d399');
+      }
+    }
+
+    // Live math panel
+    const sectorArea = 0.5 * E_rad;
+    const triangleArea = 0.5 * e * Math.sin(E_rad);
+    const sweptArea = sectorArea - triangleArea;
+    const r_val = 1.0 * (1 - e * Math.cos(E_rad));
+    const mathBoxW = 200, mathBoxH = highlight === 'all' ? 140 : 100;
+    ctx.fillStyle = 'rgba(15,23,42,0.88)'; ctx.strokeStyle = 'rgba(139,92,246,0.3)'; ctx.lineWidth = 1;
+    this.rrect(ctx, panelX + 16, pt + 16, mathBoxW, mathBoxH, 8); ctx.fill(); ctx.stroke();
+    
+    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 10px Outfit,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('LIVE CALCULATION', panelX + 24, pt + 30);
+    
+    ctx.font = '500 9px monospace'; let rowY = pt + 45;
+    ctx.fillStyle = '#cbd5e1'; ctx.fillText(`a=1.000  e=${e.toFixed(3)}  E=${this.orbitEq_E.toFixed(1)}°`, panelX + 24, rowY);
+    
+    rowY += 13;
+    ctx.fillStyle = '#fcd34d'; ctx.fillText(`r = a(1−e·cos E) = ${r_val.toFixed(3)}`, panelX + 24, rowY);
+    
+    if (highlight === 'all') {
+      rowY += 13; ctx.fillStyle = '#c084fc';
+      ctx.fillText(`Sector ½a²E = ${sectorArea.toFixed(4)}`, panelX + 24, rowY);
+      rowY += 13; ctx.fillStyle = '#fbbf24';
+      ctx.fillText(`Triangle ½a²e·sin E = ${triangleArea.toFixed(4)}`, panelX + 24, rowY);
+      rowY += 13; ctx.fillStyle = '#38bdf8';
+      ctx.fillText(`Swept = ${sweptArea.toFixed(4)}`, panelX + 24, rowY);
+    }
+    rowY += 13; ctx.fillStyle = '#34d399';
+    ctx.fillText(`M = E−e·sin E = ${M_deg.toFixed(1)}°`, panelX + 24, rowY);
+
+    // Bottom equation
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = 'italic 14px Georgia,serif'; ctx.textAlign = 'center';
+    if (highlight === 'distance_derivation') {
+      ctx.fillText('r² = (a·cos E − ae)² + (b·sin E)²  ⟹  r = a(1 − e·cos E)', cx, pt + ph - 16);
+    } else {
+      ctx.fillText('½a²M = ½a²E − ½a²e·sin E  ⟹  M = E − e·sin E', cx, pt + ph - 16);
+    }
+
+    // Header
+    ctx.fillStyle = '#fff'; ctx.font = '600 16px Outfit,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText("Kepler's Orbit Equations: From Geometry to Uniform Time", IX + IW / 2, 44);
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '500 12px Outfit,sans-serif';
+    if (highlight === 'distance_derivation') {
+      ctx.fillText('r = a(1 − e·cos E) — physical distance from the focus using eccentric anomaly E.', IX + IW / 2, 62);
+    } else {
+      ctx.fillText('½a²M = ½a²E − ½a²e·sin E  ⟹  M = E − e·sin E — the bridge from area to time.', IX + IW / 2, 62);
     }
   }
 

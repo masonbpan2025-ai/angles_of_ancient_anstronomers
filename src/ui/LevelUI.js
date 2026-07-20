@@ -39,6 +39,7 @@ export class LevelUI {
     this.kepler8_1Verified = false;
     this.kepler8_23Verified = false;
     this.kepler8_logVerified = false;
+    this.kepler8_eqVerified = false;
     this.newton1Verified = false;
     this.newton2Verified = false;
     this.newton3Verified = false;
@@ -2356,9 +2357,10 @@ export class LevelUI {
         <p class="text-[9px] text-slate-400 tracking-wider font-bold mt-1 uppercase">Elliptical Orbits &amp; Harmonic Laws</p>
 
         <!-- Tabs -->
-        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5">
+        <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 flex-wrap">
           <button id="tab-k1"  class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:rgb(139,92,246);color:#fff;">Kepler's 1st Law</button>
           <button id="tab-k23" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Kepler's 2nd &amp; 3rd</button>
+          <button id="tab-keq" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Orbit Equations</button>
           <button id="tab-klog" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Eclipse &amp; Logarithm</button>
         </div>
  
@@ -2405,6 +2407,84 @@ export class LevelUI {
             </p>
           </div>
         </div>
+
+        <!-- Orbit Equations content -->
+        <div id="content-keq" class="flex flex-col gap-2 mt-2 hidden">
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <h3 class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Orbit Equations &amp; Geometry</h3>
+            
+            <div class="flex gap-1.5 mb-1.5 border-b border-slate-800 pb-1.5">
+              <button id="keq-mode-dist" class="flex-1 py-1 text-[9.5px] font-bold rounded transition text-center border border-slate-700 bg-slate-900 text-slate-400">
+                Distance Equation
+              </button>
+              <button id="keq-mode-time" class="flex-1 py-1 text-[9.5px] font-bold rounded transition text-center border border-violet-500 bg-violet-950/20 text-violet-300">
+                Kepler's Eq (Time)
+              </button>
+            </div>
+
+            <!-- Distance derivation explanation -->
+            <div id="keq-content-dist" class="flex flex-col gap-2 hidden">
+              <p class="text-[10.5px] leading-relaxed text-slate-300">
+                How did Kepler find the orbital distance <strong class="text-amber-300 font-mono">r = a(1 − e·cos E)</strong>?
+              </p>
+              <div class="bg-slate-950/50 p-2 rounded border border-slate-900/60 text-[10px] space-y-1">
+                <div>• Center <span class="font-bold text-slate-200">C</span> is at (0,0); Sun <span class="font-bold text-slate-200">S</span> is at focus <span class="font-bold text-slate-200">(ae, 0)</span>.</div>
+                <div>• Planet <span class="font-bold text-slate-200">P</span> shares the x-coordinate of circle point Q: <span class="font-bold text-slate-200">x = a·cos E</span>.</div>
+                <div>• The y-coordinate is scaled: <span class="font-bold text-slate-200">y = b·sin E</span>, where <span class="font-bold text-slate-300">b² = a²(1−e²)</span>.</div>
+                <div class="pt-1.5 border-t border-slate-900 text-slate-400">Apply Pythagoras to right triangle <span class="text-amber-400 font-semibold">S–M–P</span>:</div>
+                <div class="font-mono text-sky-400 text-center py-1">r² = (a·cos E − ae)² + (b·sin E)²</div>
+                <div class="text-slate-400">Substitute <span class="font-mono text-slate-300">b²</span>, expand, and factor into a perfect square:</div>
+                <div class="font-mono text-green-400 text-center py-0.5">r = a(1 − e·cos E)</div>
+              </div>
+              <p class="text-[10px] text-slate-400 leading-relaxed pt-1.5 border-t border-slate-850">
+                <strong>Goal / Practical Use Cases:</strong> Calculates physical distance <span class="italic text-amber-300 font-serif">r</span> directly from focus to planet. Crucial for computing <strong>gravitational forces</strong> (<span class="italic text-violet-300 font-serif">F ∝ 1/r²</span>), <strong>stellar radiation flux</strong> (heating/thermal state), and tidal deformation.
+              </p>
+            </div>
+
+            <!-- Kepler's equation (time) explanation -->
+            <div id="keq-content-time" class="flex flex-col gap-2">
+              <p class="text-[10.5px] leading-relaxed text-slate-300">
+                Kepler realized that <strong>area, not distance, was the true measure of time</strong>. He equated the physical swept area from the Sun to a uniform "ideal" clock angle M:
+              </p>
+              <div class="bg-slate-950/50 p-2 rounded border border-slate-900/60 font-mono text-[10px] space-y-1 text-center">
+                <div class="text-violet-300">½a²M = ½a²E − ½a²e·sin E</div>
+                <div class="text-sky-300">⟹  M = E − e·sin E</div>
+              </div>
+              <p class="text-[10px] text-slate-400 leading-relaxed">
+                <span class="text-violet-300">Sector (C to Q)</span> − <span class="text-amber-300">Triangle (C–S–Q)</span> = <span class="text-sky-300">Swept Area (S to Q)</span>. Set equal to <span class="text-emerald-300">½a²M</span> and divide by ½a² to get the pure-angle form.
+              </p>
+              <p class="text-[10px] text-slate-400 leading-relaxed pt-1.5 border-t border-slate-850">
+                <strong>Goal / Practical Use Cases:</strong> Relates orbital position (<span class="italic text-violet-300 font-serif">E</span>) to elapsed time (<span class="italic text-emerald-300 font-serif">M</span>). Key for <strong>orbital predictions (ephemerides)</strong>. Since time <span class="italic text-slate-300 font-serif">t</span> flows uniformly, we calculate <span class="italic text-emerald-300 font-serif">M</span>, then solve this transcendental equation numerically to find <span class="italic text-violet-300 font-serif">E(t)</span> and locate the planet!
+              </p>
+            </div>
+            
+            <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verification Challenge:</span>
+              <p class="text-[10px] text-slate-400 leading-relaxed">
+                Use <span class="text-violet-300 font-mono">e = 0.600</span>, <span class="text-violet-300 font-mono">E = 45.0°</span>. Compute each step to verify Kepler's Equation.
+              </p>
+              
+              <div class="flex flex-col gap-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">1. Distance r = a(1 − e·cos E) (3 decimals)</label>
+                <input type="number" id="calc-keq-r" class="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.576" step="0.001">
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">2. Triangle area = ½·e·sin(E) with a=1 (4 decimals)</label>
+                <input type="number" id="calc-keq-tri" class="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.2121" step="0.0001">
+              </div>
+ 
+              <div class="flex flex-col gap-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">3. Mean Anomaly M in degrees (1 decimal)</label>
+                <input type="number" id="calc-keq-m" class="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 20.7" step="0.1">
+              </div>
+ 
+              <button id="verify-keq-btn" class="w-full bg-violet-500 hover:bg-violet-600 text-white font-bold py-1.5 rounded-lg text-xs transition mt-1">Verify Calculation</button>
+ 
+              <div id="keq-feedback" class="text-xs p-2 rounded-lg border hidden font-sans"></div>
+            </div>
+          </div>
+        </div>
  
         <!-- Logarithm Task content -->
         <div id="content-klog" class="flex flex-col gap-2 mt-2 hidden">
@@ -2445,6 +2525,9 @@ export class LevelUI {
           <div id="check-k23" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>2nd &amp; 3rd Laws Explored</span>
           </div>
+          <div id="check-keq" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Orbit Equations Verified</span>
+          </div>
           <div id="check-klog" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Eclipse &amp; Logarithm Verified</span>
           </div>
@@ -2471,8 +2554,11 @@ export class LevelUI {
     const finalBtn  = document.getElementById('final-submit-btn');
     const checkK1   = document.getElementById('check-k1');
     const checkK23  = document.getElementById('check-k23');
+    const checkKeq  = document.getElementById('check-keq');
     const checkKlog = document.getElementById('check-klog');
     const k1Fb      = document.getElementById('kepler1-feedback');
+    const conKeqDist = document.getElementById('keq-content-dist');
+    const conKeqTime = document.getElementById('keq-content-time');
  
     const refreshChecklist = () => {
       if (this.kepler8_1Verified) {
@@ -2483,11 +2569,15 @@ export class LevelUI {
         checkK23.querySelector('.status-check').textContent = '✅';
         checkK23.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
       }
+      if (this.kepler8_eqVerified) {
+        checkKeq.querySelector('.status-check').textContent = '✅';
+        checkKeq.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      }
       if (this.kepler8_logVerified) {
         checkKlog.querySelector('.status-check').textContent = '✅';
         checkKlog.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
       }
-      if (this.kepler8_1Verified && this.kepler8_23Verified && this.kepler8_logVerified) {
+      if (this.kepler8_1Verified && this.kepler8_23Verified && this.kepler8_eqVerified && this.kepler8_logVerified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
       }
@@ -2531,9 +2621,11 @@ export class LevelUI {
     // Tab switching
     const tab1  = document.getElementById('tab-k1');
     const tab23 = document.getElementById('tab-k23');
-    const tablog = document.getElementById('tab-tab-klog') || document.getElementById('tab-klog');
+    const tabeq = document.getElementById('tab-keq');
+    const tablog = document.getElementById('tab-klog');
     const con1  = document.getElementById('content-k1');
     const con23 = document.getElementById('content-k23');
+    const coneq = document.getElementById('content-keq');
     const conlog = document.getElementById('content-klog');
  
     const switchTab = (which) => {
@@ -2542,10 +2634,12 @@ export class LevelUI {
       }
       tab1.style.background  = 'transparent'; tab1.style.color  = 'rgb(148,163,184)';
       tab23.style.background = 'transparent'; tab23.style.color = 'rgb(148,163,184)';
+      tabeq.style.background = 'transparent'; tabeq.style.color = 'rgb(148,163,184)';
       tablog.style.background = 'transparent'; tablog.style.color = 'rgb(148,163,184)';
       
       con1.classList.add('hidden');
       con23.classList.add('hidden');
+      coneq.classList.add('hidden');
       conlog.classList.add('hidden');
  
       if (which === 'kepler1') {
@@ -2558,6 +2652,14 @@ export class LevelUI {
         this.kepler8_23Verified = true;
         refreshChecklist();
         renderK8Params('kepler23');
+      } else if (which === 'orbit_equations') {
+        tabeq.style.background = 'rgb(139,92,246)'; tabeq.style.color = '#fff';
+        coneq.classList.remove('hidden');
+        renderK8Params('orbit_equations');
+        if (window.activeLevelInstance) {
+          const isDist = conKeqDist && !conKeqDist.classList.contains('hidden');
+          window.activeLevelInstance.orbitEq_highlight = isDist ? 'distance_derivation' : 'all';
+        }
       } else if (which === 'logarithm') {
         tablog.style.background = 'rgb(139,92,246)'; tablog.style.color = '#fff';
         conlog.classList.remove('hidden');
@@ -2567,8 +2669,79 @@ export class LevelUI {
  
     tab1.addEventListener('click',  () => switchTab('kepler1'));
     tab23.addEventListener('click', () => switchTab('kepler23'));
+    tabeq.addEventListener('click', () => switchTab('orbit_equations'));
     tablog.addEventListener('click', () => switchTab('logarithm'));
+
+    // Orbit equations mode buttons
+    const btnKeqDist = document.getElementById('keq-mode-dist');
+    const btnKeqTime = document.getElementById('keq-mode-time');
+
+    if (btnKeqDist && btnKeqTime && conKeqDist && conKeqTime) {
+      btnKeqDist.addEventListener('click', () => {
+        btnKeqDist.className = 'flex-1 py-1 text-[9.5px] font-bold rounded transition text-center border border-violet-500 bg-violet-950/20 text-violet-300';
+        btnKeqTime.className = 'flex-1 py-1 text-[9.5px] font-bold rounded transition text-center border border-slate-700 bg-slate-900 text-slate-400';
+        conKeqDist.classList.remove('hidden');
+        conKeqTime.classList.add('hidden');
+        if (window.activeLevelInstance) {
+          window.activeLevelInstance.orbitEq_highlight = 'distance_derivation';
+        }
+      });
+
+      btnKeqTime.addEventListener('click', () => {
+        btnKeqTime.className = 'flex-1 py-1 text-[9.5px] font-bold rounded transition text-center border border-violet-500 bg-violet-950/20 text-violet-300';
+        btnKeqDist.className = 'flex-1 py-1 text-[9.5px] font-bold rounded transition text-center border border-slate-700 bg-slate-900 text-slate-400';
+        conKeqTime.classList.remove('hidden');
+        conKeqDist.classList.add('hidden');
+        if (window.activeLevelInstance) {
+          window.activeLevelInstance.orbitEq_highlight = 'all';
+        }
+      });
+    }
  
+    // Orbit equations subtask verification
+    const keqBtn = document.getElementById('verify-keq-btn');
+    const inputKeqR = document.getElementById('calc-keq-r');
+    const inputKeqTri = document.getElementById('calc-keq-tri');
+    const inputKeqM = document.getElementById('calc-keq-m');
+    const keqFb = document.getElementById('keq-feedback');
+
+    keqBtn.addEventListener('click', () => {
+      keqFb.classList.remove('hidden');
+      const valR = parseFloat(inputKeqR.value);
+      const valTri = parseFloat(inputKeqTri.value);
+      const valM = parseFloat(inputKeqM.value);
+
+      // e=0.6, E=45°: r = 1 - 0.6*cos(45°) = 1 - 0.4243 = 0.576
+      // triangle = 0.5*0.6*sin(45°) = 0.3*0.7071 = 0.2121
+      // M_deg = (π/4 - 0.6*sin(π/4)) * 180/π = (0.7854 - 0.4243) * 57.296 = 20.7°
+      const isRCorrect = Math.abs(valR - 0.576) <= 0.003;
+      const isTriCorrect = Math.abs(valTri - 0.2121) <= 0.001;
+      const isMCorrect = Math.abs(valM - 20.7) <= 0.15;
+
+      if (isRCorrect && isTriCorrect && isMCorrect) {
+        keqFb.innerHTML = '<strong>✓ Correct!</strong><br>• r = 1.0(1 − 0.6·cos(45°)) = 0.576 units<br>• Triangle = ½·0.6·sin(45°) = 0.2121<br>• Sector ½E = 0.3927, swept = 0.3927 − 0.2121 = 0.1806<br>• M = 2·swept = 0.3612 rad = 20.7° — matches M = E − e·sin E!';
+        keqFb.className = 'text-xs p-2 rounded-lg border border-green-900/30 bg-green-950/20 text-green-400 leading-relaxed';
+        this.kepler8_eqVerified = true;
+        refreshChecklist();
+      } else {
+        let hints = '<strong>Incorrect.</strong> Hints:<br>';
+        if (!isRCorrect) hints += '• r = a(1 − e·cos E) = 1 − 0.6·cos(45°) = 1 − 0.4243 = 0.576<br>';
+        if (!isTriCorrect) hints += '• Triangle = ½·e·sin E = 0.3·sin(45°) = 0.3·0.7071 = 0.2121<br>';
+        if (!isMCorrect) hints += '• M_rad = π/4 − 0.6·sin(π/4) = 0.7854 − 0.4243 = 0.3612 rad. M_deg = 0.3612 × 180/π = 20.7°<br>';
+        keqFb.innerHTML = hints;
+        keqFb.className = 'text-xs p-2 rounded-lg border border-red-900/30 bg-red-950/20 text-red-400 leading-relaxed';
+      }
+    });
+
+    if (this.kepler8_eqVerified) {
+      inputKeqR.value = '0.576';
+      if (inputKeqTri) inputKeqTri.value = '0.2121';
+      inputKeqM.value = '20.7';
+      keqFb.innerHTML = '<strong>✓ Correct!</strong> r = 0.576, Triangle area = 0.2121, M = 20.7°. Kepler\'s equation verified!';
+      keqFb.className = 'text-xs p-2 rounded-lg border border-green-900/30 bg-green-950/20 text-green-400 leading-relaxed';
+      keqFb.classList.remove('hidden');
+    }
+
     // Logarithm subtask verification
     const klogBtn = document.getElementById('verify-klog-btn');
     const inputNum = document.getElementById('calc-klog-num');
@@ -2638,6 +2811,70 @@ export class LevelUI {
               <span class="text-purple-400 font-semibold">Right: T² vs a³ log-log plot (3rd Law)</span>
             </div>
           </div>`;
+      } else if (tab === 'orbit_equations') {
+        pp.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-4 w-full">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Interactive Keplerian Orbit Geometry</span>
+            
+            <div class="flex items-center gap-6 flex-grow max-w-md">
+              <div class="flex flex-col gap-0.5 flex-1">
+                <div class="flex justify-between text-[9px] font-bold text-slate-500">
+                  <span>Eccentricity (e):</span>
+                  <span id="slider-k8-e-val" class="text-violet-400">0.600</span>
+                </div>
+                <input type="range" id="slider-k8-e" min="0.0" max="0.8" step="0.01" value="0.60" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
+              </div>
+              
+              <div class="flex flex-col gap-0.5 flex-1">
+                <div class="flex justify-between text-[9px] font-bold text-slate-500">
+                  <span>Eccentric Anomaly (E):</span>
+                  <span id="slider-k8-E-val" class="text-violet-400">45°</span>
+                </div>
+                <input type="range" id="slider-k8-E" min="0" max="360" step="1" value="45" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="k8-play-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5">
+                <span id="k8-play-icon">❚❚</span><span id="k8-play-text">Pause</span>
+              </button>
+              <button id="k8-reset-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-1.5 rounded-lg text-xs border border-slate-700 transition">Reset</button>
+            </div>
+          </div>`;
+
+        const sliderE = document.getElementById('slider-k8-E');
+        const valE = document.getElementById('slider-k8-E-val');
+        const sliderE_e = document.getElementById('slider-k8-e');
+        const valE_e = document.getElementById('slider-k8-e-val');
+        const inst = window.activeLevelInstance;
+
+        if (inst && sliderE && sliderE_e) {
+          sliderE.value = Math.round(inst.orbitEq_E);
+          valE.textContent = Math.round(inst.orbitEq_E) + '°';
+          sliderE_e.value = inst.orbitEq_e;
+          valE_e.textContent = inst.orbitEq_e.toFixed(3);
+
+          sliderE.addEventListener('input', (e) => {
+            inst.orbitEq_E = parseFloat(e.target.value);
+            valE.textContent = Math.round(inst.orbitEq_E) + '°';
+            // Solve mean anomaly from E: M = E - e * sin(E)
+            const E_rad = inst.orbitEq_E * Math.PI / 180;
+            inst.meanAnomaly = E_rad - inst.orbitEq_e * Math.sin(E_rad);
+            // Pause simulation when manually adjusting
+            if (inst.isSimPlaying) {
+              inst.togglePlay();
+              const playIcon = document.getElementById('k8-play-icon');
+              const playText = document.getElementById('k8-play-text');
+              if (playIcon) playIcon.textContent = '▶';
+              if (playText) playText.textContent = 'Play';
+            }
+          });
+
+          sliderE_e.addEventListener('input', (e) => {
+            inst.orbitEq_e = parseFloat(e.target.value);
+            valE_e.textContent = inst.orbitEq_e.toFixed(3);
+          });
+        }
       } else {
         pp.innerHTML = `
           <div class="flex flex-wrap items-center gap-4 w-full">
@@ -2663,6 +2900,19 @@ export class LevelUI {
         resetBtn.addEventListener('click', () => {
           if (window.activeLevelInstance && typeof window.activeLevelInstance.resetSimulation === 'function') {
             window.activeLevelInstance.resetSimulation();
+            const inst = window.activeLevelInstance;
+            if (tab === 'orbit_equations') {
+              inst.orbitEq_e = 0.60;
+              inst.orbitEq_E = 45;
+              const valE = document.getElementById('slider-k8-E-val');
+              const valE_e = document.getElementById('slider-k8-e-val');
+              const sliderE = document.getElementById('slider-k8-E');
+              const sliderE_e = document.getElementById('slider-k8-e');
+              if (sliderE) sliderE.value = 45;
+              if (valE) valE.textContent = '45°';
+              if (sliderE_e) sliderE_e.value = 0.60;
+              if (valE_e) valE_e.textContent = '0.600';
+            }
           }
         });
       }
