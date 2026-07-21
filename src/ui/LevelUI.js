@@ -3445,7 +3445,7 @@ export class LevelUI {
         </div>
 
         <!-- Binomial Expansion tab content -->
-        <div id="section-binomial" class="flex flex-col gap-2 mt-2 hidden" style="max-height: calc(100vh - 230px); overflow-y: auto; padding-right: 4px;">
+        <div id="section-binomial" class="flex flex-col gap-2 mt-2 hidden">
           <!-- Newton's Binomial Discovery -->
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
             <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Newton's Binomial Discovery</h3>
@@ -3528,20 +3528,6 @@ export class LevelUI {
           </div>
         </div>
 
-        <!-- Checklist -->
-        <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 mt-2">
-          <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
-          <div id="check-bh" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
-            <span class="status-check">❌</span><span>Black Hole Radius Verified</span>
-          </div>
-          <div id="check-exo" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
-            <span class="status-check">❌</span><span>Exoplanet Orbit Size Verified</span>
-          </div>
-          <div id="check-bin" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
-            <span class="status-check">❌</span><span>Binomial Applications Verified</span>
-          </div>
-        </div>
-
         <button id="bh-final-submit-btn" disabled
           class="w-full py-2 rounded-xl bg-slate-800 text-slate-500 font-bold transition cursor-not-allowed text-xs border border-slate-700 mt-2">
           Verify &amp; Finish Game
@@ -3583,34 +3569,28 @@ export class LevelUI {
     this.binomialVerified = this.binomialVerified || false;
 
     const refreshCheck = () => {
-      const checkBh = document.getElementById('check-bh');
-      const checkExo = document.getElementById('check-exo');
-      const checkBin = document.getElementById('check-bin');
-      
+      const tabBlackHole = document.getElementById('tab-black-hole');
+      const tabExoplanet = document.getElementById('tab-exoplanet');
+      const tabBinomial = document.getElementById('tab-binomial');
+
       if (this.blackholeVerified) {
-        checkBh.querySelector('.status-check').textContent = '✅';
-        checkBh.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+        tabBlackHole.innerHTML = 'Black Hole <span class="text-green-400 font-bold ml-1">✓</span>';
       } else {
-        checkBh.querySelector('.status-check').textContent = '❌';
-        checkBh.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+        tabBlackHole.innerHTML = 'Black Hole';
       }
 
       if (this.exoplanetVerified) {
-        checkExo.querySelector('.status-check').textContent = '✅';
-        checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+        tabExoplanet.innerHTML = 'Exoplanet Orbit <span class="text-green-400 font-bold ml-1">✓</span>';
       } else {
-        checkExo.querySelector('.status-check').textContent = '❌';
-        checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+        tabExoplanet.innerHTML = 'Exoplanet Orbit';
       }
 
       this.binomialVerified = this.binomialPiVerified && this.binomialGravityVerified && this.binomialSpeedVerified;
 
       if (this.binomialVerified) {
-        checkBin.querySelector('.status-check').textContent = '✅';
-        checkBin.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+        tabBinomial.innerHTML = 'Binomial Expansion <span class="text-green-400 font-bold ml-1">✓</span>';
       } else {
-        checkBin.querySelector('.status-check').textContent = '❌';
-        checkBin.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+        tabBinomial.innerHTML = 'Binomial Expansion';
       }
 
       if (this.blackholeVerified && this.exoplanetVerified && this.binomialVerified) {
