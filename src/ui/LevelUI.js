@@ -3379,6 +3379,7 @@ export class LevelUI {
         <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 flex-wrap">
           <button id="tab-black-hole" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: rgb(139, 92, 246); color: white;">Black Hole</button>
           <button id="tab-exoplanet" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Exoplanet Orbit</button>
+          <button id="tab-binomial" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Binomial Expansion</button>
         </div>
 
         <div id="section-black-hole" class="flex flex-col gap-2 mt-2">
@@ -3443,6 +3444,90 @@ export class LevelUI {
           </div>
         </div>
 
+        <!-- Binomial Expansion tab content -->
+        <div id="section-binomial" class="flex flex-col gap-2 mt-2 hidden" style="max-height: calc(100vh - 230px); overflow-y: auto; padding-right: 4px;">
+          <!-- Newton's Binomial Discovery -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Newton's Binomial Discovery</h3>
+            <p class="text-[10px] leading-relaxed text-slate-300">
+              In 1665, Isaac Newton sought the area under circular segments. He knew the integrals of integer powers of <span class="font-serif">1 − x²</span>, like:
+              <span class="block text-center font-serif text-amber-300 font-bold my-1 text-[10px]">
+                ∫ (1−x²)⁰ dx = x <br>
+                ∫ (1−x²)¹ dx = x − ⅓x³ <br>
+                ∫ (1−x²)² dx = x − ⅔x³ + ⅕x⁵
+              </span>
+              By arranging these integrals in a table and analyzing the rows of Pascal's triangle coefficients, Newton generalized the formula for <strong>fractional and negative exponents</strong>! He defined the general binomial coefficient:
+              <span class="block text-center font-serif text-sky-400 font-bold my-1 text-[10.5px]">
+                (n choose k) = n(n−1)(n−2)...(n−k+1) / k!
+              </span>
+              For <span class="font-serif text-violet-300">n = ½</span>, this gives:
+              <span class="block text-center font-serif text-green-400 font-bold my-1 text-[10.5px]">
+                (1−x²)<sup>½</sup> = 1 − ½x² − ⅛x⁴ − ⅟₁₆x⁶ − ⁵/₁₂₈x⁸ − ...
+              </span>
+            </p>
+          </div>
+
+          <!-- Application 1: Calculating Pi -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">1. Calculating Pi (π)</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              Newton integrated the circle expansion from 0 to 0.5. Geometrically, this area equals a <span class="text-violet-300">30° sector (π/12)</span> plus a <span class="text-amber-300">right triangle (√3/8)</span>:
+              <span class="block text-center font-serif text-white font-bold my-1 text-[10.5px]">
+                ∫₀<sup>0.5</sup> (1−x²)<sup>½</sup> dx = π/12 + √3/8
+              </span>
+              Rearranging, he got an incredibly fast-converging series for <span class="font-serif">π</span>:
+              <span class="block text-center font-serif text-emerald-400 font-bold my-1 text-[10.5px]">
+                π = 12 · ( ∫₀<sup>0.5</sup> (1−x²)<sup>½</sup> dx − √3/8 )
+              </span>
+            </p>
+            <span class="text-[9.5px] font-semibold text-slate-200 uppercase">Challenge: Compute 3 terms of the integral at x = 0.5:</span>
+            <span class="text-[9px] text-slate-450 italic">Formula: x − ⅙x³ − ⅟₄₀x⁵ (4 decimals)</span>
+            <div class="flex gap-2">
+              <input type="number" id="bin-pi-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.4784" step="0.0001">
+              <button id="bin-pi-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="bin-pi-feedback" class="text-[10.5px] font-medium hidden"></div>
+          </div>
+
+          <!-- Application 2: Gravity at Different Heights -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">2. Gravity at Different Heights</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              At height <span class="font-serif">h</span>, gravity is <span class="font-serif">F = GMm / (R+h)² = (GMm/R²) · (1 + h/R)⁻²</span>.
+              Using the binomial approximation <span class="font-serif text-sky-400">(1+x)⁻² ≈ 1 − 2x</span> for tiny <span class="font-serif">x = h/R</span>:
+              <span class="block text-center font-serif text-emerald-400 font-bold my-1 text-[10.5px]">
+                F ≈ (GMm/R²) · (1 − 2h/R)
+              </span>
+            </p>
+            <span class="text-[9.5px] font-semibold text-slate-200 uppercase">Challenge: Earth R = 6400 km, mountain h = 16 km:</span>
+            <span class="text-[9px] text-slate-450 italic">Calculate the percentage decrease in gravitational force (2 decimals, e.g. 0.50):</span>
+            <div class="flex gap-2">
+              <input type="number" id="bin-gravity-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.50" step="0.01">
+              <button id="bin-gravity-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="bin-gravity-feedback" class="text-[10.5px] font-medium hidden"></div>
+          </div>
+
+          <!-- Application 3: Orbital Speed -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">3. Finding Orbital Speed</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              Orbital speed satisfies <span class="font-serif">v = √(GM / (R+h)) = v₀ · (1 + h/R)<sup>−½</sup></span>.
+              Using <span class="font-serif text-sky-400">(1+x)<sup>−½</sup> ≈ 1 − ½x</span>:
+              <span class="block text-center font-serif text-emerald-400 font-bold my-1 text-[10.5px]">
+                v ≈ v₀ · (1 − h / 2R)
+              </span>
+            </p>
+            <span class="text-[9.5px] font-semibold text-slate-200 uppercase">Challenge: Satellite at height h = 64 km, Earth R = 6400 km:</span>
+            <span class="text-[9px] text-slate-450 italic">Calculate the orbital speed reduction coefficient (fraction h / 2R):</span>
+            <div class="flex gap-2">
+              <input type="number" id="bin-speed-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.005" step="0.001">
+              <button id="bin-speed-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="bin-speed-feedback" class="text-[10.5px] font-medium hidden"></div>
+          </div>
+        </div>
+
         <!-- Checklist -->
         <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1 mt-2">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
@@ -3451,6 +3536,9 @@ export class LevelUI {
           </div>
           <div id="check-exo" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Exoplanet Orbit Size Verified</span>
+          </div>
+          <div id="check-bin" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Binomial Applications Verified</span>
           </div>
         </div>
 
@@ -3476,9 +3564,28 @@ export class LevelUI {
     const exoInput = document.getElementById('exo-input');
     const exoFeedback = document.getElementById('exo-feedback');
 
+    // Binomial Verification bindings
+    const binPiInput = document.getElementById('bin-pi-input');
+    const binPiBtn = document.getElementById('bin-pi-verify-btn');
+    const binPiFb = document.getElementById('bin-pi-feedback');
+
+    const binGravInput = document.getElementById('bin-gravity-input');
+    const binGravBtn = document.getElementById('bin-gravity-verify-btn');
+    const binGravFb = document.getElementById('bin-gravity-feedback');
+
+    const binSpeedInput = document.getElementById('bin-speed-input');
+    const binSpeedBtn = document.getElementById('bin-speed-verify-btn');
+    const binSpeedFb = document.getElementById('bin-speed-feedback');
+
+    this.binomialPiVerified = this.binomialPiVerified || false;
+    this.binomialGravityVerified = this.binomialGravityVerified || false;
+    this.binomialSpeedVerified = this.binomialSpeedVerified || false;
+    this.binomialVerified = this.binomialVerified || false;
+
     const refreshCheck = () => {
       const checkBh = document.getElementById('check-bh');
       const checkExo = document.getElementById('check-exo');
+      const checkBin = document.getElementById('check-bin');
       
       if (this.blackholeVerified) {
         checkBh.querySelector('.status-check').textContent = '✅';
@@ -3496,7 +3603,17 @@ export class LevelUI {
         checkExo.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
       }
 
-      if (this.blackholeVerified && this.exoplanetVerified) {
+      this.binomialVerified = this.binomialPiVerified && this.binomialGravityVerified && this.binomialSpeedVerified;
+
+      if (this.binomialVerified) {
+        checkBin.querySelector('.status-check').textContent = '✅';
+        checkBin.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      } else {
+        checkBin.querySelector('.status-check').textContent = '❌';
+        checkBin.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-slate-500';
+      }
+
+      if (this.blackholeVerified && this.exoplanetVerified && this.binomialVerified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
       } else {
@@ -3533,8 +3650,81 @@ export class LevelUI {
       exoFeedback.classList.remove('hidden');
     });
 
+    binPiBtn.addEventListener('click', () => {
+      const val = parseFloat(binPiInput.value);
+      if (val >= 0.4782 && val <= 0.4786) {
+        binPiFb.textContent = '✓ Correct! x − ⅙x³ − ⅟₄₀x⁵ = 0.5 − 0.02083 − 0.00078 = 0.4784. Newton calculated this to 9 terms by hand to find Pi!';
+        binPiFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+        this.binomialPiVerified = true;
+        refreshCheck();
+      } else {
+        binPiFb.textContent = '❌ Incorrect. Hint: Compute 0.5 - (0.5³)/6 - (0.5⁵)/40 = 0.5 - 0.125/6 - 0.03125/40 = 0.5 - 0.020833 - 0.000781 = 0.4784.';
+        binPiFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
+      }
+      binPiFb.classList.remove('hidden');
+    });
+
+    binGravBtn.addEventListener('click', () => {
+      const val = parseFloat(binGravInput.value);
+      if (val >= 0.49 && val <= 0.51) {
+        binGravFb.textContent = '✓ Correct! The force decrease is approximately 2h/R = 32 / 6400 = 0.50% (0.005 fraction).';
+        binGravFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+        this.binomialGravityVerified = true;
+        refreshCheck();
+      } else {
+        binGravFb.textContent = '❌ Incorrect. Hint: Calculate 2h/R = 2 * 16 / 6400 = 32 / 6400 = 0.0050 = 0.50%.';
+        binGravFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
+      }
+      binGravFb.classList.remove('hidden');
+    });
+
+    binSpeedBtn.addEventListener('click', () => {
+      const val = parseFloat(binSpeedInput.value);
+      if (val >= 0.0049 && val <= 0.0051) {
+        binSpeedFb.textContent = '✓ Correct! The orbital speed reduction coefficient is h/2R = 64 / 12800 = 0.005.';
+        binSpeedFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+        this.binomialSpeedVerified = true;
+        refreshCheck();
+      } else {
+        binSpeedFb.textContent = '❌ Incorrect. Hint: The speed is v ≈ v₀(1 - h/2R). The reduction coefficient is h / 2R = 64 / (2 * 6400) = 64 / 12800 = 0.005.';
+        binSpeedFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
+      }
+      binSpeedFb.classList.remove('hidden');
+    });
+
+    if (this.blackholeVerified) {
+      input.value = '4.47';
+      feedback.textContent = '✓ Correct! The Earth would need to be compressed to a radius of ~4.47 millimeters for its orbital velocity to equal the speed of light.';
+      feedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      feedback.classList.remove('hidden');
+    }
+    if (this.exoplanetVerified) {
+      exoInput.value = '0.42';
+      exoFeedback.textContent = '✓ Correct! The orbit radius is approximately 0.42 AU, placing the planet about 63 million kilometers from its host star.';
+      exoFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      exoFeedback.classList.remove('hidden');
+    }
+    if (this.binomialPiVerified) {
+      binPiInput.value = '0.4784';
+      binPiFb.textContent = '✓ Correct! x − ⅙x³ − ⅟₄₀x⁵ = 0.5 − 0.02083 − 0.00078 = 0.4784. Newton calculated this to 9 terms by hand to find Pi!';
+      binPiFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      binPiFb.classList.remove('hidden');
+    }
+    if (this.binomialGravityVerified) {
+      binGravInput.value = '0.50';
+      binGravFb.textContent = '✓ Correct! The force decrease is approximately 2h/R = 32 / 6400 = 0.50% (0.005 fraction).';
+      binGravFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      binGravFb.classList.remove('hidden');
+    }
+    if (this.binomialSpeedVerified) {
+      binSpeedInput.value = '0.005';
+      binSpeedFb.textContent = '✓ Correct! The orbital speed reduction coefficient is h/2R = 64 / 12800 = 0.005.';
+      binSpeedFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      binSpeedFb.classList.remove('hidden');
+    }
+
     finalBtn.addEventListener('click', () => {
-      alert("Congratulations! You have completed all tasks in Level 10, demonstrating the power of Newton's laws in explaining black holes and mapping exoplanet orbits!");
+      alert("Congratulations! You have completed all tasks in Level 10, demonstrating the power of Newton's laws in explaining black holes, mapping exoplanet orbits, and using binomial expansion approximations!");
       gameState.completeLevel(10);
     });
 
@@ -3542,23 +3732,34 @@ export class LevelUI {
     const switchTab = (tab) => {
       const tabBlackHole = document.getElementById('tab-black-hole');
       const tabExoplanet = document.getElementById('tab-exoplanet');
+      const tabBinomial = document.getElementById('tab-binomial');
       const sectBH = document.getElementById('section-black-hole');
       const sectExo = document.getElementById('section-exoplanet');
+      const sectBin = document.getElementById('section-binomial');
+
+      tabBlackHole.style.background = 'transparent';
+      tabBlackHole.style.color = 'rgb(148, 163, 184)';
+      tabExoplanet.style.background = 'transparent';
+      tabExoplanet.style.color = 'rgb(148, 163, 184)';
+      tabBinomial.style.background = 'transparent';
+      tabBinomial.style.color = 'rgb(148, 163, 184)';
+
+      sectBH.style.display = 'none';
+      sectExo.style.display = 'none';
+      sectBin.style.display = 'none';
 
       if (tab === 'black-hole') {
         tabBlackHole.style.background = 'rgb(139, 92, 246)';
         tabBlackHole.style.color = 'white';
-        tabExoplanet.style.background = 'transparent';
-        tabExoplanet.style.color = 'rgb(148, 163, 184)';
         sectBH.style.display = 'flex';
-        sectExo.style.display = 'none';
-      } else {
+      } else if (tab === 'exoplanet') {
         tabExoplanet.style.background = 'rgb(139, 92, 246)';
         tabExoplanet.style.color = 'white';
-        tabBlackHole.style.background = 'transparent';
-        tabBlackHole.style.color = 'rgb(148, 163, 184)';
-        sectBH.style.display = 'none';
         sectExo.style.display = 'flex';
+      } else if (tab === 'binomial') {
+        tabBinomial.style.background = 'rgb(139, 92, 246)';
+        tabBinomial.style.color = 'white';
+        sectBin.style.display = 'flex';
       }
 
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setTab === 'function') {
@@ -3568,6 +3769,7 @@ export class LevelUI {
 
     document.getElementById('tab-black-hole').addEventListener('click', () => switchTab('black-hole'));
     document.getElementById('tab-exoplanet').addEventListener('click', () => switchTab('exoplanet'));
+    document.getElementById('tab-binomial').addEventListener('click', () => switchTab('binomial'));
 
     refreshCheck();
   }

@@ -10,7 +10,7 @@ export class Level10 {
 
     // Common state
     this.time = 0;
-    this.activeTab = 'black-hole'; // 'black-hole' or 'exoplanet'
+    this.activeTab = 'black-hole'; // 'black-hole' | 'exoplanet' | 'binomial'
 
     // Black Hole state
     this.gravityFactor = 0; // 0 to 80. At 50, light orbits. At >50, light is captured.
@@ -18,6 +18,10 @@ export class Level10 {
     // Exoplanet Orbit state
     this.periodDays = 100;
     this.starMassSolar = 1.0;
+
+    // Binomial state
+    this.bin_x = 0.50;
+    this.bin_terms = 3;
     this.startTime = Date.now();
 
     // Stars background
@@ -50,10 +54,19 @@ export class Level10 {
     if (tab === 'black-hole') {
       this.bhOverlay.style.display = 'block';
       this.exoplanetOverlay.style.display = 'none';
-    } else {
+      if (this.binomialOverlay) this.binomialOverlay.style.display = 'none';
+    } else if (tab === 'exoplanet') {
       this.bhOverlay.style.display = 'none';
       this.exoplanetOverlay.style.display = 'block';
+      if (this.binomialOverlay) this.binomialOverlay.style.display = 'none';
       this.updateExoplanetUI();
+    } else if (tab === 'binomial') {
+      this.bhOverlay.style.display = 'none';
+      this.exoplanetOverlay.style.display = 'none';
+      if (this.binomialOverlay) {
+        this.binomialOverlay.style.display = 'block';
+        this.updateBinomialUI();
+      }
     }
   }
 
@@ -218,6 +231,98 @@ export class Level10 {
     massSlider.addEventListener('input', (e) => {
       this.starMassSolar = parseFloat(e.target.value);
       this.updateExoplanetUI();
+    });
+
+    // 3. Binomial Overlay
+    this.binomialOverlay = document.createElement('div');
+    this.binomialOverlay.style.cssText = `
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      pointer-events: auto;
+      display: none;
+    `;
+    this.container.appendChild(this.binomialOverlay);
+
+    this.binomialOverlay.innerHTML = `
+      <div class="bg-slate-900/95 border border-slate-800 p-4 rounded-2xl shadow-2xl w-[280px] font-sans text-slate-200 backdrop-blur-md flex flex-col gap-3 max-h-[calc(100vh-60px)] overflow-y-auto custom-scrollbar">
+        <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          Binomial Approximation
+        </h4>
+
+        <!-- Sliders -->
+        <div class="space-y-2.5">
+          <div class="flex flex-col gap-1">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>Integration Limit (x):</span>
+              <span id="bin-x-readout" class="text-violet-400 font-bold font-mono">0.50</span>
+            </div>
+            <input type="range" id="bin-x-slider" min="0.05" max="0.95" value="0.50" step="0.01"
+              class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span>Series Terms (N):</span>
+              <span id="bin-terms-readout" class="text-violet-400 font-bold font-mono">3 Terms</span>
+            </div>
+            <input type="range" id="bin-terms-slider" min="1" max="6" value="3" step="1"
+              class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-violet-500">
+          </div>
+        </div>
+
+        <!-- Calculations -->
+        <div class="border-t border-slate-800 pt-2.5 flex flex-col gap-2">
+          <span class="text-[9.5px] uppercase font-bold tracking-wider text-slate-500 block">Live Series Convergence</span>
+
+          <div class="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800 text-[10px] leading-relaxed flex flex-col gap-1">
+            <div class="flex justify-between text-slate-400 border-b border-slate-900 pb-1 mb-1 font-bold">
+              <span>Quantity</span>
+              <span>Value</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Exact Area:</span>
+              <span id="bin-area-exact" class="font-mono text-white">0.4784</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Series Approx:</span>
+              <span id="bin-area-approx" class="font-mono text-emerald-400 font-bold">0.4784</span>
+            </div>
+            <div class="flex justify-between border-t border-slate-900/60 pt-1 mt-1">
+              <span class="text-slate-400">Abs Error:</span>
+              <span id="bin-area-error" class="font-mono text-violet-400">0.0000</span>
+            </div>
+          </div>
+          
+          <div class="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800 text-[10px] leading-relaxed">
+            <span class="font-bold text-slate-400 block mb-1">Newton's Series for (1-x²)^(1/2):</span>
+            <div class="font-mono text-[9px] text-slate-300 overflow-x-auto whitespace-nowrap bg-slate-950/80 p-1.5 rounded border border-slate-900">
+              1 - ½x² - ⅛x⁴ - ⅟₁₆x⁶ - ⁵/₁₂₈x⁸ - ...
+            </div>
+            <span class="font-bold text-slate-400 block mt-2 mb-1">Integrating Term-by-Term:</span>
+            <div class="font-mono text-[9px] text-emerald-300 overflow-x-auto whitespace-nowrap bg-slate-950/80 p-1.5 rounded border border-slate-900">
+              x - ⅙x³ - ⅟₄₀x⁵ - ⅟₁₁₂x⁷ - ⁵/₁₁₅₂x⁹ - ...
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const binXSlider = this.binomialOverlay.querySelector('#bin-x-slider');
+    const binTermsSlider = this.binomialOverlay.querySelector('#bin-terms-slider');
+
+    binXSlider.addEventListener('input', (e) => {
+      this.bin_x = parseFloat(e.target.value);
+      this.updateBinomialUI();
+    });
+
+    binTermsSlider.addEventListener('input', (e) => {
+      this.bin_terms = parseInt(e.target.value);
+      this.updateBinomialUI();
     });
   }
 
@@ -524,7 +629,7 @@ export class Level10 {
       ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 10px Outfit,sans-serif';
       ctx.fillText("Adjust gravity/mass scale in top-right. At 50x, surface orbit velocity matches speed of light.", IX_center(W, TASK_W), 61);
 
-    } else {
+    } else if (this.activeTab === 'exoplanet') {
       // --- DRAW EXOPLANET ORBIT SIMULATION (TOP-DOWN, FRONT VIEW, & DYNAMIC LIGHT CURVE) ---
       const cx = TASK_W + (W - 450 - TASK_W) / 2;
       
@@ -777,7 +882,206 @@ export class Level10 {
       ctx.fillText("Exoplanet Keplerian Orbit & Transit Simulation", cx, 40);
       ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 10px Outfit,sans-serif';
       ctx.fillText("Observe the transit occlusion (small black dot) as it transits in front of the host star, dipping starlight.", cx, 57);
+    } else if (this.activeTab === 'binomial') {
+      this.drawBinomial(ctx, W, H, TASK_W);
     }
+  }
+
+  updateBinomialUI() {
+    if (!this.binomialOverlay) return;
+    const readoutX = this.binomialOverlay.querySelector('#bin-x-readout');
+    const readoutTerms = this.binomialOverlay.querySelector('#bin-terms-readout');
+    const exactEl = this.binomialOverlay.querySelector('#bin-area-exact');
+    const approxEl = this.binomialOverlay.querySelector('#bin-area-approx');
+    const errorEl = this.binomialOverlay.querySelector('#bin-area-error');
+
+    if (readoutX) readoutX.textContent = this.bin_x.toFixed(2);
+    if (readoutTerms) readoutTerms.textContent = `${this.bin_terms} Term${this.bin_terms > 1 ? 's' : ''}`;
+
+    const exactArea = 0.5 * this.bin_x * Math.sqrt(1 - this.bin_x * this.bin_x) + 0.5 * Math.asin(this.bin_x);
+    const approxArea = this.getBinomialApprox(this.bin_x, this.bin_terms);
+    const error = Math.abs(exactArea - approxArea);
+
+    if (exactEl) exactEl.textContent = exactArea.toFixed(5);
+    if (approxEl) approxEl.textContent = approxArea.toFixed(5);
+    if (errorEl) errorEl.textContent = error.toFixed(5);
+  }
+
+  getBinomialApprox(x, n) {
+    let sum = 0;
+    const coefficients = [
+      1.0,
+      -1.0 / 6.0,
+      -1.0 / 40.0,
+      -1.0 / 112.0,
+      -5.0 / 1152.0,
+      -7.0 / 2816.0
+    ];
+    for (let i = 0; i < n; i++) {
+      sum += coefficients[i] * Math.pow(x, 2 * i + 1);
+    }
+    return sum;
+  }
+
+  drawBinomial(ctx, W, H, TASK_W) {
+    const R = Math.min(W - 350 - TASK_W, H - 200) * 0.8;
+    const cx = IX_center(W, TASK_W) - R * 0.5;
+    const cy = H / 2 + R * 0.4;
+
+    const x = this.bin_x;
+    const y = Math.sqrt(1 - x * x);
+
+    // 1. Grid Axes
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 30, cy);
+    ctx.lineTo(cx + R + 40, cy);
+    ctx.moveTo(cx, cy + 30);
+    ctx.lineTo(cx, cy - R - 40);
+    ctx.stroke();
+
+    // Axis ticks & labels
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.font = '500 10px Outfit, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    // x ticks
+    ctx.fillText('0', cx, cy + 6);
+    ctx.fillText('0.5', cx + R * 0.5, cy + 6);
+    ctx.fillText('1.0', cx + R, cy + 6);
+    ctx.fillText('x', cx + R + 30, cy + 6);
+
+    ctx.beginPath();
+    ctx.moveTo(cx + R * 0.5, cy); ctx.lineTo(cx + R * 0.5, cy + 4);
+    ctx.moveTo(cx + R, cy); ctx.lineTo(cx + R, cy + 4);
+    ctx.stroke();
+
+    // y ticks
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('1.0', cx - 6, cy - R);
+    ctx.fillText('y', cx - 6, cy - R - 30);
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - R); ctx.lineTo(cx - 4, cy - R);
+    ctx.stroke();
+
+    // 2. Shaded Areas
+    // Shaded Triangle Area (C - P_proj - P)
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.16)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx, cy - y * R);
+    ctx.lineTo(cx + x * R, cy - y * R);
+    ctx.closePath();
+    ctx.fill();
+
+    // Shaded Sector Area (C - P - Q_top)
+    ctx.fillStyle = 'rgba(167, 139, 250, 0.12)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + x * R, cy - y * R);
+    ctx.arc(cx, cy, R, -Math.acos(x), -Math.PI / 2, true);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Separation Lines & Boundaries
+    // Unit Circle arc
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, -Math.PI / 2, true);
+    ctx.stroke();
+
+    // Vertical boundary line at x
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.moveTo(cx + x * R, cy);
+    ctx.lineTo(cx + x * R, cy - y * R);
+    ctx.stroke();
+
+    // Radial line C -> P
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + x * R, cy - y * R);
+    ctx.stroke();
+
+    // Horizontal line P_proj -> P (Triangle top)
+    ctx.save();
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - y * R);
+    ctx.lineTo(cx + x * R, cy - y * R);
+    ctx.stroke();
+    ctx.restore();
+
+    // Points
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI*2); ctx.fill(); // origin C
+    ctx.fillStyle = '#60a5fa';
+    ctx.beginPath(); ctx.arc(cx + x * R, cy - y * R, 5.0, 0, Math.PI*2); ctx.fill(); // point P
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 12px Outfit, sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('C', cx - 8, cy + 12);
+    ctx.textAlign = 'left';
+    ctx.fillText('P', cx + x * R + 8, cy - y * R - 4);
+    ctx.textAlign = 'right';
+    ctx.fillText('Q', cx - 8, cy - R - 4);
+
+    // Leader Helper
+    const drawLeader = (label, startX, startY, endX, endY, color, textColor) => {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      const cpX = (startX + endX) / 2;
+      ctx.bezierCurveTo(cpX, startY, cpX, endY, endX, endY);
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(startX, startY, 3, 0, Math.PI*2); ctx.fill();
+
+      ctx.beginPath(); ctx.moveTo(endX, endY); ctx.lineTo(endX - 15, endY); ctx.stroke();
+
+      ctx.fillStyle = textColor;
+      ctx.font = 'bold italic 12px Georgia, serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, endX - 20, endY);
+      ctx.restore();
+    };
+
+    // Draw area labels
+    const tX = cx + (x * R) / 3;
+    const tY = cy - (2 * y * R) / 3;
+    drawLeader('Triangle Area = ½ · x · √(1-x²)', tX, tY, cx - 60, cy - R * 0.25, 'rgba(251,191,36,0.85)', '#fbbf24');
+
+    // Sector angle centroid
+    const angle_p = -Math.acos(x);
+    const angle_q = -Math.PI / 2;
+    const midAngle = (angle_p + angle_q) / 2;
+    const sX = cx + R * 0.45 * Math.cos(midAngle);
+    const sY = cy + R * 0.45 * Math.sin(midAngle);
+    drawLeader('Sector Area = ½ · arcsin(x)', sX, sY, cx - 60, cy - R * 0.65, 'rgba(167,139,250,0.85)', '#c084fc');
+
+    // Titles
+    ctx.fillStyle = '#fff'; ctx.font = '600 16px Outfit,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText("Newton's Binomial Expansion & Quadrature", IX_center(W, TASK_W), 44);
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '500 12px Outfit,sans-serif';
+    ctx.fillText("Integrating circular segment areas term-by-term using fractional powers.", IX_center(W, TASK_W), 62);
   }
 
   destroy() {
@@ -791,6 +1095,9 @@ export class Level10 {
     }
     if (this.exoplanetOverlay && this.exoplanetOverlay.parentNode) {
       this.exoplanetOverlay.parentNode.removeChild(this.exoplanetOverlay);
+    }
+    if (this.binomialOverlay && this.binomialOverlay.parentNode) {
+      this.binomialOverlay.parentNode.removeChild(this.binomialOverlay);
     }
   }
 }
