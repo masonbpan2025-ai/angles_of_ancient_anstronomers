@@ -3380,6 +3380,11 @@ export class LevelUI {
           <button id="tab-black-hole" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: rgb(139, 92, 246); color: white;">Black Hole</button>
           <button id="tab-exoplanet" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Exoplanet Orbit</button>
           <button id="tab-binomial" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Binomial Expansion</button>
+          <button id="tab-binomial-apps" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Calculate π</button>
+          <button id="tab-tidal-force" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Tidal Force</button>
+          <button id="tab-roche-limit" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Roche Limit</button>
+          <button id="tab-tidal-lock" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Tidal Lock</button>
+          <button id="tab-lunar-perturbation" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Lunar Perturbation</button>
         </div>
 
         <div id="section-black-hole" class="flex flex-col gap-2 mt-2">
@@ -3444,87 +3449,336 @@ export class LevelUI {
           </div>
         </div>
 
-        <!-- Binomial Expansion tab content -->
+        <!-- Binomial Expansion tab content (Task 3) -->
         <div id="section-binomial" class="flex flex-col gap-2 mt-2 hidden">
           <!-- Newton's Binomial Discovery -->
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
-            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Newton's Binomial Discovery</h3>
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Newton's Pascal Extrapolation</h3>
             <p class="text-[10px] leading-relaxed text-slate-300">
-              In 1665, Isaac Newton sought the area under circular segments. He knew the integrals of integer powers of <span class="font-serif">1 − x²</span>, like:
+              In a standard Pascal's triangle, you add the two numbers directly above to get the number below:
               <span class="block text-center font-serif text-amber-300 font-bold my-1 text-[10px]">
-                ∫ (1−x²)⁰ dx = x <br>
-                ∫ (1−x²)¹ dx = x − ⅓x³ <br>
-                ∫ (1−x²)² dx = x − ⅔x³ + ⅕x⁵
+                Below = Target + Left
               </span>
-              By arranging these integrals in a table and analyzing the rows of Pascal's triangle coefficients, Newton generalized the formula for <strong>fractional and negative exponents</strong>! He defined the general binomial coefficient:
+              By left-justifying the triangle, Isaac Newton realized he could algebraically rearrange this rule to solve for the unknown upper row, extrapolating to **negative rows**:
+              <span class="block text-center font-serif text-green-400 font-bold my-1 text-[10px]">
+                Target = Below − Left
+              </span>
+              Newton also generalized the binomial coefficient:
               <span class="block text-center font-serif text-sky-400 font-bold my-1 text-[10.5px]">
-                (n choose k) = n(n−1)(n−2)...(n−k+1) / k!
+                C(n, k) = n(n−1)(n−2)...(n−k+1) / k!
               </span>
-              For <span class="font-serif text-violet-300">n = ½</span>, this gives:
-              <span class="block text-center font-serif text-green-400 font-bold my-1 text-[10.5px]">
-                (1−x²)<sup>½</sup> = 1 − ½x² − ⅛x⁴ − ⅟₁₆x⁶ − ⁵/₁₂₈x⁸ − ...
+              This generalized formula allowed plugging in fractions (like <span class="font-serif text-purple-300">n = ½</span>), revealing that Pascal's numbers exist continuously for any power!
+            </p>
+          </div>
+
+          <!-- Challenge Section -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Pascal Grid Challenge:</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              Use the controls on the right to extrapolate the Pascal grid upwards. Start the Auto Play or click Step.
+              Find the value of the cell at row <strong>n = −3, column k = 3</strong>.
+            </p>
+            <span class="text-[10.5px] font-semibold text-slate-200">Coefficient C(−3, 3):</span>
+            <div class="flex gap-2">
+              <input type="number" id="bin-pascal-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. -10" step="1">
+              <button id="bin-pascal-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="bin-pascal-feedback" class="text-[10.5px] font-medium hidden font-sans"></div>
+          </div>
+        </div>
+
+        <!-- Binomial Applications tab content (Task 4) -->
+        <div id="section-binomial-apps" class="flex flex-col gap-2 mt-2 hidden">
+          <!-- Newton's Binomial Discovery -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Newton's Series Approximations</h3>
+            <p class="text-[10px] leading-relaxed text-slate-300">
+              For any fractional power like <span class="font-serif text-violet-300">n = ½</span>, the generalized binomial theorem expands into an infinite sum (Σ) of terms:
+              <span class="block text-center font-serif text-green-400 font-bold my-1 text-[10px]">
+                (1−x²)<sup>½</sup> = 1 − ½x² − ⅛x⁴ − ⅟₁₆x⁶ − ...
               </span>
+              By summing these terms, we can approximate complicated quantities (like square roots and circles) using only basic arithmetic!
             </p>
           </div>
 
           <!-- Application 1: Calculating Pi -->
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
-            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">1. Calculating Pi (π)</span>
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Calculating Pi (π) using Series Sums</span>
             <p class="text-[10px] text-slate-300 leading-relaxed">
-              Newton integrated the circle expansion from 0 to 0.5. Geometrically, this area equals a <span class="text-violet-300">30° sector (π/12)</span> plus a <span class="text-amber-300">right triangle (√3/8)</span>:
-              <span class="block text-center font-serif text-white font-bold my-1 text-[10.5px]">
-                ∫₀<sup>0.5</sup> (1−x²)<sup>½</sup> dx = π/12 + √3/8
-              </span>
-              Rearranging, he got an incredibly fast-converging series for <span class="font-serif">π</span>:
-              <span class="block text-center font-serif text-emerald-400 font-bold my-1 text-[10.5px]">
-                π = 12 · ( ∫₀<sup>0.5</sup> (1−x²)<sup>½</sup> dx − √3/8 )
-              </span>
+              Newton calculated the area under the circle curve. Geometrically, he got two series expansions to compute π: one from standard exhaustion (integrating over [0, 1]) and one from his improved rapid method (integrating over [0, 0.5]).
+              <br>Let's calculate the value of π we get if we sum only the <strong>first 3 terms</strong> for both methods.
             </p>
-            <span class="text-[9.5px] font-semibold text-slate-200 uppercase">Challenge: Compute 3 terms of the integral at x = 0.5:</span>
-            <span class="text-[9px] text-slate-450 italic">Formula: x − ⅙x³ − ⅟₄₀x⁵ (4 decimals)</span>
-            <div class="flex gap-2">
-              <input type="number" id="bin-pi-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.4784" step="0.0001">
-              <button id="bin-pi-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-[9.5px] font-semibold text-slate-200 uppercase">1. First Method Pi (3 terms, 4 decimals):</span>
+                <span class="block text-[8.5px] text-slate-450 italic mt-0.5">Formula: 4 * (1 − ⅙ − ⅟₄₀)</span>
+                <input type="number" id="bin-pi-first-input" class="w-full bg-slate-900 border border-slate-800 text-white text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1" placeholder="e.g. 3.2333" step="0.0001">
+              </div>
+              
+              <div>
+                <span class="text-[9.5px] font-semibold text-slate-200 uppercase">2. Improved Method Pi (3 terms, 4 decimals):</span>
+                <span class="block text-[8.5px] text-slate-450 italic mt-0.5">Formula: 12 * (0.5 − ⅟₄₈ − ⅟₁₂₈₀ − √3/8)</span>
+                <input type="number" id="bin-pi-improved-input" class="w-full bg-slate-900 border border-slate-800 text-white text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1" placeholder="e.g. 3.1425" step="0.0001">
+              </div>
+
+              <button id="bin-pi-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition mt-1 w-full">Verify</button>
             </div>
-            <div id="bin-pi-feedback" class="text-[10.5px] font-medium hidden"></div>
+            <div id="bin-pi-feedback" class="text-[10.5px] font-medium hidden font-sans mt-1"></div>
+          </div>
+        </div>
+
+        <!-- Tidal Force tab content (Task 5) -->
+        <div id="section-tidal-force" class="flex flex-col gap-2 mt-2 hidden">
+          <!-- Tidal Force Background -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5 text-[10px] leading-relaxed text-slate-300">
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">The Physics of Tides</h3>
+            <p>
+              Tidal force is a differential gravitational effect. The side facing the Moon experiences a stronger pull 
+              <span class="font-serif text-sky-300 font-bold">F<sub>near</sub> = G M m / (R − r)²</span>, while the far side experiences a weaker pull 
+              <span class="font-serif text-rose-300 font-bold">F<sub>far</sub> = G M m / (R + r)²</span>.
+            </p>
+            <p>
+              By applying the <strong>binomial approximation</strong> <span class="font-serif">(1 ∓ r/R)⁻² ≈ 1 ∓ 2r/R</span>, Newton derived equal and opposite stretching forces:
+              <span class="block text-center font-serif text-amber-400 font-bold my-1 text-[10.5px]">
+                F<sub>tidal</sub> ≈ ± 2 G M m r / R³
+              </span>
+              This outward stretching force pulls the ocean towards Earth, away from the Moon on the near side, and throws the ocean away from Earth and Moon on the far side!
+            </p>
           </div>
 
-          <!-- Application 2: Gravity at Different Heights -->
+          <!-- Tidal Force Challenge -->
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
-            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">2. Gravity at Different Heights</span>
-            <p class="text-[10px] text-slate-300 leading-relaxed">
-              At height <span class="font-serif">h</span>, gravity is <span class="font-serif">F = GMm / (R+h)² = (GMm/R²) · (1 + h/R)⁻²</span>.
-              Using the binomial approximation <span class="font-serif text-sky-400">(1+x)⁻² ≈ 1 − 2x</span> for tiny <span class="font-serif">x = h/R</span>:
-              <span class="block text-center font-serif text-emerald-400 font-bold my-1 text-[10.5px]">
-                F ≈ (GMm/R²) · (1 − 2h/R)
-              </span>
-            </p>
-            <span class="text-[9.5px] font-semibold text-slate-200 uppercase">Challenge: Earth R = 6400 km, mountain h = 16 km:</span>
-            <span class="text-[9px] text-slate-450 italic">Calculate the percentage decrease in gravitational force (2 decimals, e.g. 0.50):</span>
-            <div class="flex gap-2">
-              <input type="number" id="bin-gravity-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.50" step="0.01">
-              <button id="bin-gravity-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Tidal Force Challenge:</span>
+            
+            <div class="flex flex-col gap-1.5 mt-1">
+              <label class="text-[9.5px] font-semibold text-slate-200 uppercase">1. High tide times during New/Full Moon:</label>
+              <select id="tide-time-newfull-select" class="bg-slate-900 border border-slate-800 text-white text-xs px-2 py-1.5 rounded-lg outline-none focus:border-violet-500 transition">
+                <option value="">-- Select times --</option>
+                <option value="noon-midnight">12:00 AM & 12:00 PM (Noon & Midnight)</option>
+                <option value="six-six">6:00 AM & 6:00 PM</option>
+                <option value="three-three">3:00 AM & 3:00 PM</option>
+              </select>
             </div>
-            <div id="bin-gravity-feedback" class="text-[10.5px] font-medium hidden"></div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[9.5px] font-semibold text-slate-200 uppercase">2. High tide times during 1st/3rd Quarter:</label>
+              <select id="tide-time-quarters-select" class="bg-slate-900 border border-slate-800 text-white text-xs px-2 py-1.5 rounded-lg outline-none focus:border-violet-500 transition">
+                <option value="">-- Select times --</option>
+                <option value="noon-midnight">12:00 AM & 12:00 PM (Noon & Midnight)</option>
+                <option value="six-six">6:00 AM & 6:00 PM</option>
+                <option value="three-three">3:00 AM & 3:00 PM</option>
+              </select>
+            </div>
+
+            <div class="flex flex-col gap-1.5 font-sans">
+              <label class="text-[9.5px] font-semibold text-slate-200 uppercase">3. Highest tides (Spring Tides) happen in:</label>
+              <select id="tide-highest-select" class="bg-slate-900 border border-slate-800 text-white text-xs px-2 py-1.5 rounded-lg outline-none focus:border-violet-500 transition">
+                <option value="">-- Select phases --</option>
+                <option value="new-full">New Moon & Full Moon</option>
+                <option value="quarters">First Quarter & Third Quarter</option>
+                <option value="new-quarters">New Moon & First Quarter</option>
+              </select>
+            </div>
+
+            <button id="tide-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition mt-1 w-full">Verify</button>
+            <div id="tide-feedback" class="text-[10.5px] font-medium hidden font-sans"></div>
+          </div>
+        </div>
+
+        <!-- Roche Limit tab content (Task 6) -->
+        <div id="section-roche-limit" class="flex flex-col gap-2 mt-2 hidden">
+          <!-- Roche Limit Background -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5 text-[10px] leading-relaxed text-slate-300">
+            <h3 class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Tidal Disruption & The Roche Limit</h3>
+            <p>
+              When a satellite orbits too close to a massive primary body, the differential <strong>tidal force</strong> pulling outward exceeds the satellite's internal <strong>self-gravity</strong> holding it together.
+            </p>
+            <p>
+              Equating tidal force to self-gravity yields the <strong>Roche Limit</strong> distance (d<sub>Roche</sub>):
+              <span class="block text-center font-serif text-amber-400 font-bold my-1 text-[10.5px]">
+                d<sub>Roche</sub> ≈ 2.44 · R · ( ρ<sub>Primary</sub> / ρ<sub>Satellite</sub> )<sup>⅓</sup>
+              </span>
+              Inside this threshold distance, the satellite is torn apart into planetary rings! Tune the simulation sliders in the illustration area to observe the break-up threshold!
+            </p>
           </div>
 
-          <!-- Application 3: Orbital Speed -->
+          <!-- Roche Limit Challenge -->
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
-            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">3. Finding Orbital Speed</span>
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Roche Limit Challenge:</span>
             <p class="text-[10px] text-slate-300 leading-relaxed">
-              Orbital speed satisfies <span class="font-serif">v = √(GM / (R+h)) = v₀ · (1 + h/R)<sup>−½</sup></span>.
-              Using <span class="font-serif text-sky-400">(1+x)<sup>−½</sup> ≈ 1 − ½x</span>:
-              <span class="block text-center font-serif text-emerald-400 font-bold my-1 text-[10.5px]">
-                v ≈ v₀ · (1 − h / 2R)
-              </span>
+              Calculate the Roche limit distance d<sub>Roche</sub> (in Solar Radii R<sub>☉</sub>) for Earth and Mercury orbiting the Sun, using the fluid formula d = 2.44 · R<sub>☉</sub> (ρ<sub>Sun</sub> / ρ<sub>Planet</sub>)<sup>1/3</sup> (Given ρ<sub>Sun</sub> = 1.41 g/cm³):
             </p>
-            <span class="text-[9.5px] font-semibold text-slate-200 uppercase">Challenge: Satellite at height h = 64 km, Earth R = 6400 km:</span>
-            <span class="text-[9px] text-slate-450 italic">Calculate the orbital speed reduction coefficient (fraction h / 2R):</span>
-            <div class="flex gap-2">
-              <input type="number" id="bin-speed-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.005" step="0.001">
-              <button id="bin-speed-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-[9.5px] font-semibold text-slate-200 uppercase">1. Earth Roche Limit (ρ<sub>Earth</sub> = 5.51 g/cm³):</span>
+                <input type="number" id="roche-earth-input" class="w-full bg-slate-900 border border-slate-800 text-white text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1" placeholder="e.g. 1.55" step="0.01">
+              </div>
+              
+              <div>
+                <span class="text-[9.5px] font-semibold text-slate-200 uppercase">2. Mercury Roche Limit (ρ<sub>Mercury</sub> = 5.43 g/cm³):</span>
+                <input type="number" id="roche-mercury-input" class="w-full bg-slate-900 border border-slate-800 text-white text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1" placeholder="e.g. 1.56" step="0.01">
+              </div>
+
+              <button id="roche-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition mt-1 w-full">Verify</button>
             </div>
-            <div id="bin-speed-feedback" class="text-[10.5px] font-medium hidden"></div>
+            <div id="roche-feedback" class="text-[10.5px] font-medium hidden font-sans mt-1"></div>
+          </div>
+        </div>
+
+        <!-- Tidal Lock tab content (Task 7) -->
+        <div id="section-tidal-lock" class="flex flex-col gap-2 mt-2 hidden">
+          <!-- Tidal Lock Derivation Card -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Tidal Lock Derivation</span>
+            <p class="text-[9px] uppercase font-bold text-slate-500 -mt-1">Bulge Deformation & Tidal Acceleration</p>
+            
+            <div class="space-y-2 mt-1">
+              <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-850 text-[10px] leading-relaxed">
+                <span class="font-bold text-slate-400 block mb-0.5">1. Tidal Acceleration Across Radius R_m:</span>
+                <div class="text-center font-serif text-sky-400 font-bold my-1 text-xs">
+                  Δg ≈ 2 · G · M · R_m / a³
+                </div>
+              </div>
+
+              <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-850 text-[10px] leading-relaxed">
+                <span class="font-bold text-slate-400 block mb-0.5">2. Bulge Height Estimation (h / R_m):</span>
+                <div class="text-center font-serif text-slate-300 my-1 text-[9.5px]">
+                  g_m = G · m / R_m²  ⟹  h / R_m ~ Δg / g_m
+                </div>
+                <div class="text-center font-serif text-amber-400 font-bold my-1 text-[11.5px]">
+                  ⟹ h / R_m ~ ( M / m ) · ( R_m / a )³
+                </div>
+              </div>
+              
+              <div class="bg-slate-900/40 p-2.5 rounded-lg border border-slate-850 text-[9.5px] leading-relaxed text-slate-400 space-y-1">
+                <div class="font-bold text-slate-200 text-[10px] uppercase mb-1">Physical Implications</div>
+                <div>• Bigger Planet (M) ⟹ Larger bulge height h</div>
+                <div>• Closer Orbit (a) ⟹ DRAMATICALLY larger bulge (∝ a⁻³)</div>
+                <div class="text-emerald-400 font-bold pt-1 border-t border-slate-800/60">
+                  ✓ Misaligned bulge creates torque τ ∝ a⁻⁶
+                </div>
+                <div class="text-emerald-405 font-bold">
+                  ⟹ Lock time t_lock ∝ a⁶ / M²
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tidal Lock Challenge -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Tidal Lock Challenge:</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed font-sans">
+              Using the bulge ratio formula <strong>h / R<sub>m</sub> ~ (M / m) · (R<sub>m</sub> / a)³</strong>, calculate the relative tidal bulge scale for each system and evaluate tidal lock likelihood:
+            </p>
+            
+            <div class="flex flex-col gap-2.5">
+              <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-850">
+                <span class="text-[9.5px] font-bold text-amber-300 uppercase block">1. Earth-Moon System:</span>
+                <p class="text-[9px] text-slate-400 my-0.5 leading-normal">
+                  Given: M/m ≈ 81, Moon radius R<sub>m</sub> = 1,737 km, distance a = 384,400 km
+                </p>
+                <input type="text" id="tidelock-earthmoon-input" class="w-full bg-slate-950 border border-slate-800 text-white text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1" placeholder="e.g. 7.4e-6" step="any">
+              </div>
+              
+              <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-850">
+                <span class="text-[9.5px] font-bold text-sky-300 uppercase block">2. Proxima b (Habitable Zone Exoplanet):</span>
+                <p class="text-[9px] text-slate-400 my-0.5 leading-normal">
+                  Given: M/m ≈ 38,539, planet radius R<sub>m</sub> = 6,498 km, distance a = 7,260,000 km
+                </p>
+                <input type="text" id="tidelock-proxima-input" class="w-full bg-slate-950 border border-slate-800 text-white text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1" placeholder="e.g. 2.7e-5" step="any">
+              </div>
+
+              <div>
+                <span class="text-[9.5px] font-semibold text-slate-200 uppercase block">3. Is Proxima b likely to be tidally locked to Proxima Centauri?</span>
+                <select id="tidelock-locked-select" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1">
+                  <option value="" disabled selected>Select an option</option>
+                  <option value="yes">Yes (Larger bulge scale indicates much stronger tidal torque and rapid locking)</option>
+                  <option value="no">No (Smaller bulge scale indicates weaker tidal torque and free rotation)</option>
+                </select>
+              </div>
+
+              <button id="tidelock-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition mt-1 w-full">Verify</button>
+            </div>
+            <div id="tidelock-feedback" class="text-[10.5px] font-medium hidden font-sans mt-1"></div>
+          </div>
+        </div>
+
+        <div id="section-lunar-perturbation" class="flex flex-col gap-2 mt-2" style="display: none;">
+          <!-- Derivation & Explanation Card -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
+            <h3 class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Lunar Perturbation & Apsidal Precession</h3>
+            <p class="text-[10px] leading-relaxed text-slate-300 font-sans">
+              Astronomers since antiquity noted that the Moon's orbital perigee rotates slowly counterclockwise (precessing once every 8.85 years / ~118 orbits). Newton proved this is caused by the differential solar gravitational force. <em>(Note: Precession is accelerated 15× in the simulation for visual clarity).</em>
+            </p>
+            
+            <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-850 text-[10px] leading-relaxed font-sans">
+              <span class="font-bold text-slate-400 block mb-0.5">1. Solar Perturbing Force:</span>
+              <div class="text-center font-serif text-amber-400 font-bold my-1 text-[11px]">
+                F<sub>pert</sub> = F<sub>Sun→Moon</sub> − F<sub>Sun→Earth</sub>
+              </div>
+              <div class="text-center font-serif text-slate-300 my-1 text-[10px]">
+                F<sub>pert</sub> ≈ ( G · M<sub>S</sub> · r / R<sub>E</sub>³ ) · [ 3 cos(φ) r̂ − d̂ ]
+              </div>
+            </div>
+
+            <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-850 text-[10px] leading-relaxed font-sans">
+              <span class="font-bold text-slate-400 block mb-0.5">2. Radial & Transverse Components:</span>
+              <div class="text-slate-300 text-[9.5px] space-y-1 my-1">
+                <div>• <strong class="text-red-400">Radial (F<sub>r</sub>)</strong>: Reduces Earth's net pull on average by ~G·M<sub>S</sub>·r / R<sub>E</sub>³, expanding the lunar orbit.</div>
+                <div>• <strong class="text-emerald-400">Transverse (F<sub>θ</sub>)</strong>: Exerts a continuous torque on the orbit, rotating the eccentricity vector <strong class="text-violet-300">e⃗</strong> counterclockwise!</div>
+              </div>
+            </div>
+            
+            <div class="bg-slate-900/40 p-2.5 rounded-lg border border-slate-850 text-[9.5px] leading-relaxed text-slate-400 space-y-1 font-sans">
+              <div class="font-bold text-slate-200 text-[10px] uppercase mb-1">Key Physical Takeaway</div>
+              <div>• Maximum perturbing force scales as <strong class="text-amber-300">R<sub>E</sub>⁻³</strong> (inverse cube of Earth-Sun distance).</div>
+              <div class="text-emerald-400 font-bold pt-1 border-t border-slate-800/60">
+                ✓ Transverse differential torque drives the 8.85-year Apsidal Precession!
+              </div>
+            </div>
+          </div>
+
+          <!-- Lunar Perturbation Challenge -->
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Lunar Perturbation Challenge:</span>
+            <p class="text-[10px] text-slate-300 leading-relaxed font-sans">
+              Test your understanding of solar perturbing forces and orbit axis precession:
+            </p>
+            
+            <div class="flex flex-col gap-2.5">
+              <div>
+                <span class="text-[9.5px] font-semibold text-slate-200 uppercase block">1. How does the maximum solar perturbing force scale with Earth-Sun distance R<sub>E</sub>?</span>
+                <select id="lunar-scaling-select" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1">
+                  <option value="" disabled selected>Select an option</option>
+                  <option value="cube">Inverse Cube (~1 / R_E³)</option>
+                  <option value="square">Inverse Square (~1 / R_E²)</option>
+                  <option value="linear">Inverse Linear (~1 / R_E)</option>
+                </select>
+              </div>
+
+              <div>
+                <span class="text-[9.5px] font-semibold text-slate-200 uppercase block">2. Which component of the perturbing force drives the rotation of the perigee axis?</span>
+                <select id="lunar-component-select" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1">
+                  <option value="" disabled selected>Select an option</option>
+                  <option value="transverse">Transverse Component F_θ (exerts torque along orbit direction)</option>
+                  <option value="radial">Radial Component F_r (stretches orbit radially)</option>
+                </select>
+              </div>
+
+              <div>
+                <span class="text-[9.5px] font-semibold text-slate-200 uppercase block">3. If Earth were moved closer to the Sun (smaller R<sub>E</sub>), what happens to the orbit axis precession rate?</span>
+                <select id="lunar-rate-select" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs px-3 py-1.5 rounded-lg outline-none focus:border-violet-500 transition mt-1">
+                  <option value="" disabled selected>Select an option</option>
+                  <option value="faster">Precesses Faster (Stronger differential solar torque)</option>
+                  <option value="slower">Precesses Slower (Weaker differential solar torque)</option>
+                </select>
+              </div>
+
+              <button id="lunar-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition mt-1 w-full">Verify</button>
+            </div>
+            <div id="lunar-feedback" class="text-[10.5px] font-medium hidden font-sans mt-1"></div>
           </div>
         </div>
 
@@ -3550,28 +3804,30 @@ export class LevelUI {
     const exoInput = document.getElementById('exo-input');
     const exoFeedback = document.getElementById('exo-feedback');
 
-    // Binomial Verification bindings
-    const binPiInput = document.getElementById('bin-pi-input');
+    const binPascalInput = document.getElementById('bin-pascal-input');
+    const binPascalBtn = document.getElementById('bin-pascal-verify-btn');
+    const binPascalFb = document.getElementById('bin-pascal-feedback');
+
     const binPiBtn = document.getElementById('bin-pi-verify-btn');
     const binPiFb = document.getElementById('bin-pi-feedback');
 
-    const binGravInput = document.getElementById('bin-gravity-input');
-    const binGravBtn = document.getElementById('bin-gravity-verify-btn');
-    const binGravFb = document.getElementById('bin-gravity-feedback');
-
-    const binSpeedInput = document.getElementById('bin-speed-input');
-    const binSpeedBtn = document.getElementById('bin-speed-verify-btn');
-    const binSpeedFb = document.getElementById('bin-speed-feedback');
-
+    this.binomialPascalVerified = this.binomialPascalVerified || false;
     this.binomialPiVerified = this.binomialPiVerified || false;
-    this.binomialGravityVerified = this.binomialGravityVerified || false;
-    this.binomialSpeedVerified = this.binomialSpeedVerified || false;
     this.binomialVerified = this.binomialVerified || false;
+    this.tidalVerified = this.tidalVerified || false;
+    this.rocheVerified = this.rocheVerified || false;
+    this.tidelockVerified = this.tidelockVerified || false;
+    this.lunarPerturbVerified = this.lunarPerturbVerified || false;
 
     const refreshCheck = () => {
       const tabBlackHole = document.getElementById('tab-black-hole');
       const tabExoplanet = document.getElementById('tab-exoplanet');
       const tabBinomial = document.getElementById('tab-binomial');
+      const tabBinomialApps = document.getElementById('tab-binomial-apps');
+      const tabTidalForce = document.getElementById('tab-tidal-force');
+      const tabRocheLimit = document.getElementById('tab-roche-limit');
+      const tabTidalLock = document.getElementById('tab-tidal-lock');
+      const tabLunarPerturb = document.getElementById('tab-lunar-perturbation');
 
       if (this.blackholeVerified) {
         tabBlackHole.innerHTML = 'Black Hole <span class="text-green-400 font-bold ml-1">✓</span>';
@@ -3585,15 +3841,45 @@ export class LevelUI {
         tabExoplanet.innerHTML = 'Exoplanet Orbit';
       }
 
-      this.binomialVerified = this.binomialPiVerified && this.binomialGravityVerified && this.binomialSpeedVerified;
-
-      if (this.binomialVerified) {
+      if (this.binomialPascalVerified) {
         tabBinomial.innerHTML = 'Binomial Expansion <span class="text-green-400 font-bold ml-1">✓</span>';
       } else {
         tabBinomial.innerHTML = 'Binomial Expansion';
       }
 
-      if (this.blackholeVerified && this.exoplanetVerified && this.binomialVerified) {
+      this.binomialVerified = this.binomialPiVerified;
+
+      if (this.binomialVerified) {
+        tabBinomialApps.innerHTML = 'Calculate π <span class="text-green-400 font-bold ml-1">✓</span>';
+      } else {
+        tabBinomialApps.innerHTML = 'Calculate π';
+      }
+
+      if (this.tidalVerified) {
+        tabTidalForce.innerHTML = 'Tidal Force <span class="text-green-400 font-bold ml-1">✓</span>';
+      } else {
+        tabTidalForce.innerHTML = 'Tidal Force';
+      }
+
+      if (this.rocheVerified) {
+        tabRocheLimit.innerHTML = 'Roche Limit <span class="text-green-400 font-bold ml-1">✓</span>';
+      } else {
+        tabRocheLimit.innerHTML = 'Roche Limit';
+      }
+
+      if (this.tidelockVerified) {
+        tabTidalLock.innerHTML = 'Tidal Lock <span class="text-green-400 font-bold ml-1">✓</span>';
+      } else {
+        tabTidalLock.innerHTML = 'Tidal Lock';
+      }
+
+      if (this.lunarPerturbVerified) {
+        tabLunarPerturb.innerHTML = 'Lunar Perturbation <span class="text-green-400 font-bold ml-1">✓</span>';
+      } else {
+        tabLunarPerturb.innerHTML = 'Lunar Perturbation';
+      }
+
+      if (this.blackholeVerified && this.exoplanetVerified && this.binomialPascalVerified && this.binomialVerified && this.tidalVerified && this.rocheVerified && this.tidelockVerified && this.lunarPerturbVerified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
       } else {
@@ -3602,75 +3888,192 @@ export class LevelUI {
       }
     };
 
-    verifyBtn.addEventListener('click', () => {
-      const val = parseFloat(input.value);
-      if (val >= 4.3 && val <= 4.6) {
-        feedback.textContent = '✓ Correct! The Earth would need to be compressed to a radius of ~4.47 millimeters for its orbital velocity to equal the speed of light.';
-        feedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
-        this.blackholeVerified = true;
-        refreshCheck();
-      } else {
-        feedback.textContent = '❌ Incorrect. Hint: Calculate GM = v_m^2 * D_m ≈ 4.015e14 m^3/s^2. Then r = GM / c^2 = 4.015e14 / 8.9875e16 ≈ 0.00447 meters = 4.47 mm.';
-        feedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
-      }
-      feedback.classList.remove('hidden');
-    });
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', () => {
+        const val = parseFloat(input.value);
+        if (Math.abs(val - 4.47) < 0.1) {
+          feedback.textContent = '✓ Correct! The Earth would need to be compressed to a radius of ~4.47 millimeters for its orbital velocity to equal the speed of light.';
+          feedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.blackholeVerified = true;
+          refreshCheck();
+        } else {
+          feedback.textContent = '❌ Incorrect. Hint: r = G * M / c² ≈ 4.47 mm.';
+          feedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        feedback.classList.remove('hidden');
+      });
+    }
 
-    exoVerifyBtn.addEventListener('click', () => {
-      const val = parseFloat(exoInput.value);
-      if (val >= 0.41 && val <= 0.43) {
-        exoFeedback.textContent = '✓ Correct! The orbit radius is approximately 0.42 AU, placing the planet about 63 million kilometers from its host star.';
-        exoFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
-        this.exoplanetVerified = true;
-        refreshCheck();
-      } else {
-        exoFeedback.textContent = '❌ Incorrect. Hint: Set period to 100 days and star mass to 1.0 Solar Mass on the right, then read the calculated radius (r ≈ 0.42 AU).';
-        exoFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
-      }
-      exoFeedback.classList.remove('hidden');
-    });
+    if (exoVerifyBtn) {
+      exoVerifyBtn.addEventListener('click', () => {
+        const val = parseFloat(exoInput.value);
+        if (Math.abs(val - 0.42) < 0.05) {
+          exoFeedback.textContent = '✓ Correct! The orbit radius is approximately 0.42 AU, placing the planet about 63 million kilometers from its host star.';
+          exoFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.exoplanetVerified = true;
+          refreshCheck();
+        } else {
+          exoFeedback.textContent = '❌ Incorrect. Hint: r³ = M * T² (in AU, solar mass, years) ⟹ r = (1.2 * (255/365.25)²)⅓ ≈ 0.42 AU.';
+          exoFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        exoFeedback.classList.remove('hidden');
+      });
+    }
 
-    binPiBtn.addEventListener('click', () => {
-      const val = parseFloat(binPiInput.value);
-      if (val >= 0.4782 && val <= 0.4786) {
-        binPiFb.textContent = '✓ Correct! x − ⅙x³ − ⅟₄₀x⁵ = 0.5 − 0.02083 − 0.00078 = 0.4784. Newton calculated this to 9 terms by hand to find Pi!';
-        binPiFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
-        this.binomialPiVerified = true;
-        refreshCheck();
-      } else {
-        binPiFb.textContent = '❌ Incorrect. Hint: Compute 0.5 - (0.5³)/6 - (0.5⁵)/40 = 0.5 - 0.125/6 - 0.03125/40 = 0.5 - 0.020833 - 0.000781 = 0.4784.';
-        binPiFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
-      }
-      binPiFb.classList.remove('hidden');
-    });
+    if (binPascalBtn) {
+      binPascalBtn.addEventListener('click', () => {
+        const val = parseFloat(binPascalInput.value);
+        if (val === -10) {
+          binPascalFb.textContent = '✓ Correct! Using Newton\'s recursive formula C(n,k) = C(n+1,k) - C(n,k-1), C(−3, 3) = C(−2, 3) − C(−3, 2) = −4 − (6) = −10.';
+          binPascalFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.binomialPascalVerified = true;
+          refreshCheck();
+        } else {
+          binPascalFb.textContent = '❌ Incorrect. Target cell (n=-3, k=3) = Below (-4) - Left (6) = -10.';
+          binPascalFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        binPascalFb.classList.remove('hidden');
+      });
+    }
 
-    binGravBtn.addEventListener('click', () => {
-      const val = parseFloat(binGravInput.value);
-      if (val >= 0.49 && val <= 0.51) {
-        binGravFb.textContent = '✓ Correct! The force decrease is approximately 2h/R = 32 / 6400 = 0.50% (0.005 fraction).';
-        binGravFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
-        this.binomialGravityVerified = true;
-        refreshCheck();
-      } else {
-        binGravFb.textContent = '❌ Incorrect. Hint: Calculate 2h/R = 2 * 16 / 6400 = 32 / 6400 = 0.0050 = 0.50%.';
-        binGravFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
-      }
-      binGravFb.classList.remove('hidden');
-    });
+    if (binPiBtn) {
+      binPiBtn.addEventListener('click', () => {
+        const valFirst = parseFloat(document.getElementById('bin-pi-first-input').value);
+        const valImproved = parseFloat(document.getElementById('bin-pi-improved-input').value);
+        const okFirst = Math.abs(valFirst - 3.2333) < 0.02;
+        const okImproved = Math.abs(valImproved - 3.1425) < 0.02;
 
-    binSpeedBtn.addEventListener('click', () => {
-      const val = parseFloat(binSpeedInput.value);
-      if (val >= 0.0049 && val <= 0.0051) {
-        binSpeedFb.textContent = '✓ Correct! The orbital speed reduction coefficient is h/2R = 64 / 12800 = 0.005.';
-        binSpeedFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
-        this.binomialSpeedVerified = true;
-        refreshCheck();
-      } else {
-        binSpeedFb.textContent = '❌ Incorrect. Hint: The speed is v ≈ v₀(1 - h/2R). The reduction coefficient is h / 2R = 64 / (2 * 6400) = 64 / 12800 = 0.005.';
-        binSpeedFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
-      }
-      binSpeedFb.classList.remove('hidden');
-    });
+        if (okFirst && okImproved) {
+          binPiFb.textContent = '✓ Correct! Standard series yields π ≈ 3.2333, while Newton\'s rapid method yields π ≈ 3.1425!';
+          binPiFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.binomialPiVerified = true;
+          refreshCheck();
+        } else {
+          let msg = '❌ Incorrect. ';
+          if (!okFirst) msg += 'First method: 4 * (1 - 1/6 - 1/40) ≈ 3.2333. ';
+          if (!okImproved) msg += 'Improved method: 12 * (0.5 - √3/8 - 1/48 - 1/1280) ≈ 3.1425. ';
+          binPiFb.textContent = msg;
+          binPiFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        binPiFb.classList.remove('hidden');
+      });
+    }
+
+    const tideVerifyBtn = document.getElementById('tide-verify-btn');
+    const tideFeedback = document.getElementById('tide-feedback');
+    if (tideVerifyBtn) {
+      tideVerifyBtn.addEventListener('click', () => {
+        const nfVal = document.getElementById('tide-time-newfull-select').value;
+        const qVal = document.getElementById('tide-time-quarters-select').value;
+        const hVal = document.getElementById('tide-highest-select').value;
+
+        const nfOk = (nfVal === 'noon-midnight');
+        const qOk = (qVal === 'six-six');
+        const hOk = (hVal === 'new-full');
+
+        if (nfOk && qOk && hOk) {
+          tideFeedback.textContent = '✓ Correct! For New/Full moon, the Sun and Moon line up at noon and midnight (Spring Tide). For Quarters, high tide is at 6:00 AM & 6:00 PM (Neap Tide).';
+          tideFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.tidalVerified = true;
+          refreshCheck();
+        } else {
+          let msg = '❌ Incorrect. ';
+          if (!nfOk) msg += 'New/Full moon tides align with Sun (noon/midnight). ';
+          if (!qOk) msg += 'Quarter moon tides occur at 6:00 AM/PM. ';
+          if (!hOk) msg += 'Highest tides occur during New/Full moon (Spring Tide). ';
+          tideFeedback.textContent = msg;
+          tideFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        tideFeedback.classList.remove('hidden');
+      });
+    }
+
+    const rocheVerifyBtn = document.getElementById('roche-verify-btn');
+    const rocheFeedback = document.getElementById('roche-feedback');
+    if (rocheVerifyBtn) {
+      rocheVerifyBtn.addEventListener('click', () => {
+        const earthVal = parseFloat(document.getElementById('roche-earth-input').value);
+        const mercuryVal = parseFloat(document.getElementById('roche-mercury-input').value);
+
+        const earthOk = Math.abs(earthVal - 1.55) <= 0.05;
+        const mercuryOk = Math.abs(mercuryVal - 1.56) <= 0.05;
+
+        if (earthOk && mercuryOk) {
+          rocheFeedback.textContent = '✓ Correct! Earth\'s Roche limit is ~1.55 R_☉ and Mercury\'s is ~1.56 R_☉.';
+          rocheFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.rocheVerified = true;
+          refreshCheck();
+        } else {
+          let msg = '❌ Incorrect. ';
+          if (!earthOk) msg += 'Earth Roche limit: 2.44 * (1.41 / 5.51)⅓ ≈ 1.55 R_☉. ';
+          if (!mercuryOk) msg += 'Mercury Roche limit: 2.44 * (1.41 / 5.43)⅓ ≈ 1.56 R_☉. ';
+          rocheFeedback.textContent = msg;
+          rocheFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        rocheFeedback.classList.remove('hidden');
+      });
+    }
+
+    const tidelockVerifyBtn = document.getElementById('tidelock-verify-btn');
+    const tidelockFeedback = document.getElementById('tidelock-feedback');
+    if (tidelockVerifyBtn) {
+      tidelockVerifyBtn.addEventListener('click', () => {
+        const earthMoonStr = document.getElementById('tidelock-earthmoon-input').value.trim().toLowerCase();
+        const proximaStr = document.getElementById('tidelock-proxima-input').value.trim().toLowerCase();
+        const lockedVal = document.getElementById('tidelock-locked-select').value;
+
+        const earthMoonVal = parseFloat(earthMoonStr);
+        const proximaVal = parseFloat(proximaStr);
+
+        const earthMoonOk = !isNaN(earthMoonVal) && Math.abs(earthMoonVal - 7.4e-6) < 1.1e-7;
+        const proximaOk = !isNaN(proximaVal) && Math.abs(proximaVal - 2.7e-5) < 1.1e-6;
+        const lockedOk = (lockedVal === 'yes');
+
+        if (earthMoonOk && proximaOk && lockedOk) {
+          tidelockFeedback.textContent = '✓ Correct! Earth-Moon bulge ratio is ~7.4e-6 and Proxima b is ~2.7e-5. Proxima b experiences much stronger tidal torque and is likely tidally locked!';
+          tidelockFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.tidelockVerified = true;
+          refreshCheck();
+        } else {
+          let msg = '❌ Incorrect. ';
+          if (!earthMoonOk) msg += 'Check Earth-Moon bulge scale (approx. 7.4e-6). ';
+          if (!proximaOk) msg += 'Check Proxima b bulge scale (approx. 2.7e-5). ';
+          if (!lockedOk) msg += 'A larger bulge height ratio indicates Proxima b is likely locked. ';
+          tidelockFeedback.textContent = msg;
+          tidelockFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        tidelockFeedback.classList.remove('hidden');
+      });
+    }
+
+    const lunarVerifyBtn = document.getElementById('lunar-verify-btn');
+    const lunarFeedback = document.getElementById('lunar-feedback');
+    if (lunarVerifyBtn) {
+      lunarVerifyBtn.addEventListener('click', () => {
+        const scalingVal = document.getElementById('lunar-scaling-select').value;
+        const componentVal = document.getElementById('lunar-component-select').value;
+        const rateVal = document.getElementById('lunar-rate-select').value;
+
+        const scalingOk = (scalingVal === 'cube');
+        const componentOk = (componentVal === 'transverse');
+        const rateOk = (rateVal === 'faster');
+
+        if (scalingOk && componentOk && rateOk) {
+          lunarFeedback.textContent = '✓ Correct! The maximum solar perturbing force scales as ~1/R_E³. The transverse component F_θ exerts torque along the orbital direction, driving the counterclockwise precession of the Moon\'s perigee axis once every 8.85 years!';
+          lunarFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.lunarPerturbVerified = true;
+          refreshCheck();
+        } else {
+          let msg = '❌ Incorrect. ';
+          if (!scalingOk) msg += 'Differential gravity scales as 1/R_E³. ';
+          if (!componentOk) msg += 'Transverse force F_θ produces the net torque on orbit orientation. ';
+          if (!rateOk) msg += 'A smaller R_E increases differential gravity, speeding up precession. ';
+          lunarFeedback.textContent = msg;
+          lunarFeedback.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        lunarFeedback.classList.remove('hidden');
+      });
+    }
 
     if (this.blackholeVerified) {
       input.value = '4.47';
@@ -3684,64 +4087,69 @@ export class LevelUI {
       exoFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
       exoFeedback.classList.remove('hidden');
     }
+    if (this.binomialPascalVerified) {
+      binPascalInput.value = '-10';
+      binPascalFb.textContent = '✓ Correct! The binomial coefficient C(−3, 3) is indeed −10.';
+      binPascalFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      binPascalFb.classList.remove('hidden');
+    }
     if (this.binomialPiVerified) {
-      binPiInput.value = '0.4784';
-      binPiFb.textContent = '✓ Correct! x − ⅙x³ − ⅟₄₀x⁵ = 0.5 − 0.02083 − 0.00078 = 0.4784. Newton calculated this to 9 terms by hand to find Pi!';
+      document.getElementById('bin-pi-first-input').value = '3.2333';
+      document.getElementById('bin-pi-improved-input').value = '3.1425';
+      binPiFb.textContent = '✓ Correct! Using the first 3 terms, the standard method yields π ≈ 3.2333, while Newton\'s improved rapid method yields π ≈ 3.1425 (within 0.03% of actual π!).';
       binPiFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
       binPiFb.classList.remove('hidden');
     }
-    if (this.binomialGravityVerified) {
-      binGravInput.value = '0.50';
-      binGravFb.textContent = '✓ Correct! The force decrease is approximately 2h/R = 32 / 6400 = 0.50% (0.005 fraction).';
-      binGravFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
-      binGravFb.classList.remove('hidden');
+    if (this.tidalVerified) {
+      document.getElementById('tide-time-newfull-select').value = 'noon-midnight';
+      document.getElementById('tide-time-quarters-select').value = 'six-six';
+      document.getElementById('tide-highest-select').value = 'new-full';
+      tideFeedback.textContent = '✓ Correct! For New/Full moon, the Sun and Moon line up to pull on the oceans at noon and midnight (Spring Tide). For Quarters, they act perpendicularly, shifting the high tide to 6:00 AM & 6:00 PM (Neap Tide).';
+      tideFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      tideFeedback.classList.remove('hidden');
     }
-    if (this.binomialSpeedVerified) {
-      binSpeedInput.value = '0.005';
-      binSpeedFb.textContent = '✓ Correct! The orbital speed reduction coefficient is h/2R = 64 / 12800 = 0.005.';
-      binSpeedFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
-      binSpeedFb.classList.remove('hidden');
+    if (this.rocheVerified) {
+      document.getElementById('roche-earth-input').value = '1.55';
+      document.getElementById('roche-mercury-input').value = '1.56';
+      rocheFeedback.textContent = '✓ Correct! Using d = 2.44 · R_☉ · (ρ_Sun / ρ_Planet)⅓, Earth\'s Roche limit is ~1.55 R_☉ (1.08 million km) and Mercury\'s is ~1.56 R_☉ (1.09 million km). Inside these radii, solar tidal force disintegrates the planets!';
+      rocheFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      rocheFeedback.classList.remove('hidden');
+    }
+    if (this.tidelockVerified) {
+      document.getElementById('tidelock-earthmoon-input').value = '7.4e-6';
+      document.getElementById('tidelock-proxima-input').value = '2.7e-5';
+      document.getElementById('tidelock-locked-select').value = 'yes';
+      tidelockFeedback.textContent = '✓ Correct! The relative bulge height ratio of the Earth-Moon system is ~7.4e-6 and Proxima b is ~2.7e-5. Because Proxima b has a significantly larger bulge scale due to its close orbit to Proxima Centauri, it experiences much stronger tidal torque and is indeed likely to be tidally locked!';
+      tidelockFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      tidelockFeedback.classList.remove('hidden');
+    }
+    if (this.lunarPerturbVerified) {
+      document.getElementById('lunar-scaling-select').value = 'cube';
+      document.getElementById('lunar-component-select').value = 'transverse';
+      document.getElementById('lunar-rate-select').value = 'faster';
+      lunarFeedback.textContent = '✓ Correct! The maximum solar perturbing force scales as ~1/R_E³. The transverse component F_θ exerts torque along the orbital direction, driving the counterclockwise precession of the Moon\'s perigee axis once every 8.85 years!';
+      lunarFeedback.className = 'text-[11px] font-semibold text-green-500 mt-1';
+      lunarFeedback.classList.remove('hidden');
     }
 
     finalBtn.addEventListener('click', () => {
-      alert("Congratulations! You have completed all tasks in Level 10, demonstrating the power of Newton's laws in explaining black holes, mapping exoplanet orbits, and using binomial expansion approximations!");
+      alert("Congratulations! You have completed all tasks in Level 10, demonstrating the power of Newton's laws in explaining black holes, mapping exoplanet orbits, binomial expansion approximations, ocean tides, tidal disruption at the Roche limit, rotational tidal locking, and lunar orbit axis precession!");
       gameState.completeLevel(10);
     });
 
-    // Tab buttons event listeners
     const switchTab = (tab) => {
-      const tabBlackHole = document.getElementById('tab-black-hole');
-      const tabExoplanet = document.getElementById('tab-exoplanet');
-      const tabBinomial = document.getElementById('tab-binomial');
-      const sectBH = document.getElementById('section-black-hole');
-      const sectExo = document.getElementById('section-exoplanet');
-      const sectBin = document.getElementById('section-binomial');
-
-      tabBlackHole.style.background = 'transparent';
-      tabBlackHole.style.color = 'rgb(148, 163, 184)';
-      tabExoplanet.style.background = 'transparent';
-      tabExoplanet.style.color = 'rgb(148, 163, 184)';
-      tabBinomial.style.background = 'transparent';
-      tabBinomial.style.color = 'rgb(148, 163, 184)';
-
-      sectBH.style.display = 'none';
-      sectExo.style.display = 'none';
-      sectBin.style.display = 'none';
-
-      if (tab === 'black-hole') {
-        tabBlackHole.style.background = 'rgb(139, 92, 246)';
-        tabBlackHole.style.color = 'white';
-        sectBH.style.display = 'flex';
-      } else if (tab === 'exoplanet') {
-        tabExoplanet.style.background = 'rgb(139, 92, 246)';
-        tabExoplanet.style.color = 'white';
-        sectExo.style.display = 'flex';
-      } else if (tab === 'binomial') {
-        tabBinomial.style.background = 'rgb(139, 92, 246)';
-        tabBinomial.style.color = 'white';
-        sectBin.style.display = 'flex';
-      }
-
+      const tabs = ['black-hole', 'exoplanet', 'binomial', 'binomial-apps', 'tidal-force', 'roche-limit', 'tidal-lock', 'lunar-perturbation'];
+      tabs.forEach(t => {
+        const tabEl = document.getElementById(`tab-${t}`);
+        const sectEl = document.getElementById(`section-${t}`);
+        if (tabEl) {
+          tabEl.style.background = (t === tab) ? 'rgb(139, 92, 246)' : 'transparent';
+          tabEl.style.color = (t === tab) ? 'white' : 'rgb(148, 163, 184)';
+        }
+        if (sectEl) {
+          sectEl.style.display = (t === tab) ? 'flex' : 'none';
+        }
+      });
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setTab === 'function') {
         window.activeLevelInstance.setTab(tab);
       }
@@ -3750,8 +4158,11 @@ export class LevelUI {
     document.getElementById('tab-black-hole').addEventListener('click', () => switchTab('black-hole'));
     document.getElementById('tab-exoplanet').addEventListener('click', () => switchTab('exoplanet'));
     document.getElementById('tab-binomial').addEventListener('click', () => switchTab('binomial'));
-
-    refreshCheck();
+    document.getElementById('tab-binomial-apps').addEventListener('click', () => switchTab('binomial-apps'));
+    document.getElementById('tab-tidal-force').addEventListener('click', () => switchTab('tidal-force'));
+    document.getElementById('tab-roche-limit').addEventListener('click', () => switchTab('roche-limit'));
+    document.getElementById('tab-tidal-lock').addEventListener('click', () => switchTab('tidal-lock'));
+    document.getElementById('tab-lunar-perturbation').addEventListener('click', () => switchTab('lunar-perturbation'));
   }
 
   renderLevel11() {
