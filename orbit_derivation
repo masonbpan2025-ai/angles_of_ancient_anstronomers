@@ -1,0 +1,71 @@
+The Universal Kinematic Derivation of Orbital Eccentricity
+
+This proof demonstrates how the global shape of an orbit (its eccentricity, $e$) is strictly determined by its initial velocity ($v$) relative to the local circular velocity ($v_0$), using a local kinematic approximation at the periapsis.
+
+1. The Unified Equation & Kinematic Substitution
+
+We shift the origin of the coordinate system so that the origin is at the focal point where the central planet is located. The universal Cartesian equation for central conics (ellipses and hyperbolas) with focus at origin is:
+
+$$\frac{(x+Ae)^2}{A^2} + \frac{y^2}{A^2(1-e^2)} = 1$$
+
+We launch a projectile horizontally from the periapsis at distance $r = (1-e)A$. For a small time $t$:
+
+The horizontal travel is $y = vt$.
+
+The vertical fall position is $x = (1-e)A - \frac{1}{2}gt^2 = r - \frac{1}{2}gt^2$.
+
+When $e = 1$ (parabola), $r = \frac{v^2}{g}$, giving the parabolic equations:
+
+$$y = vt, \quad x = r - \frac{1}{2}gt^2; \quad r = \frac{v^2}{g}; \quad x = r - \frac{y^2}{4r}$$
+
+Substituting these into the unified equation yields:
+
+$$\frac{((1-e)A - \frac{1}{2}gt^2 + Ae)^2}{A^2} + \frac{(vt)^2}{A^2(1-e^2)} = 1$$
+
+2. The Local Approximation
+
+Expanding the first term, we get:
+
+$$\frac{A^2 - Agt^2 + \frac{1}{4}g^2t^4}{A^2} + \frac{v^2t^2}{(1-e^2)A^2} = 1$$
+
+Because we are only looking at the exact moment of launch, $t$ is infinitesimally small. We can safely ignore the $(\frac{1}{4}g^2t^4)$ term. This leaves:
+
+$$\frac{A^2 - Agt^2}{A^2} + \frac{v^2t^2}{(1-e^2)A^2} = 1$$
+
+$$1 - \frac{gt^2}{A} + \frac{v^2t^2}{(1-e^2)A^2} = 1$$
+
+Subtracting 1 from both sides and rearranging:
+
+$$\frac{v^2t^2}{(1-e^2)A^2} = \frac{gt^2}{A}$$
+
+Cancel $t^2$ and simplify $A$:
+
+$$\frac{v^2}{(1-e^2)A} = g$$
+
+3. The Geometric Substitution
+
+We introduce the properties of the local circular orbit. For a circle of radius $r$, the gravitational acceleration acts as centripetal acceleration, meaning $g = \frac{v_0^2}{r}$.
+
+We also define the launch distance (periapsis) in terms of the major axis and eccentricity: $r = A(1-e)$.
+
+Substitute $g$ into our kinematic result:
+
+$$\frac{v^2}{(1-e^2)A} = \frac{v_0^2}{A(1-e)}$$
+
+Now, expand the difference of squares in the denominator: $(1-e^2) = (1-e)(1+e)$.
+
+$$\frac{v^2}{A(1-e)(1+e)} = \frac{v_0^2}{A(1-e)}$$
+
+4. The Final Unification
+
+Notice that the term $A(1-e)$ appears on the bottom of both fractions. We can completely cancel it out!
+
+$$\frac{v^2}{(1+e)} = v_0^2$$
+
+Rearranging to solve for $e$:
+
+$$1+e = \left(\frac{v}{v_0}\right)^2$$
+
+$$e = \left(\frac{v}{v_0}\right)^2 - 1$$
+
+Conclusion: The eccentricity of the resulting orbit is completely determined by the ratio of the launch velocity to the circular velocity.

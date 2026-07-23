@@ -44,6 +44,7 @@ export class LevelUI {
     this.newton1Verified = false;
     this.newton2Verified = false;
     this.newton3Verified = false;
+    this.newtonOrbitVerified = false;
     this.blackholeVerified = false;
     this.gravityConstantVerified = false;
     this.exoplanetVerified = false;
@@ -3219,6 +3220,7 @@ export class LevelUI {
         <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 font-sans">
           <button id="tab-n1" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:rgb(139,92,246);color:#fff;">Newton's Cannonball</button>
           <button id="tab-n3" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Centripetal Proof</button>
+          <button id="tab-norbit" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Universal Orbit Proof</button>
           <button id="tab-n2" class="tab-n px-2 py-1 text-[9.5px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Law of Gravity</button>
         </div>
 
@@ -3250,28 +3252,6 @@ export class LevelUI {
           </div>
         </div>
 
-        <!-- Law of Gravity Content -->
-        <div id="content-n2" class="flex flex-col gap-2 mt-2 hidden">
-          <!-- Step content (updated dynamically by renderN9GravityStep) -->
-          <div id="gravity-step-content" class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
-            <!-- populated by JS -->
-          </div>
-          <!-- G challenge (shown only on step 5) -->
-          <div id="gravity-challenge" class="hidden bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gravitational Constant Challenge:</span>
-            <p class="text-[10px] text-slate-400">
-              Assume ρ = 3000 kg/m<sup>3</sup>, g = 9.8 m/s<sup>2</sup>, R = 6371 km.
-              Using G = 3g / (4π · ρ · R):
-            </p>
-            <span class="text-[10.5px] font-semibold text-slate-200">Value of G in units of 10<sup>-11</sup> m<sup>3</sup> kg<sup>-1</sup> s<sup>-2</sup>?</span>
-            <div class="flex gap-2">
-              <input type="number" id="newton2-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 12.2" step="0.1">
-              <button id="newton2-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
-            </div>
-            <div id="newton2-feedback" class="text-[10.5px] font-medium hidden"></div>
-          </div>
-        </div>
-
         <!-- Centripetal Proof Content -->
         <div id="content-n3" class="flex flex-col gap-2 mt-2 hidden">
           <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
@@ -3299,6 +3279,90 @@ export class LevelUI {
           </div>
         </div>
 
+        <!-- Universal Orbit Proof Content -->
+        <div id="content-norbit" class="flex flex-col gap-2 mt-2 hidden">
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <h3 class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Universal Orbit &amp; Conic Sections</h3>
+            <p class="text-[10.5px] leading-relaxed text-slate-300">
+              Newton proved that gravitational orbits are <strong>conic sections</strong> — the curves formed by slicing a 3D cone with a 2D plane.
+              The orbital shape depends entirely on launch velocity ratio <em>v / v₀</em> and eccentricity <em>e = (v / v₀)² − 1</em>:
+            </p>
+
+            <div class="space-y-1.5 border-t border-slate-800/80 pt-2 text-[10px] text-slate-300 font-sans">
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                <div class="font-bold text-sky-400 mb-0.5">1. Circle (e = 0)</div>
+                <div>Launch speed <em>v = v₀</em>. Bound closed orbit. The cutting plane is perpendicular to the cone axis.</div>
+              </div>
+
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                <div class="font-bold text-emerald-400 mb-0.5">2. Ellipse (0 &lt; e &lt; 1)</div>
+                <div>Launch speed <em>v₀ &lt; v &lt; √2 v₀</em>. Bound closed orbit. The plane cuts through one cone at an angle.</div>
+              </div>
+
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                <div class="font-bold text-yellow-400 mb-0.5">3. Parabola (e = 1)</div>
+                <div>Launch speed <em>v = v<sub>escape</sub> = √2 v₀</em>. Unbound escape trajectory. The plane is parallel to the side of the cone.</div>
+              </div>
+
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                <div class="font-bold text-red-400 mb-0.5">4. Hyperbola (e &gt; 1)</div>
+                <div>Launch speed <em>v &gt; √2 v₀</em>. Unbound escape trajectory. The plane cuts through both cones of a double cone.</div>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-sans">Asteroid Capture Challenge:</span>
+              <p class="text-[10px] text-slate-300 leading-relaxed font-sans">
+                A large asteroid is flying toward a planet. Under what condition will the asteroid become a moon of the planet? (where <span class="text-cyan-300 font-mono font-bold">v₀</span> is the circular orbiting velocity)
+              </p>
+
+              <div class="flex flex-col gap-1.5 mt-1 font-sans">
+                <label class="flex items-center gap-2 bg-slate-900/80 p-2 rounded border border-slate-800 cursor-pointer hover:border-violet-500/50 transition text-[10.5px] text-slate-200">
+                  <input type="radio" name="orbit-mc" value="v_lt_sqrt2" class="accent-violet-500">
+                  <span>v &lt; √2 v₀</span>
+                </label>
+                <label class="flex items-center gap-2 bg-slate-900/80 p-2 rounded border border-slate-800 cursor-pointer hover:border-violet-500/50 transition text-[10.5px] text-slate-200">
+                  <input type="radio" name="orbit-mc" value="v_eq_sqrt2" class="accent-violet-500">
+                  <span>v = √2 v₀</span>
+                </label>
+                <label class="flex items-center gap-2 bg-slate-900/80 p-2 rounded border border-slate-800 cursor-pointer hover:border-violet-500/50 transition text-[10.5px] text-slate-200">
+                  <input type="radio" name="orbit-mc" value="v_gt_sqrt2" class="accent-violet-500">
+                  <span>v &gt; √2 v₀</span>
+                </label>
+                <label class="flex items-center gap-2 bg-slate-900/80 p-2 rounded border border-slate-800 cursor-pointer hover:border-violet-500/50 transition text-[10.5px] text-slate-200">
+                  <input type="radio" name="orbit-mc" value="v_eq_2v0" class="accent-violet-500">
+                  <span>v = 2 v₀</span>
+                </label>
+              </div>
+
+              <button id="newton-orbit-verify-btn" class="w-full bg-violet-500 hover:bg-violet-600 text-white font-semibold py-2 rounded-lg text-xs transition mt-1">Verify Answer</button>
+              <div id="newton-orbit-feedback" class="text-[10.5px] font-medium hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Law of Gravity Content -->
+        <div id="content-n2" class="flex flex-col gap-2 mt-2 hidden">
+          <!-- Step content (updated dynamically by renderN9GravityStep) -->
+          <div id="gravity-step-content" class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-1.5">
+            <!-- populated by JS -->
+          </div>
+          <!-- G challenge (shown only on step 5) -->
+          <div id="gravity-challenge" class="hidden bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gravitational Constant Challenge:</span>
+            <p class="text-[10px] text-slate-400">
+              Assume ρ = 3000 kg/m<sup>3</sup>, g = 9.8 m/s<sup>2</sup>, R = 6371 km.
+              Using G = 3g / (4π · ρ · R):
+            </p>
+            <span class="text-[10.5px] font-semibold text-slate-200">Value of G in units of 10<sup>-11</sup> m<sup>3</sup> kg<sup>-1</sup> s<sup>-2</sup>?</span>
+            <div class="flex gap-2">
+              <input type="number" id="newton2-input" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 12.2" step="0.1">
+              <button id="newton2-verify-btn" class="bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+            <div id="newton2-feedback" class="text-[10.5px] font-medium hidden"></div>
+          </div>
+        </div>
+
         <!-- Checklist -->
         <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-1">
           <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500">Progress:</span>
@@ -3307,6 +3371,9 @@ export class LevelUI {
           </div>
           <div id="check-n3" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Centripetal Proof Verified</span>
+          </div>
+          <div id="check-norbit" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Universal Orbit Proof Verified</span>
           </div>
           <div id="check-n2" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Gravitational Constant G Verified</span>
@@ -3331,25 +3398,30 @@ export class LevelUI {
       gameState.notify();
     });
 
-    const finalBtn  = document.getElementById('final-submit-btn');
-    const checkN1   = document.getElementById('check-n1');
-    const checkN2   = document.getElementById('check-n2');
-    const checkN3   = document.getElementById('check-n3');
+    const finalBtn   = document.getElementById('final-submit-btn');
+    const checkN1    = document.getElementById('check-n1');
+    const checkN3    = document.getElementById('check-n3');
+    const checkNorbit = document.getElementById('check-norbit');
+    const checkN2    = document.getElementById('check-n2');
 
     const refreshChecklist = () => {
       if (this.newton1Verified) {
         checkN1.querySelector('.status-check').textContent = '✅';
         checkN1.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
       }
-      if (this.newton2Verified) {
-        checkN2.querySelector('.status-check').textContent = '✅';
-        checkN2.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
-      }
       if (this.newton3Verified) {
         checkN3.querySelector('.status-check').textContent = '✅';
         checkN3.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
       }
-      if (this.newton1Verified && this.newton2Verified && this.newton3Verified) {
+      if (this.newtonOrbitVerified) {
+        checkNorbit.querySelector('.status-check').textContent = '✅';
+        checkNorbit.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      }
+      if (this.newton2Verified) {
+        checkN2.querySelector('.status-check').textContent = '✅';
+        checkN2.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      }
+      if (this.newton1Verified && this.newton3Verified && this.newtonOrbitVerified && this.newton2Verified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
       }
@@ -3378,7 +3450,7 @@ export class LevelUI {
       n1Fb.classList.remove('hidden');
     });
 
-    // Verification tab 2
+    // Verification tab 2 (Gravity G)
     const n2Input = document.getElementById('newton2-input');
     const n2VerifyBtn = document.getElementById('newton2-verify-btn');
     const n2Fb = document.getElementById('newton2-feedback');
@@ -3397,7 +3469,7 @@ export class LevelUI {
       n2Fb.classList.remove('hidden');
     });
 
-    // Verification tab 3
+    // Verification tab 3 (Centripetal)
     const n3Input = document.getElementById('newton3-input');
     const n3VerifyBtn = document.getElementById('newton3-verify-btn');
     const n3Fb = document.getElementById('newton3-feedback');
@@ -3416,48 +3488,86 @@ export class LevelUI {
       n3Fb.classList.remove('hidden');
     });
 
+    // Verification tab 4 (Universal Orbit)
+    const norbitVerifyBtn = document.getElementById('newton-orbit-verify-btn');
+    const norbitFb = document.getElementById('newton-orbit-feedback');
+
+    if (norbitVerifyBtn && norbitFb) {
+      norbitVerifyBtn.addEventListener('click', () => {
+        const selected = document.querySelector('input[name="orbit-mc"]:checked');
+        if (!selected) {
+          norbitFb.textContent = '⚠️ Please select an answer option.';
+          norbitFb.className = 'text-[11px] font-semibold text-yellow-400 mt-1';
+          norbitFb.classList.remove('hidden');
+          return;
+        }
+        if (selected.value === 'v_lt_sqrt2') {
+          norbitFb.textContent = '✓ Correct! When v < √2 v₀ (below escape velocity), eccentricity e < 1, resulting in a bound elliptical orbit so the asteroid becomes a moon!';
+          norbitFb.className = 'text-[11px] font-semibold text-green-500 mt-1';
+          this.newtonOrbitVerified = true;
+          refreshChecklist();
+        } else {
+          norbitFb.textContent = '❌ Incorrect. Hint: To remain bound as a moon, the speed must be strictly below escape speed (v < √2 v₀), giving a closed elliptical orbit (e < 1).';
+          norbitFb.className = 'text-[11px] font-semibold text-red-500 mt-1';
+        }
+        norbitFb.classList.remove('hidden');
+      });
+    }
+
     // Tab switching
     const tab1 = document.getElementById('tab-n1');
-    const tab2 = document.getElementById('tab-n2');
     const tab3 = document.getElementById('tab-n3');
+    const taborbit = document.getElementById('tab-norbit');
+    const tab2 = document.getElementById('tab-n2');
+
     const con1 = document.getElementById('content-n1');
-    const con2 = document.getElementById('content-n2');
     const con3 = document.getElementById('content-n3');
+    const conorbit = document.getElementById('content-norbit');
+    const con2 = document.getElementById('content-n2');
 
     const switchTab = (which) => {
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
         window.activeLevelInstance.setSubtask(which);
       }
+      tab1.style.background = 'transparent'; tab1.style.color = 'rgb(148,163,184)';
+      tab3.style.background = 'transparent'; tab3.style.color = 'rgb(148,163,184)';
+      taborbit.style.background = 'transparent'; taborbit.style.color = 'rgb(148,163,184)';
+      tab2.style.background = 'transparent'; tab2.style.color = 'rgb(148,163,184)';
+
+      con1.classList.add('hidden');
+      con3.classList.add('hidden');
+      conorbit.classList.add('hidden');
+      con2.classList.add('hidden');
+
       if (which === 'cannonball') {
         tab1.style.background = 'rgb(139,92,246)'; tab1.style.color = '#fff';
-        tab2.style.background = 'transparent';     tab2.style.color = 'rgb(148,163,184)';
-        tab3.style.background = 'transparent';     tab3.style.color = 'rgb(148,163,184)';
-        con1.classList.remove('hidden'); con2.classList.add('hidden'); con3.classList.add('hidden');
+        con1.classList.remove('hidden');
         renderN9Params('cannonball');
+      } else if (which === 'acceleration') {
+        tab3.style.background = 'rgb(139,92,246)'; tab3.style.color = '#fff';
+        con3.classList.remove('hidden');
+        renderN9Params('acceleration');
+      } else if (which === 'orbit') {
+        taborbit.style.background = 'rgb(139,92,246)'; taborbit.style.color = '#fff';
+        conorbit.classList.remove('hidden');
+        renderN9Params('orbit');
       } else if (which === 'gravity') {
         tab2.style.background = 'rgb(139,92,246)'; tab2.style.color = '#fff';
-        tab1.style.background = 'transparent';     tab1.style.color = 'rgb(148,163,184)';
-        tab3.style.background = 'transparent';     tab3.style.color = 'rgb(148,163,184)';
-        con2.classList.remove('hidden'); con1.classList.add('hidden'); con3.classList.add('hidden');
+        con2.classList.remove('hidden');
         renderN9Params('gravity');
-      } else {
-        tab3.style.background = 'rgb(139,92,246)'; tab3.style.color = '#fff';
-        tab1.style.background = 'transparent';     tab1.style.color = 'rgb(148,163,184)';
-        tab2.style.background = 'transparent';     tab2.style.color = 'rgb(148,163,184)';
-        con3.classList.remove('hidden'); con1.classList.add('hidden'); con2.classList.add('hidden');
-        renderN9Params('acceleration');
       }
     };
 
     tab1.addEventListener('click', () => switchTab('cannonball'));
-    tab2.addEventListener('click', () => switchTab('gravity'));
     tab3.addEventListener('click', () => switchTab('acceleration'));
+    taborbit.addEventListener('click', () => switchTab('orbit'));
+    tab2.addEventListener('click', () => switchTab('gravity'));
 
     // Param panel renderer
     const renderN9Params = (tab) => {
       const pp = document.getElementById('n9-param-panel');
       if (!pp) return;
-      if (tab === 'acceleration') {
+      if (tab === 'acceleration' || tab === 'orbit') {
         pp.style.display = 'none';
         return;
       }

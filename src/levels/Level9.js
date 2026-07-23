@@ -1,4 +1,5 @@
-// Level 9: Newton
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { gameState } from '../core/GameState.js';
 import { GravityIllustration } from './GravityIllustration.js';
 
@@ -10,11 +11,21 @@ export class Level9 {
     this.container.appendChild(this.canvas);
 
     // Simulation state
-    this.subtask = 'cannonball'; // 'cannonball', 'gravity', or 'acceleration'
+    // Acceleration subtask container
+    this.subtask = 'cannonball'; // 'cannonball', 'gravity', 'acceleration', or 'orbit'
     this.accelerationContainer = document.createElement('div');
     this.accelerationContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:auto;display:none;';
     this.container.appendChild(this.accelerationContainer);
     this.accelerationUIInitialized = false;
+
+    // Orbit subtask container (Universal Orbit Proof)
+    this.orbitContainer = document.createElement('div');
+    this.orbitContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:auto;display:none;';
+    this.container.appendChild(this.orbitContainer);
+    this.orbitUIInitialized = false;
+    this.orbitV_ratio = 1.0;
+    this.orbitTime = 0;
+
     this.isSimPlaying = true;
     this.time = 0;
 
@@ -92,15 +103,24 @@ export class Level9 {
       this._gravityIllustration.show();
       this.canvas.style.display = 'none';
       this.accelerationContainer.style.display = 'none';
+      this.orbitContainer.style.display = 'none';
     } else if (subtask === 'acceleration') {
       this._gravityIllustration.hide();
       this.canvas.style.display = 'none';
       this.accelerationContainer.style.display = 'block';
+      this.orbitContainer.style.display = 'none';
       this.renderAccelerationUI();
+    } else if (subtask === 'orbit') {
+      this._gravityIllustration.hide();
+      this.canvas.style.display = 'none';
+      this.accelerationContainer.style.display = 'none';
+      this.orbitContainer.style.display = 'block';
+      this.renderOrbitUI();
     } else {
       this._gravityIllustration.hide();
       this.canvas.style.display = 'block';
       this.accelerationContainer.style.display = 'none';
+      this.orbitContainer.style.display = 'none';
     }
   }
 
@@ -271,6 +291,8 @@ export class Level9 {
 
     if (this.subtask === 'cannonball') {
       this.drawCannonball(ctx, IX, IW, IH);
+    } else if (this.subtask === 'orbit') {
+      this.renderOrbitUI();
     } else {
       this.drawGravity(ctx, IX, IW, IH);
     }
@@ -476,6 +498,14 @@ export class Level9 {
     }
     if (this.accelerationContainer && this.accelerationContainer.parentNode) {
       this.accelerationContainer.parentNode.removeChild(this.accelerationContainer);
+    }
+    if (this.orbitContainer && this.orbitContainer.parentNode) {
+      this.orbitContainer.parentNode.removeChild(this.orbitContainer);
+    }
+    if (this._conic3d) {
+      if (this._conic3d.animId) cancelAnimationFrame(this._conic3d.animId);
+      if (this._conic3d.renderer) this._conic3d.renderer.dispose();
+      this._conic3d = null;
     }
   }
 
@@ -749,5 +779,733 @@ export class Level9 {
       <br>• tan(θ) ≈ θ (error: <strong>${((Math.tan(theta) - theta) / (theta || 1) * 100).toFixed(2)}%</strong>).
       <br><span class="text-violet-400 font-bold">Limit holds!</span> As Δt → 0, a = v² / R is exact.
     `;
+  }
+
+  // ── Subtask 3: Universal Orbit Proof (Conic Sections & Derivation) ────
+  renderOrbitUI() {
+    if (this.subtask !== 'orbit') return;
+
+    if (!this.orbitUIInitialized) {
+      this.orbitContainer.innerHTML = `
+        <div class="flex flex-col lg:flex-row h-full w-full bg-slate-950 text-slate-200 font-sans overflow-hidden relative">
+          <!-- Spacer to clear left task panel -->
+          <div class="hidden lg:block lg:w-[420px] shrink-0 pointer-events-none"></div>
+
+          <!-- Left Panel: Math Explanation & Derivation -->
+          <div class="w-full lg:w-[380px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col z-20 overflow-y-auto shrink-0 space-y-3">
+            <div>
+              <h2 class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-1 flex items-center gap-1.5 font-sans">
+                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Universal Orbit Kinematics
+              </h2>
+              <p class="text-[10px] text-slate-400 leading-relaxed font-sans">
+                Unified kinematic derivation of orbital eccentricity e from local launch velocity v.
+              </p>
+            </div>
+
+            <!-- Controls -->
+            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80">
+              <label class="flex justify-between text-[11px] font-bold text-cyan-400 mb-1.5">
+                <span>Launch Velocity (v)</span>
+                <span id="orbit-lbl-v" class="text-yellow-300 font-mono font-bold">1.00 v₀</span>
+              </label>
+              <input type="range" id="orbit-v-slider" min="1.0" max="2.0" step="0.005" value="1.0"
+                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+              <div class="flex justify-between text-[9px] text-slate-500 mt-1 font-semibold">
+                <span class="text-sky-400 font-bold">Circle (1.00 v₀)</span>
+                <button id="snap-sqrt2-btn" class="text-yellow-400 font-bold hover:underline cursor-pointer bg-yellow-400/10 px-1.5 py-0.5 rounded border border-yellow-400/30 transition" title="Click to snap to Escape Speed (√2 v₀)">
+                  ⚡ Parabola (√2 v₀ ≈ 1.414)
+                </button>
+                <span class="text-red-400 font-bold text-right">Hyperbola (&gt; 1.41 v₀)</span>
+              </div>
+            </div>
+
+            <!-- Live Calculations -->
+            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80 font-mono text-[10px] space-y-2">
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-sans mb-1 flex justify-between items-center">
+                <span>Universal Formula</span>
+                <span id="orbit-val-type" class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-blue-500/20 text-blue-400">Circle</span>
+              </div>
+
+              <div class="flex justify-between items-center bg-slate-950/60 p-2 rounded border border-slate-850">
+                <span class="text-slate-300 font-sans">Ratio (v / v₀)²</span>
+                <span id="orbit-val-ratio" class="text-yellow-400 font-bold">1.000</span>
+              </div>
+
+              <div class="flex justify-between items-center bg-slate-950/60 p-2 rounded border border-slate-850">
+                <span class="text-slate-300 font-sans">Eccentricity e = |(v/v₀)² − 1|</span>
+                <span id="orbit-val-e" class="text-white font-bold">0.000</span>
+              </div>
+            </div>
+
+            <!-- Proof Derivation Card (from @[orbit_derivation]) -->
+            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80 space-y-2 font-sans">
+              <h3 class="text-[11px] font-bold text-amber-400 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Kinematic Proof Steps
+              </h3>
+              <div class="text-[9.5px] text-slate-300 space-y-2">
+                <div>
+                  <span class="font-bold text-white">1. Conic &amp; Kinematic Equations:</span>
+                  <div id="orbit-proof-step1" class="bg-slate-950/60 p-1.5 rounded border border-slate-850 font-mono text-[9px] text-cyan-300 mt-0.5">
+                    (x+Ae)²/A² + y²/[A²(1-e²)] = 1<br>
+                    y = v·t, x = (1-e)A − ½g·t² = r − ½g·t²
+                  </div>
+                </div>
+                <div>
+                  <span class="font-bold text-white">2. Taylor Limit (t⁴ → 0):</span>
+                  <div class="bg-slate-950/60 p-1.5 rounded border border-slate-850 font-mono text-[9px] text-cyan-300 mt-0.5">
+                    v² / [(1-e²)A] = g
+                  </div>
+                </div>
+                <div>
+                  <span class="font-bold text-white">3. Substitute g = v₀²/r &amp; r = A(1-e):</span>
+                  <div class="bg-slate-950/60 p-1.5 rounded border border-slate-850 font-mono text-[9px] text-yellow-300 mt-0.5">
+                    v² / [A(1-e)(1+e)] = v₀² / [A(1-e)]
+                  </div>
+                </div>
+                <div>
+                  <span class="font-bold text-white">4. Final Unification:</span>
+                  <div class="bg-slate-950/60 p-1.5 rounded border border-slate-850 font-mono text-[9.5px] font-bold text-emerald-400 mt-0.5">
+                    e = (v / v₀)² − 1
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visual Legend -->
+            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80 space-y-1.5 text-[9.5px] text-slate-300 font-sans">
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Visual Legend</div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-blue-500/50 border border-blue-400"></div> Earth Focus &amp; Gravity (g)
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-0.5 bg-cyan-400"></div> True Orbital Path (Polar Conic)
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-0.5 border-b-2 border-dashed border-yellow-400"></div> Kinematic Parabola (x = r_p − ½gt²)
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-0.5 bg-pink-500"></div> Geometric Axes (A &amp; B, Center C)
+              </div>
+            </div>
+
+            <!-- 3D Conic View Controls -->
+            <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80 space-y-2 font-sans">
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">3D Conic View Controls</div>
+              <div>
+                <label class="flex justify-between text-[10px] font-semibold text-cyan-400 mb-1">
+                  <span>Illustration Width</span>
+                  <span id="conic-width-lbl" class="text-yellow-300 font-mono">200px</span>
+                </label>
+                <input type="range" id="conic-width-slider" min="120" max="600" step="10" value="200"
+                  class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                <div class="flex justify-between text-[8px] text-slate-500 mt-0.5 font-semibold">
+                  <span>120px</span>
+                  <span>600px</span>
+                </div>
+              </div>
+              <div>
+                <label class="flex justify-between text-[10px] font-semibold text-cyan-400 mb-1">
+                  <span>Illustration Height</span>
+                  <span id="conic-height-lbl" class="text-yellow-300 font-mono">220px</span>
+                </label>
+                <input type="range" id="conic-height-slider" min="120" max="400" step="10" value="220"
+                  class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                <div class="flex justify-between text-[8px] text-slate-500 mt-0.5 font-semibold">
+                  <span>120px</span>
+                  <span>400px</span>
+                </div>
+              </div>
+              <div>
+                <label class="flex justify-between text-[10px] font-semibold text-cyan-400 mb-1">
+                  <span>View Azimuth</span>
+                  <span id="conic-azimuth-lbl" class="text-yellow-300 font-mono">45°</span>
+                </label>
+                <input type="range" id="conic-azimuth-slider" min="0" max="360" step="1" value="45"
+                  class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                <div class="flex justify-between text-[8px] text-slate-500 mt-0.5 font-semibold">
+                  <span>0°</span>
+                  <span>360°</span>
+                </div>
+              </div>
+              <div>
+                <label class="flex justify-between text-[10px] font-semibold text-cyan-400 mb-1">
+                  <span>View Elevation</span>
+                  <span id="conic-elevation-lbl" class="text-yellow-300 font-mono">-5°</span>
+                </label>
+                <input type="range" id="conic-elevation-slider" min="-90" max="90" step="1" value="-5"
+                  class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                <div class="flex justify-between text-[8px] text-slate-500 mt-0.5 font-semibold">
+                  <span>-90°</span>
+                  <span>90°</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel: Canvas Illustration Area -->
+          <div class="flex-grow relative bg-slate-950 flex flex-col h-full overflow-hidden">
+            <canvas id="orbit-canvas-inner" class="w-full h-full block"></canvas>
+
+            <!-- 3D Conic Section Illustration Inset Card (bottom-right) -->
+            <div id="conic-inset-card" class="absolute bottom-3 right-3 w-[200px] h-[220px] bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl overflow-hidden p-1.5 flex flex-col pointer-events-auto z-30">
+              <div class="px-1 pb-1 mb-1 border-b border-slate-800/80 text-[10px] font-bold font-sans flex items-center justify-between text-cyan-400">
+                <span class="flex items-center gap-1">
+                  <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                  3D Conic Section Cut
+                </span>
+              </div>
+              <div id="conic-3d-canvas-container" class="w-full flex-grow relative rounded overflow-hidden" style="pointer-events:auto;">
+                <div id="conic-angle-lbl" class="absolute top-1.5 left-1.5 z-10 px-2 py-0.5 bg-slate-950/80 backdrop-blur border border-amber-500/30 rounded text-[9.5px] font-mono text-amber-300 font-bold shadow pointer-events-none">
+                  θ = 0.0° (Circle)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const slider = this.orbitContainer.querySelector('#orbit-v-slider');
+      const snapBtn = this.orbitContainer.querySelector('#snap-sqrt2-btn');
+      const sqrt2 = Math.SQRT2; // ~1.41421356
+
+      slider.addEventListener('input', (e) => {
+        let val = parseFloat(e.target.value);
+        // Snap to sqrt(2) if within 0.025 distance
+        if (Math.abs(val - sqrt2) < 0.025) {
+          val = sqrt2;
+          slider.value = val;
+        }
+        this.orbitV_ratio = val;
+        this.orbitTime = 0;
+      });
+
+      if (snapBtn) {
+        snapBtn.addEventListener('click', () => {
+          this.orbitV_ratio = sqrt2;
+          slider.value = sqrt2;
+          this.orbitTime = 0;
+        });
+      }
+
+      const conic3dBox = this.orbitContainer.querySelector('#conic-3d-canvas-container');
+      if (conic3dBox) {
+        this.initConic3D(conic3dBox);
+      }
+
+      // 3D Conic View size controls
+      const conicInsetCard = this.orbitContainer.querySelector('#conic-inset-card');
+      const conicWidthSlider = this.orbitContainer.querySelector('#conic-width-slider');
+      const conicWidthLbl = this.orbitContainer.querySelector('#conic-width-lbl');
+      const conicHeightSlider = this.orbitContainer.querySelector('#conic-height-slider');
+      const conicHeightLbl = this.orbitContainer.querySelector('#conic-height-lbl');
+
+      if (conicWidthSlider && conicInsetCard) {
+        conicWidthSlider.addEventListener('input', (e) => {
+          const w = parseInt(e.target.value);
+          conicInsetCard.style.width = w + 'px';
+          if (conicWidthLbl) conicWidthLbl.textContent = w + 'px';
+        });
+      }
+      if (conicHeightSlider && conicInsetCard) {
+        conicHeightSlider.addEventListener('input', (e) => {
+          const h = parseInt(e.target.value);
+          conicInsetCard.style.height = h + 'px';
+          if (conicHeightLbl) conicHeightLbl.textContent = h + 'px';
+        });
+      }
+
+      // Camera angle controls
+      const azimuthSlider = this.orbitContainer.querySelector('#conic-azimuth-slider');
+      const azimuthLbl = this.orbitContainer.querySelector('#conic-azimuth-lbl');
+      const elevationSlider = this.orbitContainer.querySelector('#conic-elevation-slider');
+      const elevationLbl = this.orbitContainer.querySelector('#conic-elevation-lbl');
+
+      const updateCameraAngle = () => {
+        if (!this._conic3d) return;
+        const azDeg = parseFloat(azimuthSlider.value);
+        const elDeg = parseFloat(elevationSlider.value);
+        if (azimuthLbl) azimuthLbl.textContent = azDeg + '°';
+        if (elevationLbl) elevationLbl.textContent = elDeg + '°';
+
+        const az = azDeg * Math.PI / 180;
+        const el = elDeg * Math.PI / 180;
+        const radius = 57; // distance from target
+        const target = this._conic3d.controls.target;
+
+        this._conic3d.camera.position.set(
+          target.x + radius * Math.cos(el) * Math.sin(az),
+          target.y + radius * Math.sin(el),
+          target.z + radius * Math.cos(el) * Math.cos(az)
+        );
+        this._conic3d.camera.lookAt(target);
+        this._conic3d.controls.update();
+      };
+
+      if (azimuthSlider) azimuthSlider.addEventListener('input', updateCameraAngle);
+      if (elevationSlider) elevationSlider.addEventListener('input', updateCameraAngle);
+
+      this.orbitUIInitialized = true;
+    }
+
+    const innerCanvas = this.orbitContainer.querySelector('#orbit-canvas-inner');
+    if (!innerCanvas) return;
+    const ctx = innerCanvas.getContext('2d');
+    const width = innerCanvas.clientWidth || (window.innerWidth - 380);
+    const height = innerCanvas.clientHeight || window.innerHeight;
+
+    if (innerCanvas.width !== width || innerCanvas.height !== height) {
+      innerCanvas.width = width;
+      innerCanvas.height = height;
+    }
+
+    this.drawOrbitCanvas(ctx, width, height);
+    this.updateConic3D(this.orbitV_ratio);
+  }
+
+  drawOrbitCanvas(ctx, width, height) {
+    ctx.fillStyle = '#0b0c10';
+    ctx.fillRect(0, 0, width, height);
+
+    const centerX = width * 0.35;
+    const centerY = height * 0.5;
+    const R_PERIAPSIS = 140;
+
+    const v_ratio = this.orbitV_ratio;
+    // Force exact ratio_sq = 2.0 when v_ratio is Math.SQRT2
+    const ratio_sq = Math.abs(v_ratio - Math.SQRT2) < 1e-6 ? 2.0 : v_ratio * v_ratio;
+    let e = ratio_sq - 1;
+    let isApogee = false;
+
+    if (e < 0) {
+      e = Math.abs(e);
+      isApogee = true;
+    }
+
+    // Update DOM texts inside orbitContainer
+    const lblV = this.orbitContainer.querySelector('#orbit-lbl-v');
+    const valRatio = this.orbitContainer.querySelector('#orbit-val-ratio');
+    const valE = this.orbitContainer.querySelector('#orbit-val-e');
+    const valType = this.orbitContainer.querySelector('#orbit-val-type');
+
+    const isSnappedSqrt2 = Math.abs(v_ratio - Math.SQRT2) < 1e-6;
+    if (lblV) lblV.textContent = isSnappedSqrt2 ? '√2 v₀ (1.414)' : v_ratio.toFixed(2) + ' v₀';
+    if (valRatio) valRatio.textContent = ratio_sq.toFixed(3);
+    if (valE) valE.textContent = e.toFixed(3);
+
+    if (valType) {
+      let typeStr = "";
+      let typeColor = "";
+      let typeBg = "";
+      if (Math.abs(e) < 0.001) {
+        typeStr = "Circle"; typeColor = "text-blue-400"; typeBg = "bg-blue-500/20";
+      } else if (Math.abs(e - 1.0) < 0.005) {
+        typeStr = "Parabola (Escape)"; typeColor = "text-yellow-400"; typeBg = "bg-yellow-500/20";
+      } else if (e < 1.0) {
+        typeStr = "Ellipse"; typeColor = "text-green-400"; typeBg = "bg-green-500/20";
+      } else {
+        typeStr = "Hyperbola"; typeColor = "text-red-400"; typeBg = "bg-red-500/20";
+      }
+      valType.className = `px-2 py-0.5 rounded text-[9.5px] font-bold ${typeBg} ${typeColor}`;
+      valType.textContent = typeStr;
+    }
+
+    const proofStep1 = this.orbitContainer.querySelector('#orbit-proof-step1');
+    if (proofStep1) {
+      if (Math.abs(e - 1.0) < 0.005 || isSnappedSqrt2) {
+        proofStep1.innerHTML = `y = v·t, x = r − ½g·t²<br>r = v²/g; x = r − y²/(4r)`;
+      } else {
+        proofStep1.innerHTML = `(x+Ae)²/A² + y²/[A²(1-e²)] = 1<br>y = v·t, x = (1-e)A − ½g·t² = r − ½g·t²`;
+      }
+    }
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+
+    // Semi-latus rectum p
+    let p = isApogee ? R_PERIAPSIS * (1 - e) : R_PERIAPSIS * (1 + e);
+
+    // Draw True Orbit (Cyan)
+    ctx.beginPath();
+    let startTheta = -Math.PI;
+    let endTheta = Math.PI;
+    if (e > 1) {
+      const limit = Math.acos(-1 / (e || 1));
+      startTheta = -limit + 0.1;
+      endTheta = limit - 0.1;
+    }
+
+    for (let theta = startTheta; theta <= endTheta; theta += 0.01) {
+      let effectiveTheta = isApogee ? theta + Math.PI : theta;
+      let radius = p / (1 + e * Math.cos(effectiveTheta));
+      let x = radius * Math.cos(theta);
+      let y = radius * Math.sin(theta);
+
+      if (theta === startTheta) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Draw Major & Minor Axes (Pink)
+    if (e !== 1 && e < 3) {
+      let A = Math.abs(R_PERIAPSIS / (1 - (isApogee ? -e : e)));
+      let B = A * Math.sqrt(Math.abs(1 - e * e));
+      let center_X = isApogee ? R_PERIAPSIS - A : (e < 1 ? R_PERIAPSIS - A : R_PERIAPSIS + A);
+
+      ctx.beginPath();
+      ctx.moveTo(center_X - A, 0); ctx.lineTo(center_X + A, 0);
+      ctx.moveTo(center_X, -B); ctx.lineTo(center_X, B);
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(center_X, 0, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ec4899';
+      ctx.fill();
+      ctx.font = 'bold 11px Outfit, sans-serif';
+      ctx.fillText('C', center_X - 5, 16);
+      ctx.fillText('A', center_X + A / 2, -6);
+      ctx.fillText('B', center_X + 6, -B / 2);
+    }
+
+    // Kinematic Parabolic Approximation (Yellow Dashed)
+    ctx.beginPath();
+    const yRange = 260;
+    for (let y = -yRange; y <= yRange; y += 4) {
+      let direction = isApogee ? 1 : -1;
+      let approx_x = R_PERIAPSIS + direction * (y * y) / (2 * R_PERIAPSIS * ratio_sq);
+      if (y === -yRange) ctx.moveTo(approx_x, y);
+      else ctx.lineTo(approx_x, y);
+    }
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw Earth Focus
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, 14);
+    grad.addColorStop(0, '#60a5fa');
+    grad.addColorStop(1, '#1e3a8a');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Gravity vector g
+    ctx.beginPath();
+    ctx.moveTo(R_PERIAPSIS - 10, 0);
+    ctx.lineTo(R_PERIAPSIS - 38, 0);
+    ctx.strokeStyle = 'rgba(239, 68, 68, 0.9)';
+    ctx.lineWidth = 2;
+    ctx.lineTo(R_PERIAPSIS - 28, -4);
+    ctx.moveTo(R_PERIAPSIS - 38, 0);
+    ctx.lineTo(R_PERIAPSIS - 28, 4);
+    ctx.stroke();
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 12px Outfit, sans-serif';
+    ctx.fillText('g', R_PERIAPSIS - 25, -10);
+
+    // Launch Point & Velocity Vector v
+    ctx.beginPath();
+    ctx.arc(R_PERIAPSIS, 0, 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(R_PERIAPSIS, 0);
+    const vLen = v_ratio * 45;
+    ctx.lineTo(R_PERIAPSIS, -vLen);
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 2.5;
+    ctx.lineTo(R_PERIAPSIS - 4, -vLen + 7);
+    ctx.moveTo(R_PERIAPSIS, -vLen);
+    ctx.lineTo(R_PERIAPSIS + 4, -vLen + 7);
+    ctx.stroke();
+    ctx.fillStyle = '#22c55e';
+    ctx.font = 'bold 12px Outfit, sans-serif';
+    ctx.fillText('v', R_PERIAPSIS + 10, -vLen / 2);
+
+    // Animated Orbiting Satellite Body
+    let speed = 0.02 * v_ratio;
+    let effectiveAnimTheta = isApogee ? this.orbitTime + Math.PI : this.orbitTime;
+
+    if (e > 1) {
+      const limit = Math.acos(-1 / e) - 0.2;
+      if (this.orbitTime > limit) this.orbitTime = -limit;
+      else if (this.orbitTime < -limit) this.orbitTime = -limit;
+    } else {
+      if (this.orbitTime > Math.PI * 2) this.orbitTime -= Math.PI * 2;
+    }
+
+    let r_anim = p / (1 + e * Math.cos(effectiveAnimTheta));
+    let anim_x = r_anim * Math.cos(this.orbitTime);
+    let anim_y = r_anim * Math.sin(this.orbitTime);
+
+    ctx.beginPath();
+    ctx.arc(anim_x, -anim_y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    if (this.isSimPlaying) {
+      let r_current = p / (1 + e * Math.cos(effectiveAnimTheta));
+      this.orbitTime += (speed * R_PERIAPSIS * R_PERIAPSIS) / (r_current * r_current || 1);
+    }
+
+    ctx.restore();
+  }
+
+  // ── 3D Conic Section Illustration (based on @[conic]) ──────────────────
+  initConic3D(container) {
+    if (this._conic3d) return;
+
+    const width = container.clientWidth || 254;
+    const height = container.clientHeight || 230;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+    camera.position.set(40, -5, 40);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+    renderer.domElement.style.touchAction = 'none';
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, -28, 0);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
+    dirLight.position.set(50, 80, 30);
+    scene.add(dirLight);
+
+    // Cone Geometry (45 degree slope angle)
+    const coneSlopeAngle = Math.PI / 4;
+    const coneHeight = 60;
+    const coneRadius = coneHeight * Math.tan(coneSlopeAngle);
+
+    const coneGroup = new THREE.Group();
+    scene.add(coneGroup);
+
+    // Transparent Cone Body
+    const coneGeo = new THREE.ConeGeometry(coneRadius, coneHeight, 64, 1, true);
+    coneGeo.translate(0, -coneHeight / 2, 0);
+    const coneMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.12,
+      side: THREE.DoubleSide, depthWrite: false, roughness: 0.2
+    });
+    const coneMesh = new THREE.Mesh(coneGeo, coneMat);
+    coneGroup.add(coneMesh);
+
+    // Wireframe Edges
+    const edgeGeo = new THREE.ConeGeometry(coneRadius, coneHeight, 16, 1, true);
+    edgeGeo.translate(0, -coneHeight / 2, 0);
+    const edges = new THREE.EdgesGeometry(edgeGeo);
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2 });
+    const coneEdges = new THREE.LineSegments(edges, edgeMat);
+    coneGroup.add(coneEdges);
+
+    // Axis Line
+    const axisGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 10, 0),
+      new THREE.Vector3(0, -coneHeight - 10, 0)
+    ]);
+    const axisMat = new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 1.5, gapSize: 1.5, transparent: true, opacity: 0.4 });
+    const axisLine = new THREE.Line(axisGeo, axisMat);
+    axisLine.computeLineDistances();
+    coneGroup.add(axisLine);
+
+    // Dynamic Slicing Group
+    const dynamicGroup = new THREE.Group();
+    scene.add(dynamicGroup);
+
+    // Slicing Plane
+    const planeGeo = new THREE.PlaneGeometry(120, 160);
+    planeGeo.rotateX(-Math.PI / 2);
+    const planeMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.22,
+      side: THREE.DoubleSide, depthWrite: false
+    });
+    const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+
+    const pivotY = -25;
+    const planePivot = new THREE.Group();
+    planePivot.position.y = pivotY;
+    planePivot.add(planeMesh);
+    dynamicGroup.add(planePivot);
+
+    // Intersection Line
+    const curveMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 3 });
+    const curveLine = new THREE.Line(new THREE.BufferGeometry(), curveMat);
+    dynamicGroup.add(curveLine);
+
+    // Intersection Surface
+    const surfaceMat = new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false });
+    const surfaceMesh = new THREE.Mesh(new THREE.BufferGeometry(), surfaceMat);
+    dynamicGroup.add(surfaceMesh);
+
+    let animId = null;
+    let lastW = 0, lastH = 0;
+    const renderLoop = () => {
+      if (this.subtask === 'orbit' && container.offsetParent !== null) {
+        animId = requestAnimationFrame(renderLoop);
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        if (w > 0 && h > 0 && (w !== lastW || h !== lastH)) {
+          lastW = w;
+          lastH = h;
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+        }
+        // Camera angle is controlled by sliders
+        controls.update();
+        renderer.render(scene, camera);
+      }
+    };
+    animId = requestAnimationFrame(renderLoop);
+
+    this._conic3d = {
+      scene, camera, renderer, controls, coneGroup, planePivot,
+      curveLine, curveMat, surfaceMesh, surfaceMat, pivotY, coneHeight, animId
+    };
+  }
+
+  updateConic3D(v_ratio) {
+    if (!this._conic3d) return;
+
+    const { planePivot, curveLine, curveMat, surfaceMesh, surfaceMat, pivotY, coneHeight } = this._conic3d;
+
+    const ratio_sq = Math.abs(v_ratio - Math.SQRT2) < 1e-6 ? 2.0 : v_ratio * v_ratio;
+    let e = Math.abs(ratio_sq - 1);
+
+    let angleDeg = 0;
+    let shapeType = 'Circle';
+    let colorHex = 0x38bdf8; // Blue
+
+    if (Math.abs(e) < 0.001) {
+      angleDeg = 0;
+      shapeType = 'Circle';
+      colorHex = 0x38bdf8;
+    } else if (Math.abs(e - 1.0) < 0.005) {
+      angleDeg = 45;
+      shapeType = 'Parabola (Escape)';
+      colorHex = 0xfacc15; // Yellow
+    } else if (e < 1.0) {
+      angleDeg = Math.asin(e / Math.SQRT2) * (180 / Math.PI);
+      shapeType = 'Ellipse';
+      colorHex = 0x4ade80; // Green
+    } else {
+      angleDeg = 45 + Math.min(33, (e - 1) * 20);
+      shapeType = 'Hyperbola';
+      colorHex = 0xf97316; // Orange
+    }
+
+    const lbl = this.orbitContainer.querySelector('#conic-angle-lbl');
+    if (lbl) {
+      lbl.textContent = `θ = ${angleDeg.toFixed(1)}° (${shapeType})`;
+    }
+
+    curveMat.color.setHex(colorHex);
+    surfaceMat.color.setHex(colorHex);
+
+    const angleRad = THREE.MathUtils.degToRad(angleDeg);
+    planePivot.rotation.z = angleRad;
+
+    // Generate 3D intersection points (from @[conic])
+    const points = [];
+    const m = Math.tan(angleRad);
+    const c = pivotY;
+
+    if (angleDeg < 45) {
+      // Ellipse / Circle
+      const denom = 1 - m * m;
+      const centerX = (m * c) / denom;
+      const semiAxisX = Math.sqrt((c * c) / (denom * denom));
+      const semiAxisZ = Math.sqrt((c * c) / denom);
+
+      for (let i = 0; i <= 64; i++) {
+        const t = (i / 64) * Math.PI * 2;
+        const dx = semiAxisX * Math.cos(t);
+        const z = semiAxisZ * Math.sin(t);
+        const x = centerX + dx;
+        const y = m * x + c;
+        points.push(new THREE.Vector3(x, y, z));
+      }
+    } else if (angleDeg === 45) {
+      // Parabola (m = 1)
+      const zLimit = 40;
+      for (let i = 0; i <= 64; i++) {
+        const z = -zLimit + (i / 64) * (2 * zLimit);
+        const x = (z * z - c * c) / (2 * c);
+        const y = m * x + c;
+
+        if (y >= -coneHeight) {
+          points.push(new THREE.Vector3(x, y, z));
+        }
+      }
+    } else {
+      // Hyperbola
+      const denom = m * m - 1;
+      const centerX = -(m * c) / denom;
+      const semiAxisX = Math.sqrt((c * c) / (denom * denom));
+      const semiAxisZ = Math.sqrt((c * c) / denom);
+
+      const tLimit = 1.2;
+      for (let i = 0; i <= 64; i++) {
+        const t = -tLimit + (i / 64) * (2 * tLimit);
+        const dx = semiAxisX / Math.cos(t);
+        const z = semiAxisZ * Math.tan(t);
+
+        const x = centerX - dx;
+        const y = m * x + c;
+
+        if (y >= -coneHeight && y <= 0) {
+          points.push(new THREE.Vector3(x, y, z));
+        }
+      }
+    }
+
+    curveLine.geometry.setFromPoints(points);
+
+    if (points.length > 2) {
+      const vertices = [];
+      let cx = 0, cy = 0, cz = 0;
+      for (let p of points) { cx += p.x; cy += p.y; cz += p.z; }
+      cx /= points.length; cy /= points.length; cz /= points.length;
+
+      for (let i = 0; i < points.length - 1; i++) {
+        vertices.push(cx, cy, cz);
+        vertices.push(points[i].x, points[i].y, points[i].z);
+        vertices.push(points[i + 1].x, points[i + 1].y, points[i + 1].z);
+      }
+
+      if (angleDeg < 45) {
+        vertices.push(cx, cy, cz);
+        vertices.push(points[points.length - 1].x, points[points.length - 1].y, points[points.length - 1].z);
+        vertices.push(points[0].x, points[0].y, points[0].z);
+      }
+
+      surfaceMesh.geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      surfaceMesh.geometry.computeVertexNormals();
+    } else {
+      surfaceMesh.geometry.setAttribute('position', new THREE.Float32BufferAttribute([], 3));
+    }
   }
 }

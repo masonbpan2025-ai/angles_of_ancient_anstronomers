@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Orbital Kinematics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #0b0c10;
+      color: #c5c6c7;
+      font-family: 'Inter', sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .ui-panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      position: absolute;
+      z-index: 10;
+    }
+
+    /* Custom scrollbar for panel */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body class="antialiased selection:bg-cyan-500 selection:text-white">
+
+  <canvas id="orbitCanvas"></canvas>
+
+  <!-- Left Panel: Math & Controls -->
+  <div class="ui-panel top-4 left-4 p-6 rounded-2xl shadow-2xl w-96 flex flex-col max-h-[95vh] overflow-y-auto">
+    <h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-2">
+      Newton's Cannonball
+    </h1>
+    <p class="text-sm text-slate-300 mb-6 border-b border-slate-700/50 pb-4">
+      Visualizing the unified kinematic derivation of orbital eccentricity.
+    </p>
+
+    <!-- Controls -->
+    <div class="mb-6">
+      <label class="flex justify-between text-sm font-semibold text-cyan-400 mb-2">
+        <span>Launch Velocity ($v$)</span>
+        <span id="lbl-v">1.00 v₀</span>
+      </label>
+      <input type="range" id="vSlider" min="1.0" max="2.0" step="0.01" value="1.0"
+        class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+      <div class="flex justify-between text-xs text-slate-500 mt-1">
+        <span>Circle (1.00 v₀)</span>
+        <span>Ellipse</span>
+        <span>Escape (v ≥ √2v₀)</span>
+      </div>
+    </div>
+
+    <!-- Live Calculation -->
+    <div class="space-y-3 font-mono text-sm mb-6 border-b border-slate-700/50 pb-6">
+      <div class="text-xs text-slate-400 mb-2 uppercase tracking-wider font-sans font-bold">The Universal Formula</div>
+
+      <div class="flex justify-between items-center">
+        <span class="text-slate-300">Ratio $(v/v_0)^2$</span>
+        <span id="val-ratio" class="text-yellow-400 font-bold">1.000</span>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <span class="text-slate-300">Eccentricity $e$</span>
+        <span id="val-e" class="text-white font-bold">0.000</span>
+      </div>
+
+      <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-700/50">
+        <span class="text-slate-300">Orbit Type</span>
+        <span id="val-type" class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 font-bold">Circle</span>
+      </div>
+    </div>
+
+    <!-- Geometric Legend -->
+    <div class="space-y-2 text-sm text-slate-300">
+      <div class="text-xs text-slate-400 mb-2 uppercase tracking-wider font-sans font-bold">Visual Legend</div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 rounded-full bg-blue-500/50 border border-blue-400 mr-3"></div> Earth (Focus) & Gravity
+        ($g$)
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-0.5 bg-cyan-400 mr-3"></div> True Orbital Path
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-0.5 border-b-2 border-dashed border-yellow-400 mr-3"></div> Kinematic Approx (Your Math)
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-0.5 bg-pink-500 mr-3"></div> Geometric Axes (A & B)
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: The Math Proof -->
+  <div class="ui-panel top-4 right-4 p-5 rounded-2xl shadow-2xl w-80 text-sm pointer-events-none hidden md:block">
+    <h2 class="text-md font-bold text-yellow-400 mb-3 tracking-wide">THE DERIVATION</h2>
+    <div class="space-y-4 text-slate-300">
+      <p>1. Assume launch from periapsis (distance $r$) with velocity $v$.</p>
+      <div class="bg-slate-900/50 p-2 rounded border border-slate-700 font-mono text-xs text-center text-cyan-200">
+        y = vt<br>
+        x = r ± ½gt²
+      </div>
+      <p>2. Plug into the conic equation and ignore the $t^4$ term (Taylor expansion equivalent):</p>
+      <div class="bg-slate-900/50 p-2 rounded border border-slate-700 font-mono text-xs text-center text-cyan-200">
+        v² = g(B²/A)
+      </div>
+      <p>3. Substitute geometric focal param $\frac{B^2}{A} = r(1+e)$ and circular speed $v_0^2 = gr$:</p>
+      <div
+        class="bg-slate-900/50 p-2 rounded border border-slate-700 font-mono text-xs text-center text-yellow-300 font-bold">
+        e = (v / v₀)² - 1
+      </div>
+      <p class="text-xs text-slate-400 mt-2 italic">Notice how the dashed yellow parabola perfectly hugs the orbit at
+        periapsis, proving the derivation visually!</p>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. SETUP CANVAS ---
+    const canvas = document.getElementById('orbitCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height, centerX, centerY;
+    const R_PERIAPSIS = 150; // Distance from Earth to launch point in pixels
+    const V0_SQUARED_OVER_R = 1; // Arbitrary constant for drawing gravity
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * window.devicePixelRatio;
+      canvas.height = height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      // Center Earth slightly to the left to show the launch point and hyperbola branches well
+      centerX = width * 0.4;
+      centerY = height * 0.5;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- 2. STATE ---
+    const slider = document.getElementById('vSlider');
+    const sqrt2 = Math.SQRT2;
+    let v_ratio = parseFloat(slider.value); // v / v0
+    let time = 0; // For cannonball animation
+
+    // DOM Elements
+    const elLblV = document.getElementById('lbl-v');
+    const elValRatio = document.getElementById('val-ratio');
+    const elValE = document.getElementById('val-e');
+    const elValType = document.getElementById('val-type');
+
+    slider.addEventListener('input', (e) => {
+      let val = parseFloat(e.target.value);
+      if (Math.abs(val - sqrt2) < 0.025) {
+        val = sqrt2;
+        slider.value = val;
+      }
+      v_ratio = val;
+      time = 0; // Reset animation on change
+    });
+
+    // --- 3. DRAWING HELPERS ---
+    function drawEarth() {
+      ctx.beginPath();
+      ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, 15);
+      grad.addColorStop(0, '#60a5fa');
+      grad.addColorStop(1, '#1e3a8a');
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw gravity vector g
+      ctx.beginPath();
+      ctx.moveTo(R_PERIAPSIS - 10, 0);
+      ctx.lineTo(R_PERIAPSIS - 40, 0); // pointing towards earth
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)';
+      ctx.lineWidth = 2;
+      // arrow head
+      ctx.lineTo(R_PERIAPSIS - 30, -5);
+      ctx.moveTo(R_PERIAPSIS - 40, 0);
+      ctx.lineTo(R_PERIAPSIS - 30, 5);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ef4444';
+      ctx.font = '14px Inter';
+      ctx.fillText('g', R_PERIAPSIS - 25, -10);
+    }
+
+    function drawLaunchPoint() {
+      ctx.beginPath();
+      ctx.arc(R_PERIAPSIS, 0, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#ffffff';
+
+      // Draw velocity vector
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.moveTo(R_PERIAPSIS, 0);
+      const vLen = v_ratio * 50;
+      ctx.lineTo(R_PERIAPSIS, -vLen);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 3;
+      ctx.lineTo(R_PERIAPSIS - 5, -vLen + 8);
+      ctx.moveTo(R_PERIAPSIS, -vLen);
+      ctx.lineTo(R_PERIAPSIS + 5, -vLen + 8);
+      ctx.stroke();
+
+      ctx.fillStyle = '#22c55e';
+      ctx.fillText('v', R_PERIAPSIS + 10, -vLen / 2);
+    }
+
+    // --- 4. MAIN RENDER LOOP ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Clear Background
+      ctx.fillStyle = '#0b0c10';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.save();
+      ctx.translate(centerX, centerY); // Earth is at (0,0) locally
+
+      const ratio_sq = Math.abs(v_ratio - Math.SQRT2) < 1e-6 ? 2.0 : v_ratio * v_ratio;
+      let e = ratio_sq - 1;
+      let isApogee = false;
+
+      if (e < 0) {
+        e = Math.abs(e);
+        isApogee = true;
+      }
+
+      // Update UI
+      const isSnappedSqrt2 = Math.abs(v_ratio - Math.SQRT2) < 1e-6;
+      elLblV.textContent = isSnappedSqrt2 ? '√2 v₀ (1.414)' : v_ratio.toFixed(2) + ' v₀';
+      elValRatio.textContent = ratio_sq.toFixed(3);
+      elValE.textContent = e.toFixed(3);
+
+      let typeStr = "";
+      let typeColor = "";
+      let typeBg = "";
+
+      if (Math.abs(e) < 0.001) {
+        typeStr = "Circle"; typeColor = "text-blue-400"; typeBg = "bg-blue-500/20";
+      } else if (Math.abs(e - 1.0) < 0.005) {
+        typeStr = "Parabola (Escape)"; typeColor = "text-yellow-400"; typeBg = "bg-yellow-500/20";
+      } else if (e < 1.0) {
+        typeStr = "Ellipse"; typeColor = "text-green-400"; typeBg = "bg-green-500/20";
+      } else {
+        typeStr = "Hyperbola"; typeColor = "text-red-400"; typeBg = "bg-red-500/20";
+      }
+      elValType.className = `px-2 py-1 rounded font-bold ${typeBg} ${typeColor}`;
+      elValType.textContent = typeStr;
+
+      // Math: Draw True Orbit via Polar Equation
+      // From focus (0,0): r_orbit = (h^2/mu) / (1 + e*cos(theta))
+      // The semi-latus rectum p = h^2/mu. 
+      // At launch point (theta=0 or pi), r = R_PERIAPSIS.
+      // If launch is periapsis (v > v0), R = p / (1 + e) => p = R*(1+e).
+      // If launch is apoapsis (v < v0), R = p / (1 - e) => p = R*(1-e).
+
+      let p;
+      if (isApogee) {
+        p = R_PERIAPSIS * (1 - e);
+      } else {
+        p = R_PERIAPSIS * (1 + e);
+      }
+
+      ctx.beginPath();
+      let startTheta = -Math.PI;
+      let endTheta = Math.PI;
+
+      // If hyperbola, limit theta to asymptotes to prevent drawing to infinity
+      if (e > 1) {
+        const limit = Math.acos(-1 / e);
+        startTheta = -limit + 0.1;
+        endTheta = limit - 0.1;
+      }
+
+      for (let theta = startTheta; theta <= endTheta; theta += 0.01) {
+        // Adjust theta if we launched from apogee (launch is at x=R, which means theta=0 corresponds to apogee)
+        let effectiveTheta = isApogee ? theta + Math.PI : theta;
+
+        let radius = p / (1 + e * Math.cos(effectiveTheta));
+        let x = radius * Math.cos(theta); // Draw relative to canvas x-axis
+        let y = radius * Math.sin(theta);
+
+        if (theta === startTheta) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#06b6d4'; // Cyan
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      if (e !== 1 && e < 3) { // Don't draw for parabola or extreme hyperbolas
+        let A = Math.abs(R_PERIAPSIS / (1 - (isApogee ? -e : e)));
+        let B = A * Math.sqrt(Math.abs(1 - e * e));
+        let center_X = isApogee ? R_PERIAPSIS - A : (e < 1 ? R_PERIAPSIS - A : R_PERIAPSIS + A);
+
+        ctx.beginPath();
+        // Major Axis
+        ctx.moveTo(center_X - A, 0);
+        ctx.lineTo(center_X + A, 0);
+        // Minor Axis
+        ctx.moveTo(center_X, -B);
+        ctx.lineTo(center_X, B);
+
+        ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)'; // Pink
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Center Point
+        ctx.beginPath();
+        ctx.arc(center_X, 0, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#ec4899';
+        ctx.fill();
+        ctx.font = '12px Inter';
+        ctx.fillText('C', center_X - 5, 15);
+        ctx.fillText('A', center_X + A / 2, -5);
+        ctx.fillText('B', center_X + 5, -B / 2);
+      }
+
+      // Based on your math: x = r_p - (1/2)g(y/v)^2
+      // We know g = v0^2 / R_PERIAPSIS. 
+      // So: x = R_PERIAPSIS - (1/2) * (v0^2 / R_PERIAPSIS) * (y^2 / v^2)
+      // x = R_PERIAPSIS - y^2 / (2 * R_PERIAPSIS * (v/v0)^2)
+
+      ctx.beginPath();
+      const yRange = 300;
+      for (let y = -yRange; y <= yRange; y += 5) {
+        // If it's apogee, gravity is pulling 'left' towards origin, but geometry is flipped relative to periapsis. 
+        // The approximation is always a parabola opening towards the force.
+        let direction = isApogee ? 1 : -1;
+        let approx_x = R_PERIAPSIS + direction * (y * y) / (2 * R_PERIAPSIS * ratio_sq);
+
+        if (y === -yRange) ctx.moveTo(approx_x, y);
+        else ctx.lineTo(approx_x, y);
+      }
+      ctx.strokeStyle = '#facc15'; // Yellow
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset
+
+      // Draw Central/Launch elements on top
+      drawEarth();
+      drawLaunchPoint();
+
+      // Basic animation logic using true anomaly
+      let speed = 0.02 * v_ratio;
+      let effectiveAnimTheta = isApogee ? time + Math.PI : time;
+
+      // Limit animation for open orbits
+      if (e > 1) {
+        const limit = Math.acos(-1 / e) - 0.2;
+        if (time > limit) time = -limit;
+        else if (time < -limit) time = -limit;
+      } else {
+        if (time > Math.PI * 2) time -= Math.PI * 2;
+      }
+
+      let r_anim = p / (1 + e * Math.cos(effectiveAnimTheta));
+      let anim_x = r_anim * Math.cos(time);
+      let anim_y = r_anim * Math.sin(time);
+
+      ctx.beginPath();
+      ctx.arc(anim_x, -anim_y, 5, 0, Math.PI * 2); // -y to make it orbit "counter clockwise" visually
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      // advance time based on conservation of angular momentum approximation
+      let r_current = p / (1 + e * Math.cos(effectiveAnimTheta));
+      time += (speed * R_PERIAPSIS * R_PERIAPSIS) / (r_current * r_current);
+
+      ctx.restore();
+    }
+
+    animate();
+  </script>
+</body>
+
+</html>
