@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Dandelin Spheres</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #0b0c10;
+      color: #c5c6c7;
+      font-family: 'Inter', sans-serif;
+    }
+
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .ui-panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+  </style>
+  <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+
+<body class="antialiased selection:bg-cyan-500 selection:text-white">
+
+  <div id="canvas-container"></div>
+
+  <!-- Left Panel: Legends and Information -->
+  <div
+    class="ui-panel absolute top-4 left-4 p-5 rounded-xl shadow-2xl max-w-sm z-10 text-sm space-y-4 pointer-events-none">
+    <div>
+      <h2 class="text-lg font-bold text-cyan-400 mb-1">Dandelin Geometry</h2>
+      <p class="text-slate-300 text-xs leading-relaxed">Rotate (Click & Drag) and Zoom (Scroll) to explore the 3D proof
+        of elliptical orbits.</p>
+    </div>
+
+    <div class="space-y-1.5 text-slate-200">
+      <div class="flex items-center">
+        <div class="w-3 h-3 bg-white/20 border border-white/50 rounded-sm mr-3"></div> Cylinder & Plane
+      </div>
+      <div class="flex items-center">
+        <div class="w-3 h-3 bg-teal-500/50 rounded-sm mr-3"></div> Dandelin Spheres
+      </div>
+      <div class="flex items-center">
+        <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div> Focal Points (F₁, F₂)
+      </div>
+    </div>
+
+    <div class="pt-3 border-t border-slate-700/50 space-y-1.5 text-slate-200">
+      <div class="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wider">The Magic Triangle</div>
+      <div class="flex items-center">
+        <div class="w-3 h-px bg-purple-500 mr-3"></div> a (Vertical to Sphere Center)
+      </div>
+      <div class="flex items-center">
+        <div class="w-3 h-px bg-orange-500 mr-3"></div> b (Sphere Radius)
+      </div>
+      <div class="flex items-center">
+        <div class="w-3 h-px bg-blue-500 mr-3"></div> c (Focal Distance on Plane)
+      </div>
+    </div>
+
+    <div class="pt-3 border-t border-slate-700/50 space-y-1.5 text-slate-200">
+      <div class="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wider">Cartesian Axes</div>
+      <div class="flex items-center">
+        <div class="w-3 h-px bg-cyan-400 mr-3"></div> x (Distance along Major Axis)
+      </div>
+      <div class="flex items-center">
+        <div class="w-3 h-px bg-pink-400 mr-3"></div> y (Distance along Minor Axis)
+      </div>
+    </div>
+
+    <div class="pt-3 border-t border-slate-700/50 space-y-1.5 text-slate-200">
+      <div class="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wider">Optical Reflection</div>
+      <div class="flex items-center">
+        <div class="w-3 h-px bg-yellow-400 mr-3"></div> Tangent Mirror Surface
+      </div>
+      <div class="flex items-center">
+        <div class="w-3 h-px bg-white border-t border-dashed mr-3"></div> Normal Line (Bisector)
+      </div>
+      <div class="flex items-center">
+        <div class="w-3 h-px bg-green-500 mr-3"></div> Vertical Generator Line
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Live Math Calculations -->
+  <div
+    class="ui-panel absolute top-4 right-4 p-5 rounded-xl shadow-2xl w-72 z-10 text-sm font-mono pointer-events-none">
+    <h2 class="text-md font-bold text-teal-400 mb-3 tracking-wide">LIVE PROOF</h2>
+
+    <div class="space-y-2 mb-4">
+      <div class="text-xs text-slate-400">Geometry: e = sin(θ)</div>
+      <div class="flex justify-between"><span>Plane Tilt (θ)</span><span id="val-theta" class="text-white">0.0°</span>
+      </div>
+      <div class="flex justify-between"><span>Eccentricity (e)</span><span id="val-e" class="text-white">0.000</span>
+      </div>
+      <div class="flex justify-between"><span>Focal Dist (c)</span><span id="val-c" class="text-white">0.00</span></div>
+    </div>
+
+    <div class="space-y-2 mb-4 pt-3 border-t border-slate-700/50">
+      <div class="text-xs text-slate-400">Cartesian Eq: (x/a)² + (y/b)² = 1</div>
+      <div class="flex justify-between text-cyan-400"><span>x² / a²</span><span id="val-x2a2">0.000</span></div>
+      <div class="flex justify-between text-pink-400"><span>y² / b²</span><span id="val-y2b2">0.000</span></div>
+      <div class="flex justify-between font-bold text-white mt-1"><span>Sum</span><span
+          id="val-cartesian-sum">0.000</span></div>
+    </div>
+
+    <div class="space-y-2 pt-3 border-t border-slate-700/50">
+      <div class="text-xs text-slate-400">Optics: Incidence = Reflection</div>
+      <div class="flex justify-between text-yellow-300"><span>∠ (F₁ → P → Normal)</span><span
+          id="val-angle1">0.0°</span></div>
+      <div class="flex justify-between text-yellow-300"><span>∠ (F₂ → P → Normal)</span><span
+          id="val-angle2">0.0°</span></div>
+    </div>
+  </div>
+
+  <!-- Bottom Panel: Controls -->
+  <div
+    class="ui-panel absolute bottom-6 left-1/2 transform -translate-x-1/2 p-5 rounded-xl shadow-2xl w-80 z-10 flex flex-col items-center">
+    <label for="tiltSlider" class="text-sm font-bold text-teal-400 mb-2">Adjust Orbital Eccentricity (Plane
+      Tilt)</label>
+    <input type="range" id="tiltSlider" min="0" max="60" value="30" step="0.5"
+      class="w-full accent-teal-500 cursor-pointer">
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // --- 1. SCENE SETUP ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(15, 20, 25);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0, 0);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    // --- 2. STATIC GEOMETRY ---
+    const R = 5; // Cylinder Radius (Minor axis b)
+    let planeAngle = THREE.MathUtils.degToRad(30);
+
+    const cylinderGeo = new THREE.CylinderGeometry(R, R, 40, 64, 1, true);
+    const cylinderMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.1,
+      side: THREE.DoubleSide, depthWrite: false, roughness: 0.1
+    });
+    const cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+    scene.add(cylinder);
+
+    // Plane Group (tilts to form the ellipse)
+    const planeGroup = new THREE.Group();
+    scene.add(planeGroup);
+
+    const planeGeo = new THREE.PlaneGeometry(R * 8, R * 3);
+    planeGeo.rotateX(-Math.PI / 2); // Lay flat on XZ
+    const planeMat = new THREE.MeshPhysicalMaterial({
+      color: 0x14b8a6, transparent: true, opacity: 0.35,
+      side: THREE.DoubleSide, depthWrite: false
+    });
+    const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+    planeGroup.add(planeMesh);
+
+    // Spheres & Contact Rings
+    const sphereGeo = new THREE.SphereGeometry(R, 64, 64);
+    const sphereMat = new THREE.MeshPhysicalMaterial({ color: 0x0d9488, transparent: true, opacity: 0.5, roughness: 0.2 });
+    const sphereTop = new THREE.Mesh(sphereGeo, sphereMat);
+    const sphereBot = new THREE.Mesh(sphereGeo, sphereMat);
+    scene.add(sphereTop);
+    scene.add(sphereBot);
+
+    const ringGeo = new THREE.TorusGeometry(R, 0.04, 16, 100);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 });
+    const topRing = new THREE.Mesh(ringGeo, ringMat);
+    const bottomRing = new THREE.Mesh(ringGeo, ringMat);
+    topRing.rotation.x = Math.PI / 2;
+    bottomRing.rotation.x = Math.PI / 2;
+    scene.add(topRing);
+    scene.add(bottomRing);
+
+    // Foci (Red points on the plane)
+    const focusGeo = new THREE.SphereGeometry(0.25, 32, 32);
+    const focusMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const focus1Mesh = new THREE.Mesh(focusGeo, focusMat);
+    const focus2Mesh = new THREE.Mesh(focusGeo, focusMat);
+    planeGroup.add(focus1Mesh); // Attach directly to plane
+    planeGroup.add(focus2Mesh);
+
+    // Orbiting Planet
+    const planetGeo = new THREE.SphereGeometry(0.3, 32, 32);
+    const planetMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const planetMesh = new THREE.Mesh(planetGeo, planetMat);
+    planeGroup.add(planetMesh);
+
+    // --- 3. DYNAMIC LINES ---
+    function createLine(color, dashed = false) {
+      const mat = dashed
+        ? new THREE.LineDashedMaterial({ color: color, dashSize: 0.3, gapSize: 0.2, linewidth: 2 })
+        : new THREE.LineBasicMaterial({ color: color, linewidth: 2 });
+      const line = new THREE.Line(new THREE.BufferGeometry(), mat);
+      return line;
+    }
+
+    function updateLine(line, p1, p2, dashed = false) {
+      line.geometry.setFromPoints([p1, p2]);
+      if (dashed) line.computeLineDistances();
+    }
+
+    // Lines attached to World
+    const lineToF1 = createLine(0xef4444, false); // Red
+    const lineToF2 = createLine(0xef4444, false); // Red
+    const lineGenerator = createLine(0x22c55e, false); // Green Vertical
+    const lineTangent = createLine(0xeab308, false); // Yellow Tangent
+    const lineNormal = createLine(0xffffff, true); // White Dashed Normal
+
+    // Magic Triangle Lines (World)
+    const lineMagicVert = createLine(0xa855f7, false); // Purple (C to O1)
+    const lineMagicRad = createLine(0xf97316, false); // Orange (O1 to F1)
+    const lineMagicBase = createLine(0x3b82f6, false); // Blue (C to F1)
+
+    scene.add(lineToF1, lineToF2, lineGenerator, lineTangent, lineNormal);
+    scene.add(lineMagicVert, lineMagicRad, lineMagicBase);
+
+    // Lines attached to Plane (Local Coordinates)
+    const lineXCoord = createLine(0x06b6d4, false); // Cyan
+    const lineYCoord = createLine(0xec4899, false); // Pink
+    planeGroup.add(lineXCoord);
+    planeGroup.add(lineYCoord);
+
+    const ellipsePathMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+    const ellipsePathLine = new THREE.LineLoop(new THREE.BufferGeometry(), ellipsePathMat);
+    planeGroup.add(ellipsePathLine);
+
+    // --- 4. MATH & UI UPDATES ---
+    let a, b, c, e;
+
+    function updateMathGeometry(angleRad) {
+      // Tilting around Z axis creates the stretch along local X axis.
+      planeGroup.rotation.z = angleRad;
+
+      b = R; // Minor axis is always cylinder radius
+      a = R / Math.cos(angleRad); // Major axis stretches
+      c = R * Math.tan(angleRad); // Focal distance
+      e = Math.sin(angleRad); // Eccentricity
+
+      // Move spheres up/down
+      const sphereY = R / Math.cos(angleRad);
+      sphereTop.position.set(0, sphereY, 0);
+      sphereBot.position.set(0, -sphereY, 0);
+      topRing.position.set(0, sphereY, 0);
+      bottomRing.position.set(0, -sphereY, 0);
+
+      // Set Foci on the local plane (X axis is major axis)
+      focus1Mesh.position.set(c, 0, 0);
+      focus2Mesh.position.set(-c, 0, 0);
+
+      // Update Magic Triangle (Static per angle)
+      const centerWorld = new THREE.Vector3(0, 0, 0);
+      const sphereCenterWorld = new THREE.Vector3(0, sphereY, 0);
+      const f1World = new THREE.Vector3();
+      focus1Mesh.getWorldPosition(f1World);
+
+      updateLine(lineMagicVert, centerWorld, sphereCenterWorld, false);
+      updateLine(lineMagicRad, sphereCenterWorld, f1World, false);
+      updateLine(lineMagicBase, centerWorld, f1World, false);
+
+      const ellipsePoints = [];
+      for (let i = 0; i <= 64; i++) {
+        // Generate points along the ellipse in the local coordinate system
+        const theta = (i / 64) * Math.PI * 2;
+        ellipsePoints.push(new THREE.Vector3(a * Math.cos(theta), 0, b * Math.sin(theta)));
+      }
+      ellipsePathLine.geometry.setFromPoints(ellipsePoints);
+
+      // Update Static UI
+      document.getElementById('val-theta').innerText = THREE.MathUtils.radToDeg(angleRad).toFixed(1) + '°';
+      document.getElementById('val-e').innerText = e.toFixed(3);
+      document.getElementById('val-c').innerText = c.toFixed(2);
+    }
+
+    // Initialize
+    updateMathGeometry(planeAngle);
+
+    const slider = document.getElementById('tiltSlider');
+    slider.addEventListener('input', (event) => {
+      planeAngle = THREE.MathUtils.degToRad(parseFloat(event.target.value));
+      updateMathGeometry(planeAngle);
+    });
+
+    // --- 5. ANIMATION LOOP ---
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      // 1. Move Planet P along ellipse in local plane coords
+      const time = Date.now() * 0.001;
+      const E = time * 0.5; // Eccentric Anomaly angle
+
+      // Equation of ellipse: x = a*cos(E), z = b*sin(E)
+      const pX = a * Math.cos(E);
+      const pZ = b * Math.sin(E);
+      planetMesh.position.set(pX, 0, pZ);
+
+      // 2. Cartesian Coordinate Lines (Local to Plane)
+      // X line (Cyan): From origin along X axis
+      updateLine(lineXCoord, new THREE.Vector3(0, 0, 0), new THREE.Vector3(pX, 0, 0), false);
+      // Y line (Pink): From X axis out to point P
+      updateLine(lineYCoord, new THREE.Vector3(pX, 0, 0), new THREE.Vector3(pX, 0, pZ), false);
+
+      // Live Cartesian UI Update
+      const termX = Math.pow(pX / a, 2);
+      const termY = Math.pow(pZ / b, 2);
+      document.getElementById('val-x2a2').innerText = termX.toFixed(3);
+      document.getElementById('val-y2b2').innerText = termY.toFixed(3);
+      document.getElementById('val-cartesian-sum').innerText = (termX + termY).toFixed(3); // Will always be 1.000
+
+      // 3. Global Transformations for Optics
+      const pWorld = new THREE.Vector3();
+      planetMesh.getWorldPosition(pWorld);
+
+      const f1World = new THREE.Vector3();
+      focus1Mesh.getWorldPosition(f1World);
+      const f2World = new THREE.Vector3();
+      focus2Mesh.getWorldPosition(f2World);
+
+      // Focal Lines
+      updateLine(lineToF1, pWorld, f1World, false);
+      updateLine(lineToF2, pWorld, f2World, false);
+
+      // Generator Line (Straight up/down cylinder)
+      const sphereY = R / Math.cos(planeAngle);
+      const genTop = new THREE.Vector3(pWorld.x, sphereY, pWorld.z);
+      const genBot = new THREE.Vector3(pWorld.x, -sphereY, pWorld.z);
+      updateLine(lineGenerator, genTop, genBot, false);
+
+      // Tangent and Normal calculations
+      // Gradient of (x/a)^2 + (z/b)^2 = 1 gives normal vector
+      const normXLocal = pX / (a * a);
+      const normZLocal = pZ / (b * b);
+
+      // Inward pointing normal
+      const nLocal = new THREE.Vector3(-normXLocal, 0, -normZLocal).normalize();
+      // Tangent is perpendicular in the XZ plane
+      const tLocal = new THREE.Vector3(-nLocal.z, 0, nLocal.x);
+
+      // Convert normal/tangent to global space
+      const nWorld = nLocal.clone().transformDirection(planeGroup.matrixWorld);
+      const tWorld = tLocal.clone().transformDirection(planeGroup.matrixWorld);
+
+      // Draw Tangent (Yellow) and Normal (White Dashed)
+      const tStart = pWorld.clone().addScaledVector(tWorld, 4);
+      const tEnd = pWorld.clone().addScaledVector(tWorld, -4);
+      updateLine(lineTangent, tStart, tEnd, false);
+
+      const nEnd = pWorld.clone().addScaledVector(nWorld, 4);
+      updateLine(lineNormal, pWorld, nEnd, true);
+
+      // Calculate Optical Angles
+      // Vector from P to F1 and P to F2
+      const vecPF1 = f1World.clone().sub(pWorld).normalize();
+      const vecPF2 = f2World.clone().sub(pWorld).normalize();
+
+      const angle1 = THREE.MathUtils.radToDeg(nWorld.angleTo(vecPF1));
+      const angle2 = THREE.MathUtils.radToDeg(nWorld.angleTo(vecPF2));
+
+      document.getElementById('val-angle1').innerText = angle1.toFixed(1) + '°';
+      document.getElementById('val-angle2').innerText = angle2.toFixed(1) + '°';
+
+      renderer.render(scene, camera);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+  </script>
+</body>
+
+</html>

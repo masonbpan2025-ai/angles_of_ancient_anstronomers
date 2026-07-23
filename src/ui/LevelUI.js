@@ -37,6 +37,7 @@ export class LevelUI {
     this.kepler1Verified = false;
     this.kepler23Verified = false;
     this.kepler8_1Verified = false;
+    this.kepler8_propVerified = false;
     this.kepler8_23Verified = false;
     this.kepler8_logVerified = false;
     this.kepler8_eqVerified = false;
@@ -2358,9 +2359,10 @@ export class LevelUI {
 
         <!-- Tabs -->
         <div class="flex border-b border-slate-800 gap-1 pb-1 mt-1.5 flex-wrap">
-          <button id="tab-k1"  class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:rgb(139,92,246);color:#fff;">Kepler's 1st Law</button>
-          <button id="tab-k23" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Kepler's 2nd &amp; 3rd</button>
-          <button id="tab-keq" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Orbit Equations</button>
+          <button id="tab-k1"   class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:rgb(139,92,246);color:#fff;">Kepler's 1st Law</button>
+          <button id="tab-k23"  class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Kepler's 2nd &amp; 3rd</button>
+          <button id="tab-kell" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Ellipse Properties</button>
+          <button id="tab-keq"  class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Orbit Equations</button>
           <button id="tab-klog" class="tab-k px-2 py-1 text-[10px] font-semibold rounded transition" style="background:transparent;color:rgb(148,163,184);">Eclipse &amp; Logarithm</button>
         </div>
  
@@ -2389,6 +2391,73 @@ export class LevelUI {
               <div id="kepler1-feedback" class="text-xs p-2 rounded-lg border border-red-900/30 bg-red-950/20 text-red-400 leading-relaxed">
                 Model fails to align with Tycho's observations.
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ellipse Properties content (Dandelin Sphere) -->
+        <div id="content-kell" class="flex flex-col gap-2 mt-2 hidden">
+          <div class="bg-slate-950/40 border border-slate-800/80 p-3 rounded-lg flex flex-col gap-2">
+            <h3 class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Ellipse Properties (Dandelin Sphere)</h3>
+            <p class="text-[10.5px] leading-relaxed text-slate-300">
+              In 1822, Germinal Dandelin proved that slicing a cylinder with an inclined plane forms a focal ellipse.
+              Inserting two tangent spheres (Dandelin Spheres) inside reveals all fundamental properties of an ellipse:
+            </p>
+            
+            <div class="space-y-2 border-t border-slate-800/80 pt-2 text-[10px] text-slate-300">
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                <div class="font-bold text-red-400 mb-0.5">1. Foci &amp; Distance Sum Property</div>
+                <div class="text-slate-300">The Dandelin Spheres touch the plane at two points, defining the <strong class="text-white">Foci (F₁, F₂)</strong>. For any point <strong class="text-white">P</strong> on the ellipse:</div>
+                <div class="font-mono text-center text-red-300 py-1 font-bold">PF₁ + PF₂ = 2a = Constant</div>
+              </div>
+
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                <div class="font-bold text-purple-400 mb-0.5">2. The Magic Right Triangle</div>
+                <div class="text-slate-300 font-mono text-[9.5px]">
+                  • Semi-major axis: <span class="text-purple-300 font-bold">a = R / cos(θ)</span><br>
+                  • Semi-minor axis: <span class="text-orange-300 font-bold">b = R</span> (Cylinder Radius)<br>
+                  • Focal distance: <span class="text-blue-300 font-bold">c = R · tan(θ) = a · sin(θ)</span><br>
+                  • Eccentricity: <span class="text-teal-300 font-bold">e = sin(θ) = c / a</span>
+                </div>
+                <div class="font-mono text-center text-amber-300 pt-1 font-bold">a² = b² + c²</div>
+              </div>
+
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                <div class="font-bold text-cyan-400 mb-0.5">3. Cartesian Canonical Form</div>
+                <div class="font-mono text-center text-cyan-300 py-0.5 font-bold">(x / a)² + (y / b)² = 1</div>
+              </div>
+
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                <div class="font-bold text-yellow-400 mb-0.5">4. Optical Reflection (Focal Law)</div>
+                <div class="text-slate-300">Rays from <strong class="text-white">F₁</strong> reflect off the ellipse tangent mirror at <strong class="text-white">P</strong> directly to <strong class="text-white">F₂</strong>. The normal line bisects the angle:</div>
+                <div class="font-mono text-center text-yellow-300 py-0.5 font-bold">∠(F₁ → P → Normal) = ∠(F₂ → P → Normal)</div>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-800/80 pt-2 flex flex-col gap-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verification Challenge:</span>
+              <p class="text-[10px] text-slate-400 leading-relaxed">
+                For cylinder radius <span class="text-violet-300 font-mono">R = 5.0</span> and plane tilt <span class="text-violet-300 font-mono">θ = 30°</span>:
+              </p>
+              
+              <div class="flex flex-col gap-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">1. Semi-major axis a = 5.0 / cos(30°) (2 decimals)</label>
+                <input type="number" id="calc-kell-a" class="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 5.77" step="0.01">
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">2. Focal distance c = 5.0 · tan(30°) (2 decimals)</label>
+                <input type="number" id="calc-kell-c" class="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 2.89" step="0.01">
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">3. Eccentricity e = sin(30°) (3 decimals)</label>
+                <input type="number" id="calc-kell-e" class="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg outline-none focus:border-violet-500 transition" placeholder="e.g. 0.500" step="0.001">
+              </div>
+
+              <button id="verify-kell-btn" class="w-full bg-violet-500 hover:bg-violet-600 text-white font-bold py-1.5 rounded-lg text-xs transition mt-1">Verify Ellipse Properties</button>
+
+              <div id="kell-feedback" class="text-xs p-2 rounded-lg border hidden font-sans"></div>
             </div>
           </div>
         </div>
@@ -2480,7 +2549,7 @@ export class LevelUI {
               </div>
  
               <button id="verify-keq-btn" class="w-full bg-violet-500 hover:bg-violet-600 text-white font-bold py-1.5 rounded-lg text-xs transition mt-1">Verify Calculation</button>
- 
+
               <div id="keq-feedback" class="text-xs p-2 rounded-lg border hidden font-sans"></div>
             </div>
           </div>
@@ -2525,6 +2594,9 @@ export class LevelUI {
           <div id="check-k23" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>2nd &amp; 3rd Laws Explored</span>
           </div>
+          <div id="check-kell" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check">❌</span><span>Ellipse Properties Verified</span>
+          </div>
           <div id="check-keq" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
             <span class="status-check">❌</span><span>Orbit Equations Verified</span>
           </div>
@@ -2551,12 +2623,13 @@ export class LevelUI {
       gameState.notify();
     });
 
-    const finalBtn  = document.getElementById('final-submit-btn');
-    const checkK1   = document.getElementById('check-k1');
-    const checkK23  = document.getElementById('check-k23');
-    const checkKeq  = document.getElementById('check-keq');
-    const checkKlog = document.getElementById('check-klog');
-    const k1Fb      = document.getElementById('kepler1-feedback');
+    const finalBtn   = document.getElementById('final-submit-btn');
+    const checkK1    = document.getElementById('check-k1');
+    const checkKell  = document.getElementById('check-kell');
+    const checkK23   = document.getElementById('check-k23');
+    const checkKeq   = document.getElementById('check-keq');
+    const checkKlog  = document.getElementById('check-klog');
+    const k1Fb       = document.getElementById('kepler1-feedback');
     const conKeqDist = document.getElementById('keq-content-dist');
     const conKeqTime = document.getElementById('keq-content-time');
  
@@ -2564,6 +2637,10 @@ export class LevelUI {
       if (this.kepler8_1Verified) {
         checkK1.querySelector('.status-check').textContent = '✅';
         checkK1.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
+      }
+      if (this.kepler8_propVerified) {
+        checkKell.querySelector('.status-check').textContent = '✅';
+        checkKell.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
       }
       if (this.kepler8_23Verified) {
         checkK23.querySelector('.status-check').textContent = '✅';
@@ -2577,7 +2654,7 @@ export class LevelUI {
         checkKlog.querySelector('.status-check').textContent = '✅';
         checkKlog.className = 'flex items-center gap-1.5 text-[11px] font-medium transition text-green-500';
       }
-      if (this.kepler8_1Verified && this.kepler8_23Verified && this.kepler8_eqVerified && this.kepler8_logVerified) {
+      if (this.kepler8_1Verified && this.kepler8_propVerified && this.kepler8_23Verified && this.kepler8_eqVerified && this.kepler8_logVerified) {
         finalBtn.disabled = false;
         finalBtn.className = 'w-full py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-bold transition cursor-pointer text-xs border border-violet-750 mt-2';
       }
@@ -2618,26 +2695,74 @@ export class LevelUI {
     offsetBtn.addEventListener('click',  () => selectModel('offset'));
     ellipseBtn.addEventListener('click', () => selectModel('ellipse'));
 
+    // Ellipse Properties verification challenge
+    const kellBtn = document.getElementById('verify-kell-btn');
+    const inputKellA = document.getElementById('calc-kell-a');
+    const inputKellC = document.getElementById('calc-kell-c');
+    const inputKellE = document.getElementById('calc-kell-e');
+    const kellFb = document.getElementById('kell-feedback');
+
+    if (kellBtn && inputKellA && inputKellC && inputKellE && kellFb) {
+      kellBtn.addEventListener('click', () => {
+        kellFb.classList.remove('hidden');
+        const valA = parseFloat(inputKellA.value);
+        const valC = parseFloat(inputKellC.value);
+        const valE = parseFloat(inputKellE.value);
+
+        // R = 5, theta = 30°: a = 5/cos(30°) = 5.77, c = 5*tan(30°) = 2.89, e = sin(30°) = 0.500
+        const isACorrect = Math.abs(valA - 5.77) <= 0.05;
+        const isCCorrect = Math.abs(valC - 2.89) <= 0.05;
+        const isECorrect = Math.abs(valE - 0.5) <= 0.02;
+
+        if (isACorrect && isCCorrect && isECorrect) {
+          kellFb.innerHTML = '<strong>✓ Correct!</strong><br>• Semi-major axis a = 5.0 / cos(30°) = 5.77<br>• Focal distance c = 5.0 · tan(30°) = 2.89<br>• Eccentricity e = sin(30°) = 0.500<br>Dandelin ellipse properties verified!';
+          kellFb.className = 'text-xs p-2 rounded-lg border border-green-900/30 bg-green-950/20 text-green-400 leading-relaxed';
+          this.kepler8_propVerified = true;
+          refreshChecklist();
+        } else {
+          let hints = '<strong>Incorrect calculations.</strong> Hints:<br>';
+          if (!isACorrect) hints += '• a = R / cos(30°) = 5.0 / 0.866 = 5.77<br>';
+          if (!isCCorrect) hints += '• c = R · tan(30°) = 5.0 · 0.577 = 2.89<br>';
+          if (!isECorrect) hints += '• e = sin(30°) = 0.500<br>';
+          kellFb.innerHTML = hints;
+          kellFb.className = 'text-xs p-2 rounded-lg border border-red-900/30 bg-red-950/20 text-red-400 leading-relaxed';
+        }
+      });
+
+      if (this.kepler8_propVerified) {
+        inputKellA.value = '5.77';
+        inputKellC.value = '2.89';
+        inputKellE.value = '0.500';
+        kellFb.innerHTML = '<strong>✓ Correct!</strong> Semi-major axis a = 5.77, focal distance c = 2.89, e = 0.500. Ellipse properties verified!';
+        kellFb.className = 'text-xs p-2 rounded-lg border border-green-900/30 bg-green-950/20 text-green-400 leading-relaxed';
+        kellFb.classList.remove('hidden');
+      }
+    }
+
     // Tab switching
-    const tab1  = document.getElementById('tab-k1');
-    const tab23 = document.getElementById('tab-k23');
-    const tabeq = document.getElementById('tab-keq');
+    const tab1   = document.getElementById('tab-k1');
+    const tabell = document.getElementById('tab-kell');
+    const tab23  = document.getElementById('tab-k23');
+    const tabeq  = document.getElementById('tab-keq');
     const tablog = document.getElementById('tab-klog');
-    const con1  = document.getElementById('content-k1');
-    const con23 = document.getElementById('content-k23');
-    const coneq = document.getElementById('content-keq');
+    const con1   = document.getElementById('content-k1');
+    const conell = document.getElementById('content-kell');
+    const con23  = document.getElementById('content-k23');
+    const coneq  = document.getElementById('content-keq');
     const conlog = document.getElementById('content-klog');
  
     const switchTab = (which) => {
       if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
         window.activeLevelInstance.setSubtask(which);
       }
-      tab1.style.background  = 'transparent'; tab1.style.color  = 'rgb(148,163,184)';
-      tab23.style.background = 'transparent'; tab23.style.color = 'rgb(148,163,184)';
-      tabeq.style.background = 'transparent'; tabeq.style.color = 'rgb(148,163,184)';
+      tab1.style.background   = 'transparent'; tab1.style.color   = 'rgb(148,163,184)';
+      tabell.style.background = 'transparent'; tabell.style.color = 'rgb(148,163,184)';
+      tab23.style.background  = 'transparent'; tab23.style.color  = 'rgb(148,163,184)';
+      tabeq.style.background  = 'transparent'; tabeq.style.color  = 'rgb(148,163,184)';
       tablog.style.background = 'transparent'; tablog.style.color = 'rgb(148,163,184)';
       
       con1.classList.add('hidden');
+      conell.classList.add('hidden');
       con23.classList.add('hidden');
       coneq.classList.add('hidden');
       conlog.classList.add('hidden');
@@ -2646,6 +2771,10 @@ export class LevelUI {
         tab1.style.background  = 'rgb(139,92,246)'; tab1.style.color  = '#fff';
         con1.classList.remove('hidden');
         renderK8Params('kepler1');
+      } else if (which === 'ellipse_properties') {
+        tabell.style.background = 'rgb(139,92,246)'; tabell.style.color = '#fff';
+        conell.classList.remove('hidden');
+        renderK8Params('ellipse_properties');
       } else if (which === 'kepler23') {
         tab23.style.background = 'rgb(139,92,246)'; tab23.style.color = '#fff';
         con23.classList.remove('hidden');
@@ -2667,9 +2796,10 @@ export class LevelUI {
       }
     };
  
-    tab1.addEventListener('click',  () => switchTab('kepler1'));
-    tab23.addEventListener('click', () => switchTab('kepler23'));
-    tabeq.addEventListener('click', () => switchTab('orbit_equations'));
+    tab1.addEventListener('click',   () => switchTab('kepler1'));
+    tabell.addEventListener('click', () => switchTab('ellipse_properties'));
+    tab23.addEventListener('click',  () => switchTab('kepler23'));
+    tabeq.addEventListener('click',  () => switchTab('orbit_equations'));
     tablog.addEventListener('click', () => switchTab('logarithm'));
 
     // Orbit equations mode buttons
@@ -2796,6 +2926,66 @@ export class LevelUI {
             </div>
             <div class="text-[9px] text-slate-500 italic w-full">Orange dots = Tycho Brahe's observations of Mars. Select a model to test it.</div>
           </div>`;
+      } else if (tab === 'ellipse_properties') {
+        pp.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-4 w-full">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dandelin Sphere Ellipse Geometry</span>
+            
+            <div class="flex items-center gap-6 flex-grow max-w-md">
+              <div class="flex flex-col gap-0.5 flex-1">
+                <div class="flex justify-between text-[9px] font-bold text-slate-500">
+                  <span>Plane Tilt / Eccentricity (θ):</span>
+                  <span id="slider-k8-tilt-val" class="text-teal-400">30.0°</span>
+                </div>
+                <input type="range" id="slider-k8-tilt" min="0" max="60" step="0.5" value="30" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500">
+              </div>
+
+              <div class="flex flex-col gap-0.5 flex-1">
+                <div class="flex justify-between text-[9px] font-bold text-slate-500">
+                  <span>Rotation Speed:</span>
+                  <span id="slider-k8-speed-val" class="text-amber-400">1.0x</span>
+                </div>
+                <input type="range" id="slider-k8-speed" min="0.1" max="5.0" step="0.1" value="1.0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="k8-play-btn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5">
+                <span id="k8-play-icon">❚❚</span><span id="k8-play-text">Pause</span>
+              </button>
+              <button id="k8-reset-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-1.5 rounded-lg text-xs border border-slate-700 transition">Reset</button>
+            </div>
+          </div>`;
+
+        const sliderTilt = document.getElementById('slider-k8-tilt');
+        const valTilt = document.getElementById('slider-k8-tilt-val');
+        const sliderSpeed = document.getElementById('slider-k8-speed');
+        const valSpeed = document.getElementById('slider-k8-speed-val');
+        const inst = window.activeLevelInstance;
+
+        if (inst) {
+          if (sliderTilt) {
+            sliderTilt.addEventListener('input', (e) => {
+              const deg = parseFloat(e.target.value);
+              valTilt.textContent = deg.toFixed(1) + '°';
+              if (typeof inst.setDandelinTilt === 'function') {
+                inst.setDandelinTilt(deg);
+              }
+            });
+          }
+          if (sliderSpeed) {
+            const curSpd = inst.dandelinSpeed !== undefined ? inst.dandelinSpeed : 1.0;
+            sliderSpeed.value = curSpd;
+            if (valSpeed) valSpeed.textContent = curSpd.toFixed(1) + 'x';
+            sliderSpeed.addEventListener('input', (e) => {
+              const spd = parseFloat(e.target.value);
+              valSpeed.textContent = spd.toFixed(1) + 'x';
+              if (typeof inst.setDandelinSpeed === 'function') {
+                inst.setDandelinSpeed(spd);
+              }
+            });
+          }
+        }
       } else if (tab === 'kepler23') {
         pp.innerHTML = `
           <div class="flex flex-wrap items-center gap-4 w-full">
@@ -2912,6 +3102,21 @@ export class LevelUI {
               if (valE) valE.textContent = '45°';
               if (sliderE_e) sliderE_e.value = 0.60;
               if (valE_e) valE_e.textContent = '0.600';
+            } else if (tab === 'ellipse_properties') {
+              if (typeof inst.setDandelinTilt === 'function') {
+                inst.setDandelinTilt(30);
+                const sliderTilt = document.getElementById('slider-k8-tilt');
+                const valTilt = document.getElementById('slider-k8-tilt-val');
+                if (sliderTilt) sliderTilt.value = 30;
+                if (valTilt) valTilt.textContent = '30.0°';
+              }
+              if (typeof inst.setDandelinSpeed === 'function') {
+                inst.setDandelinSpeed(0.5);
+                const sliderSpeed = document.getElementById('slider-k8-speed');
+                const valSpeed = document.getElementById('slider-k8-speed-val');
+                if (sliderSpeed) sliderSpeed.value = 0.5;
+                if (valSpeed) valSpeed.textContent = '0.5x';
+              }
             }
           }
         });

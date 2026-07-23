@@ -1,3 +1,6 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 // Level 8: Kepler's Laws
 export class Level8 {
   constructor(container) {
@@ -10,6 +13,11 @@ export class Level8 {
     this.logContainer.className = 'absolute inset-0 z-10 hidden bg-slate-950';
     this.container.appendChild(this.logContainer);
 
+    // Dandelin Three.js container for Ellipse Properties
+    this.dandelinContainer = document.createElement('div');
+    this.dandelinContainer.className = 'absolute top-0 left-[400px] w-[calc(100%-400px)] h-full hidden z-10 pointer-events-auto bg-[#0b0c10]';
+    this.container.appendChild(this.dandelinContainer);
+
     // Simulation state
     this.subtask = 'kepler1';
     this.kepler1Model = 'circle';
@@ -19,10 +27,11 @@ export class Level8 {
     this.meanAnomaly = 0;
 
     // Orbit equations subtask state
+    this.dandelinSpeed = 1.0;
+    this.dandelinAngle = 0;
     this.orbitEq_e = 0.60;
     this.orbitEq_E = 45; // in degrees
     this.orbitEq_highlight = 'all'; // 'sector' | 'triangle' | 'swept' | 'ideal' | 'all'
-
 
     // Tycho Brahe observation points for Mars (e = 0.40)
     this.tychoPoints = [];
@@ -47,6 +56,8 @@ export class Level8 {
       });
     }
 
+    this.initDandelinThree();
+
     this.resizeBound = this.resize.bind(this);
     window.addEventListener('resize', this.resizeBound);
     this.resize();
@@ -58,6 +69,13 @@ export class Level8 {
   resize() {
     this.canvas.width = this.container.clientWidth || window.innerWidth;
     this.canvas.height = this.container.clientHeight || window.innerHeight;
+    if (this.dandelinRenderer && this.dandelinCamera) {
+      const w = (this.container.clientWidth || window.innerWidth) - 400;
+      const h = this.container.clientHeight || window.innerHeight;
+      this.dandelinCamera.aspect = Math.max(0.1, w / h);
+      this.dandelinCamera.updateProjectionMatrix();
+      this.dandelinRenderer.setSize(Math.max(1, w), Math.max(1, h));
+    }
   }
 
   togglePlay() {
@@ -73,12 +91,19 @@ export class Level8 {
   setSubtask(subtask) {
     this.subtask = subtask;
     this.resetSimulation();
-    if (subtask === 'logarithm') {
+    if (subtask === 'ellipse_properties') {
       this.canvas.style.display = 'none';
+      this.logContainer.style.display = 'none';
+      if (this.dandelinContainer) this.dandelinContainer.style.display = 'block';
+      this.resize();
+    } else if (subtask === 'logarithm') {
+      this.canvas.style.display = 'none';
+      if (this.dandelinContainer) this.dandelinContainer.style.display = 'none';
       this.logContainer.style.display = 'block';
       this.renderLogarithmUI();
     } else {
       this.canvas.style.display = 'block';
+      if (this.dandelinContainer) this.dandelinContainer.style.display = 'none';
       this.logContainer.style.display = 'none';
     }
   }
@@ -181,6 +206,7 @@ export class Level8 {
 
     try {
       if      (this.subtask === 'kepler1')  this.drawKepler1(ctx, IX, IW, IH);
+      else if (this.subtask === 'ellipse_properties') this.updateDandelinFrame();
       else if (this.subtask === 'kepler23') this.drawKepler23(ctx, IX, IW, IH);
       else if (this.subtask === 'orbit_equations') this.drawOrbitEquations(ctx, IX, IW, IH);
     } catch (e) {
@@ -1140,6 +1166,547 @@ export class Level8 {
     }
   }
 
+  // ── Dandelin Sphere Three.js Implementation ────────────────
+  initDandelinThree() {
+    const w = (this.container.clientWidth || window.innerWidth) - 400;
+    const h = this.container.clientHeight || window.innerHeight;
+
+    this.dandelinScene = new THREE.Scene();
+
+    this.dandelinCamera = new THREE.PerspectiveCamera(45, Math.max(0.1, w / h), 0.1, 1000);
+    this.dandelinCamera.position.set(15, 20, 25);
+
+    this.dandelinRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.dandelinRenderer.setSize(Math.max(1, w), Math.max(1, h));
+    this.dandelinRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.dandelinContainer.appendChild(this.dandelinRenderer.domElement);
+
+    this.dandelinControls = new OrbitControls(this.dandelinCamera, this.dandelinRenderer.domElement);
+    this.dandelinControls.enableDamping = true;
+    this.dandelinControls.dampingFactor = 0.05;
+    this.dandelinControls.target.set(0, 0, 0);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    this.dandelinScene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(10, 20, 10);
+    this.dandelinScene.add(dirLight);
+
+    // Floating Live Proof Overlay on top-right of 3D canvas
+    this.dandelinOverlay = document.createElement('div');
+    this.dandelinOverlay.className = 'ui-panel absolute top-4 right-4 p-4 rounded-xl shadow-2xl w-72 z-20 text-xs font-mono pointer-events-none bg-slate-900/85 backdrop-blur-md border border-slate-700/50 text-slate-200';
+    this.dandelinOverlay.innerHTML = `
+      <h2 class="text-xs font-bold text-teal-400 mb-2.5 tracking-wide flex items-center gap-1.5 font-sans">
+        <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+        DANDELIN LIVE PROOF
+      </h2>
+
+      <div class="space-y-1.5 mb-3">
+        <div class="text-[10px] text-slate-400 font-sans font-semibold">Geometry: e = sin(θ) = c / a</div>
+        <div class="flex justify-between"><span>Plane Tilt (θ)</span><span id="d-val-theta" class="text-white font-bold">30.0°</span></div>
+        <div class="flex justify-between"><span>Eccentricity (e)</span><span id="d-val-e" class="text-teal-300 font-bold">0.500</span></div>
+        <div class="flex justify-between"><span>Semi-Major (a)</span><span id="d-val-a" class="text-purple-300 font-bold">5.77</span></div>
+        <div class="flex justify-between"><span>Semi-Minor (b)</span><span id="d-val-b" class="text-orange-300 font-bold">5.00</span></div>
+        <div class="flex justify-between"><span>Focal Dist (c)</span><span id="d-val-c" class="text-blue-300 font-bold">2.89</span></div>
+      </div>
+
+      <div class="space-y-1.5 mb-3 pt-2.5 border-t border-slate-700/50">
+        <div class="text-[10px] text-slate-400 font-sans font-semibold">Cartesian Eq: (x/a)² + (y/b)² = 1</div>
+        <div class="flex justify-between text-cyan-400"><span>x² / a²</span><span id="d-val-x2a2">0.000</span></div>
+        <div class="flex justify-between text-pink-400"><span>y² / b²</span><span id="d-val-y2b2">0.000</span></div>
+        <div class="flex justify-between font-bold text-white mt-0.5"><span>Sum</span><span id="d-val-cartesian-sum" class="text-emerald-400">1.000</span></div>
+      </div>
+
+      <div class="space-y-1.5 pt-2.5 border-t border-slate-700/50">
+        <div class="text-[10px] text-slate-400 font-sans font-semibold">Dandelin Angle Bisector Proof</div>
+        <div class="text-[9px] text-slate-500 mb-1">∠(t → F₁) = ∠(t → E₁) and ∠(t → F₂) = ∠(t → E₂)</div>
+        <div class="flex justify-between text-yellow-300"><span>α: ∠(t → P → F₁)</span><span id="d-val-angle-tf1">0.0°</span></div>
+        <div class="flex justify-between text-cyan-300"><span>α: ∠(t → P → E₁)</span><span id="d-val-angle-te1">0.0°</span></div>
+        <div class="flex justify-between text-yellow-300 mt-1"><span>β: ∠(t → P → F₂)</span><span id="d-val-angle-tf2">0.0°</span></div>
+        <div class="flex justify-between text-cyan-300"><span>β: ∠(t → P → E₂)</span><span id="d-val-angle-te2">0.0°</span></div>
+        <div class="text-[9px] text-emerald-400 font-bold mt-1 pt-1 border-t border-slate-700/50">∴ ∠F₁ = ∠F₂ (Reflection Law) ✓</div>
+      </div>
+
+      <div class="space-y-1.5 pt-2.5 border-t border-slate-700/50">
+        <div class="text-[10px] text-slate-400 font-sans font-semibold">Distance Sum: PF₁ + PF₂ = 2a</div>
+        <div class="flex justify-between text-red-400"><span>PF₁</span><span id="d-val-pf1">0.00</span></div>
+        <div class="flex justify-between text-red-400"><span>PF₂</span><span id="d-val-pf2">0.00</span></div>
+        <div class="flex justify-between font-bold text-white mt-0.5"><span>Sum</span><span id="d-val-pf-sum" class="text-emerald-400">0.00</span></div>
+      </div>
+    `;
+    this.dandelinContainer.appendChild(this.dandelinOverlay);
+
+    // Geometry Setup
+    this.dandelinR = 5;
+    this.dandelinPlaneAngle = THREE.MathUtils.degToRad(30);
+
+    const cylinderGeo = new THREE.CylinderGeometry(this.dandelinR, this.dandelinR, 40, 64, 1, true);
+    const cylinderMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.1,
+      side: THREE.DoubleSide, depthWrite: false, roughness: 0.1
+    });
+    const cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+    this.dandelinScene.add(cylinder);
+
+    this.dandelinPlaneGroup = new THREE.Group();
+    this.dandelinScene.add(this.dandelinPlaneGroup);
+
+    const planeGeo = new THREE.PlaneGeometry(this.dandelinR * 8, this.dandelinR * 3);
+    planeGeo.rotateX(-Math.PI / 2);
+    const planeMat = new THREE.MeshPhysicalMaterial({
+      color: 0x14b8a6, transparent: true, opacity: 0.35,
+      side: THREE.DoubleSide, depthWrite: false
+    });
+    const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+    this.dandelinPlaneGroup.add(planeMesh);
+
+    const sphereGeo = new THREE.SphereGeometry(this.dandelinR, 64, 64);
+    const sphereMat = new THREE.MeshPhysicalMaterial({ color: 0x0d9488, transparent: true, opacity: 0.5, roughness: 0.2 });
+    this.dandelinSphereTop = new THREE.Mesh(sphereGeo, sphereMat);
+    this.dandelinSphereBot = new THREE.Mesh(sphereGeo, sphereMat);
+    this.dandelinScene.add(this.dandelinSphereTop);
+    this.dandelinScene.add(this.dandelinSphereBot);
+
+    const ringGeo = new THREE.TorusGeometry(this.dandelinR, 0.04, 16, 100);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 });
+    this.dandelinTopRing = new THREE.Mesh(ringGeo, ringMat);
+    this.dandelinBottomRing = new THREE.Mesh(ringGeo, ringMat);
+    this.dandelinTopRing.rotation.x = Math.PI / 2;
+    this.dandelinBottomRing.rotation.x = Math.PI / 2;
+    this.dandelinScene.add(this.dandelinTopRing);
+    this.dandelinScene.add(this.dandelinBottomRing);
+
+    const focusGeo = new THREE.SphereGeometry(0.25, 32, 32);
+    const focusMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    this.dandelinFocus1 = new THREE.Mesh(focusGeo, focusMat);
+    this.dandelinFocus2 = new THREE.Mesh(focusGeo, focusMat);
+    this.dandelinPlaneGroup.add(this.dandelinFocus1);
+    this.dandelinPlaneGroup.add(this.dandelinFocus2);
+
+    const planetGeo = new THREE.SphereGeometry(0.3, 32, 32);
+    const planetMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    this.dandelinPlanet = new THREE.Mesh(planetGeo, planetMat);
+    this.dandelinPlaneGroup.add(this.dandelinPlanet);
+
+    const createLine = (color, dashed = false) => {
+      const mat = dashed
+        ? new THREE.LineDashedMaterial({ color: color, dashSize: 0.3, gapSize: 0.2, linewidth: 2 })
+        : new THREE.LineBasicMaterial({ color: color, linewidth: 2 });
+      return new THREE.Line(new THREE.BufferGeometry(), mat);
+    };
+
+    this.dLineToF1 = createLine(0xef4444);
+    this.dLineToF2 = createLine(0xef4444);
+    this.dLineGenerator = createLine(0x22c55e);
+    this.dLineTangent = createLine(0xeab308);
+    this.dLineNormal = createLine(0xffffff, true);
+
+    this.dLineMagicVert = createLine(0xa855f7);
+    this.dLineMagicRad = createLine(0xf97316);
+    this.dLineMagicBase = createLine(0x3b82f6);
+
+    // Lines for major axis right triangle: a = R / cos(theta)
+    this.dLineHorizRef = createLine(0x38bdf8, true);   // horizontal reference line at y=0
+    this.dLineMajorAxis = createLine(0x38bdf8);        // extended major axis line (-a to +a)
+    this.dLineMajorVert = createLine(0xa855f7, true);  // vertical leg at X=R
+
+    this.dandelinScene.add(this.dLineToF1, this.dLineToF2, this.dLineGenerator, this.dLineTangent, this.dLineNormal);
+    this.dandelinScene.add(this.dLineMagicVert, this.dLineMagicRad, this.dLineMagicBase);
+    this.dandelinScene.add(this.dLineHorizRef, this.dLineMajorVert);
+    this.dandelinPlaneGroup.add(this.dLineMajorAxis);
+
+    this.dLineXCoord = createLine(0x06b6d4);
+    this.dLineYCoord = createLine(0xec4899);
+    this.dandelinPlaneGroup.add(this.dLineXCoord);
+    this.dandelinPlaneGroup.add(this.dLineYCoord);
+
+    const ellipsePathMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+    this.dandelinEllipseLine = new THREE.LineLoop(new THREE.BufferGeometry(), ellipsePathMat);
+    this.dandelinPlaneGroup.add(this.dandelinEllipseLine);
+
+    // ── Point Labels (HTML overlays positioned via project()) ──
+    const labelStyle = (color) => `
+      position:absolute; pointer-events:none; transform:translate(-50%,-100%);
+      font: bold 13px 'Outfit',sans-serif; color:${color};
+      text-shadow: 0 0 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.7);
+      padding: 1px 4px; z-index: 30; white-space: nowrap;
+    `;
+    this.dandelinLabels = {};
+    const labelDefs = [
+      { id: 'P',  text: 'P',  color: '#ffffff' },
+      { id: 'F1', text: 'F₁', color: '#ef4444' },
+      { id: 'F2', text: 'F₂', color: '#ef4444' },
+      { id: 'E1', text: 'E₁', color: '#22c55e' },
+      { id: 'E2', text: 'E₂', color: '#22c55e' },
+      { id: 't1', text: 't',  color: '#eab308' },
+      { id: 't2', text: 't',  color: '#eab308' },
+    ];
+    labelDefs.forEach(def => {
+      const el = document.createElement('div');
+      el.style.cssText = labelStyle(def.color);
+      el.textContent = def.text;
+      this.dandelinContainer.appendChild(el);
+      this.dandelinLabels[def.id] = el;
+    });
+
+    // ── E1 / E2 marker spheres on the tangent rings ──
+    const e1Geo = new THREE.SphereGeometry(0.22, 16, 16);
+    const e1Mat = new THREE.MeshBasicMaterial({ color: 0x22c55e });
+    this.dandelinE1Marker = new THREE.Mesh(e1Geo, e1Mat);
+    this.dandelinE2Marker = new THREE.Mesh(e1Geo.clone(), e1Mat.clone());
+    this.dandelinScene.add(this.dandelinE1Marker);
+    this.dandelinScene.add(this.dandelinE2Marker);
+
+    // ── Angle arc lines ──
+    const arcMat1 = new THREE.LineBasicMaterial({ color: 0xfbbf24, linewidth: 2 }); // t-to-F1 arc (gold)
+    const arcMat2 = new THREE.LineBasicMaterial({ color: 0x22d3ee, linewidth: 2 }); // t-to-E1 arc (cyan)
+    const arcMat3 = new THREE.LineBasicMaterial({ color: 0xfbbf24, linewidth: 2 }); // t-to-F2 arc (gold)
+    const arcMat4 = new THREE.LineBasicMaterial({ color: 0x22d3ee, linewidth: 2 }); // t-to-E2 arc (cyan)
+    const arcMatTheta = new THREE.LineBasicMaterial({ color: 0x14b8a6, linewidth: 3 }); // theta arc (teal)
+
+    this.dArcTF1 = new THREE.Line(new THREE.BufferGeometry(), arcMat1);
+    this.dArcTE1 = new THREE.Line(new THREE.BufferGeometry(), arcMat2);
+    this.dArcTF2 = new THREE.Line(new THREE.BufferGeometry(), arcMat3);
+    this.dArcTE2 = new THREE.Line(new THREE.BufferGeometry(), arcMat4);
+    this.dArcThetaTop = new THREE.Line(new THREE.BufferGeometry(), arcMatTheta);
+    this.dArcThetaOrig = new THREE.Line(new THREE.BufferGeometry(), arcMatTheta.clone());
+
+    this.dandelinScene.add(this.dArcTF1, this.dArcTE1, this.dArcTF2, this.dArcTE2, this.dArcThetaTop, this.dArcThetaOrig);
+
+    // ── Angle label HTML overlays ──
+    const angleLabelStyle = (color) => `
+      position:absolute; pointer-events:none; transform:translate(-50%,-50%);
+      font: bold 12px 'Outfit',sans-serif; color:${color};
+      text-shadow: 0 0 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.7);
+      z-index: 30; white-space: nowrap;
+    `;
+    this.dandelinAngleLabels = {};
+    const angleLabelDefs = [
+      { id: 'a_tf1', text: 'α', color: '#fbbf24' },
+      { id: 'a_te1', text: 'α', color: '#22d3ee' },
+      { id: 'a_tf2', text: 'β', color: '#fbbf24' },
+      { id: 'a_te2', text: 'β', color: '#22d3ee' },
+      { id: 'a_theta_top', text: 'θ', color: '#14b8a6' },
+      { id: 'a_theta_orig', text: 'θ', color: '#14b8a6' },
+    ];
+    angleLabelDefs.forEach(def => {
+      const el = document.createElement('div');
+      el.style.cssText = angleLabelStyle(def.color);
+      el.textContent = def.text;
+      this.dandelinContainer.appendChild(el);
+      this.dandelinAngleLabels[def.id] = el;
+    });
+
+    this.updateDandelinGeometry(this.dandelinPlaneAngle);
+  }
+
+  updateLine(line, p1, p2, dashed = false) {
+    line.geometry.setFromPoints([p1, p2]);
+    if (dashed) line.computeLineDistances();
+  }
+
+  updateDandelinGeometry(angleRad) {
+    this.dandelinPlaneAngle = angleRad;
+    this.dandelinPlaneGroup.rotation.z = angleRad;
+
+    const R = this.dandelinR;
+    this.dandelinB = R;
+    this.dandelinA = R / Math.cos(angleRad);
+    this.dandelinC = R * Math.tan(angleRad);
+    this.dandelinE = Math.sin(angleRad);
+
+    const sphereY = R / Math.cos(angleRad);
+    this.dandelinSphereTop.position.set(0, sphereY, 0);
+    this.dandelinSphereBot.position.set(0, -sphereY, 0);
+    this.dandelinTopRing.position.set(0, sphereY, 0);
+    this.dandelinBottomRing.position.set(0, -sphereY, 0);
+
+    this.dandelinFocus1.position.set(this.dandelinC, 0, 0);
+    this.dandelinFocus2.position.set(-this.dandelinC, 0, 0);
+
+    const centerWorld = new THREE.Vector3(0, 0, 0);
+    const sphereCenterWorld = new THREE.Vector3(0, sphereY, 0);
+    const f1World = new THREE.Vector3();
+    this.dandelinFocus1.getWorldPosition(f1World);
+
+    this.updateLine(this.dLineMagicVert, centerWorld, sphereCenterWorld, false);
+    this.updateLine(this.dLineMagicRad, sphereCenterWorld, f1World, false);
+    this.updateLine(this.dLineMagicBase, centerWorld, f1World, false);
+
+    // Horizontal reference line at y=0 across cylinder
+    this.updateLine(this.dLineHorizRef, new THREE.Vector3(-R * 1.4, 0, 0), new THREE.Vector3(R * 1.4, 0, 0), true);
+
+    // Full Major Axis line extending across entire ellipse in local plane space (-a to +a)
+    this.updateLine(this.dLineMajorAxis, new THREE.Vector3(-this.dandelinA, 0, 0), new THREE.Vector3(this.dandelinA, 0, 0), false);
+
+    // Vertical leg of major axis right triangle: from (R,0,0) to (R, R*tan(theta), 0)
+    const vertY = R * Math.tan(angleRad);
+    this.updateLine(this.dLineMajorVert, new THREE.Vector3(R, 0, 0), new THREE.Vector3(R, vertY, 0), true);
+
+    // 1. Theta arc at top vertex (sphereCenterWorld)
+    const vecDown = new THREE.Vector3(0, -1, 0);
+    const vecToF1 = f1World.clone().sub(sphereCenterWorld).normalize();
+    const thetaArcRadius = 2.0;
+    const totalTheta = vecDown.angleTo(vecToF1);
+    const axisTheta = new THREE.Vector3().crossVectors(vecDown, vecToF1).normalize();
+    const thetaArcPts = [];
+    if (totalTheta > 0.001 && axisTheta.length() > 0.001) {
+      for (let i = 0; i <= 20; i++) {
+        const frac = i / 20;
+        const angle = totalTheta * frac;
+        const v = vecDown.clone().applyAxisAngle(axisTheta, angle).multiplyScalar(thetaArcRadius);
+        thetaArcPts.push(sphereCenterWorld.clone().add(v));
+      }
+    }
+    if (thetaArcPts.length > 1) {
+      this.dArcThetaTop.geometry.setFromPoints(thetaArcPts);
+      this.thetaTopMid = thetaArcPts[Math.floor(thetaArcPts.length / 2)];
+    }
+
+    // 2. Theta arc at origin (0, 0, 0) showing angle between horizontal reference line and major axis
+    const vecHoriz = new THREE.Vector3(1, 0, 0);
+    const vecMajorAxis = new THREE.Vector3(Math.cos(angleRad), Math.sin(angleRad), 0);
+    const axisThetaOrig = new THREE.Vector3(0, 0, 1);
+    const thetaOrigPts = [];
+    if (angleRad > 0.001) {
+      for (let i = 0; i <= 20; i++) {
+        const frac = i / 20;
+        const angle = angleRad * frac;
+        const v = vecHoriz.clone().applyAxisAngle(axisThetaOrig, angle).multiplyScalar(2.2);
+        thetaOrigPts.push(centerWorld.clone().add(v));
+      }
+    }
+    if (thetaOrigPts.length > 1) {
+      this.dArcThetaOrig.geometry.setFromPoints(thetaOrigPts);
+      this.thetaOrigMid = thetaOrigPts[Math.floor(thetaOrigPts.length / 2)];
+    }
+
+    const ellipsePoints = [];
+    for (let i = 0; i <= 64; i++) {
+      const theta = (i / 64) * Math.PI * 2;
+      ellipsePoints.push(new THREE.Vector3(this.dandelinA * Math.cos(theta), 0, this.dandelinB * Math.sin(theta)));
+    }
+    this.dandelinEllipseLine.geometry.setFromPoints(ellipsePoints);
+
+    const elTheta = document.getElementById('d-val-theta');
+    const elE = document.getElementById('d-val-e');
+    const elA = document.getElementById('d-val-a');
+    const elB = document.getElementById('d-val-b');
+    const elC = document.getElementById('d-val-c');
+    if (elTheta) elTheta.innerText = THREE.MathUtils.radToDeg(angleRad).toFixed(1) + '°';
+    if (elE) elE.innerText = this.dandelinE.toFixed(3);
+    if (elA) elA.innerText = this.dandelinA.toFixed(2);
+    if (elB) elB.innerText = this.dandelinB.toFixed(2);
+    if (elC) elC.innerText = this.dandelinC.toFixed(2);
+  }
+
+  setDandelinTilt(deg) {
+    const rad = THREE.MathUtils.degToRad(deg);
+    this.updateDandelinGeometry(rad);
+  }
+
+  setDandelinSpeed(spd) {
+    this.dandelinSpeed = parseFloat(spd);
+  }
+
+  updateDandelinFrame() {
+    if (!this.dandelinRenderer) return;
+    this.dandelinControls.update();
+
+    const a = this.dandelinA;
+    const b = this.dandelinB;
+
+    if (this.isSimPlaying) {
+      const spd = this.dandelinSpeed !== undefined ? this.dandelinSpeed : 1.0;
+      this.dandelinAngle += 0.003 * spd;
+    }
+    const E = this.dandelinAngle;
+
+    const pX = a * Math.cos(E);
+    const pZ = b * Math.sin(E);
+    this.dandelinPlanet.position.set(pX, 0, pZ);
+
+    this.updateLine(this.dLineXCoord, new THREE.Vector3(0, 0, 0), new THREE.Vector3(pX, 0, 0), false);
+    this.updateLine(this.dLineYCoord, new THREE.Vector3(pX, 0, 0), new THREE.Vector3(pX, 0, pZ), false);
+
+    const termX = Math.pow(pX / a, 2);
+    const termY = Math.pow(pZ / b, 2);
+    const elX2 = document.getElementById('d-val-x2a2');
+    const elY2 = document.getElementById('d-val-y2b2');
+    const elSum = document.getElementById('d-val-cartesian-sum');
+    if (elX2) elX2.innerText = termX.toFixed(3);
+    if (elY2) elY2.innerText = termY.toFixed(3);
+    if (elSum) elSum.innerText = (termX + termY).toFixed(3);
+
+    const pWorld = new THREE.Vector3();
+    this.dandelinPlanet.getWorldPosition(pWorld);
+
+    const f1World = new THREE.Vector3();
+    this.dandelinFocus1.getWorldPosition(f1World);
+    const f2World = new THREE.Vector3();
+    this.dandelinFocus2.getWorldPosition(f2World);
+
+    this.updateLine(this.dLineToF1, pWorld, f1World, false);
+    this.updateLine(this.dLineToF2, pWorld, f2World, false);
+
+    const sphereY = this.dandelinR / Math.cos(this.dandelinPlaneAngle);
+    const genTop = new THREE.Vector3(pWorld.x, sphereY, pWorld.z);
+    const genBot = new THREE.Vector3(pWorld.x, -sphereY, pWorld.z);
+    this.updateLine(this.dLineGenerator, genTop, genBot, false);
+
+    // E1 and E2: where the generator line meets the tangent rings
+    const e1World = genTop.clone(); // top tangent ring point
+    const e2World = genBot.clone(); // bottom tangent ring point
+    this.dandelinE1Marker.position.copy(e1World);
+    this.dandelinE2Marker.position.copy(e2World);
+
+    const normXLocal = pX / (a * a);
+    const normZLocal = pZ / (b * b);
+    const nLocal = new THREE.Vector3(-normXLocal, 0, -normZLocal).normalize();
+    const tLocal = new THREE.Vector3(-nLocal.z, 0, nLocal.x);
+
+    const nWorld = nLocal.clone().transformDirection(this.dandelinPlaneGroup.matrixWorld);
+    const tWorld = tLocal.clone().transformDirection(this.dandelinPlaneGroup.matrixWorld);
+
+    const tStart = pWorld.clone().addScaledVector(tWorld, 4);
+    const tEnd = pWorld.clone().addScaledVector(tWorld, -4);
+    this.updateLine(this.dLineTangent, tStart, tEnd, false);
+
+    const nEnd = pWorld.clone().addScaledVector(nWorld, 4);
+    this.updateLine(this.dLineNormal, pWorld, nEnd, true);
+
+    const vecPF1 = f1World.clone().sub(pWorld).normalize();
+    const vecPF2 = f2World.clone().sub(pWorld).normalize();
+    const vecPE1 = e1World.clone().sub(pWorld).normalize();
+    const vecPE2 = e2World.clone().sub(pWorld).normalize();
+    const tDir = tWorld.clone().normalize();
+    const tDirNeg = tDir.clone().negate();
+
+    // Compute the 4 angles from the Dandelin proof
+    // α: angle between tangent t and PF₁ (use t direction on F1 side)
+    const tForF1_a = (tDir.dot(vecPF1) > 0) ? tDir : tDirNeg;
+    const angleTF1 = THREE.MathUtils.radToDeg(tForF1_a.angleTo(vecPF1));
+    // α: angle between tangent t and PE₁ (use t direction on E1 side)
+    const tForE1_a = (tDir.dot(vecPE1) > 0) ? tDir : tDirNeg;
+    const angleTE1 = THREE.MathUtils.radToDeg(tForE1_a.angleTo(vecPE1));
+    // β: angle between tangent t and PF₂ (use t direction on F2 side)
+    const tForF2_a = (tDir.dot(vecPF2) > 0) ? tDir : tDirNeg;
+    const angleTF2 = THREE.MathUtils.radToDeg(tForF2_a.angleTo(vecPF2));
+    // β: angle between tangent t and PE₂ (use t direction on E2 side)
+    const tForE2_a = (tDir.dot(vecPE2) > 0) ? tDir : tDirNeg;
+    const angleTE2 = THREE.MathUtils.radToDeg(tForE2_a.angleTo(vecPE2));
+
+    // Update overlay angle displays
+    const elTF1 = document.getElementById('d-val-angle-tf1');
+    const elTE1 = document.getElementById('d-val-angle-te1');
+    const elTF2 = document.getElementById('d-val-angle-tf2');
+    const elTE2 = document.getElementById('d-val-angle-te2');
+    if (elTF1) elTF1.innerText = angleTF1.toFixed(1) + '°';
+    if (elTE1) elTE1.innerText = angleTE1.toFixed(1) + '°';
+    if (elTF2) elTF2.innerText = angleTF2.toFixed(1) + '°';
+    if (elTE2) elTE2.innerText = angleTE2.toFixed(1) + '°';
+
+    // Distance sum: PF₁ + PF₂ = 2a
+    const distPF1 = pWorld.distanceTo(f1World);
+    const distPF2 = pWorld.distanceTo(f2World);
+    const elPF1 = document.getElementById('d-val-pf1');
+    const elPF2 = document.getElementById('d-val-pf2');
+    const elPFSum = document.getElementById('d-val-pf-sum');
+    if (elPF1) elPF1.innerText = distPF1.toFixed(2);
+    if (elPF2) elPF2.innerText = distPF2.toFixed(2);
+    if (elPFSum) elPFSum.innerText = (distPF1 + distPF2).toFixed(2) + ' = 2a';
+
+    // ── Project 3D points to 2D screen for HTML labels ──
+    const projectToScreen = (pos3d) => {
+      const v = pos3d.clone().project(this.dandelinCamera);
+      const rect = this.dandelinRenderer.domElement;
+      return {
+        x: (v.x * 0.5 + 0.5) * rect.clientWidth,
+        y: (-v.y * 0.5 + 0.5) * rect.clientHeight
+      };
+    };
+
+    const positionLabel = (el, pos3d, offsetX = 0, offsetY = -12) => {
+      if (!el) return;
+      const s = projectToScreen(pos3d);
+      el.style.left = (s.x + offsetX) + 'px';
+      el.style.top = (s.y + offsetY) + 'px';
+    };
+
+    // Position point labels
+    if (this.dandelinLabels) {
+      positionLabel(this.dandelinLabels.P, pWorld, 0, -16);
+      positionLabel(this.dandelinLabels.F1, f1World, 10, -14);
+      positionLabel(this.dandelinLabels.F2, f2World, -10, -14);
+      positionLabel(this.dandelinLabels.E1, e1World, 12, -14);
+      positionLabel(this.dandelinLabels.E2, e2World, 12, -14);
+      positionLabel(this.dandelinLabels.t1, tStart, 0, -14);
+      positionLabel(this.dandelinLabels.t2, tEnd, 0, -14);
+    }
+
+    // ── Draw angle arcs showing the 4 equal angles from Dandelin proof ──
+    // Arc helper: creates points along an arc from dir1 toward dir2 around center
+    const makeArcPoints = (center, dir1, dir2, radius, numPts = 20) => {
+      const points = [];
+      const d1 = dir1.clone().normalize();
+      const d2 = dir2.clone().normalize();
+
+      // Compute angle between d1 and d2
+      const totalAngle = d1.angleTo(d2);
+      if (totalAngle < 0.001) return points;
+
+      // Build rotation axis
+      const axis = new THREE.Vector3().crossVectors(d1, d2).normalize();
+      if (axis.length() < 0.001) return points;
+
+      for (let i = 0; i <= numPts; i++) {
+        const frac = i / numPts;
+        const angle = totalAngle * frac;
+        const v = d1.clone().applyAxisAngle(axis, angle).multiplyScalar(radius);
+        points.push(center.clone().add(v));
+      }
+      return points;
+    };
+
+    const arcRadius = 1.2;
+
+    // Reuse direction vectors from angle computation above
+    // Arc 1: angle from tangent t toward F1 (on the F1 side)
+    // Arc 2: angle from tangent t toward E1 (on the E1 side, same angle)
+    // Arc 3: angle from tangent t toward F2 (on the F2 side)
+    // Arc 4: angle from tangent t toward E2 (on the E2 side, same angle)
+
+    const arcPts1 = makeArcPoints(pWorld, tForF1_a, vecPF1, arcRadius);
+    const arcPts2 = makeArcPoints(pWorld, tForE1_a, vecPE1, arcRadius);
+    const arcPts3 = makeArcPoints(pWorld, tForF2_a, vecPF2, arcRadius);
+    const arcPts4 = makeArcPoints(pWorld, tForE2_a, vecPE2, arcRadius);
+
+    if (arcPts1.length > 1) this.dArcTF1.geometry.setFromPoints(arcPts1);
+    if (arcPts2.length > 1) this.dArcTE1.geometry.setFromPoints(arcPts2);
+    if (arcPts3.length > 1) this.dArcTF2.geometry.setFromPoints(arcPts3);
+    if (arcPts4.length > 1) this.dArcTE2.geometry.setFromPoints(arcPts4);
+
+    // Position angle labels at midpoints of arcs
+    if (this.dandelinAngleLabels) {
+      const arcMid = (pts) => {
+        if (pts.length < 2) return pWorld;
+        return pts[Math.floor(pts.length / 2)];
+      };
+      positionLabel(this.dandelinAngleLabels.a_tf1, arcMid(arcPts1), 0, 0);
+      positionLabel(this.dandelinAngleLabels.a_te1, arcMid(arcPts2), 0, 0);
+      positionLabel(this.dandelinAngleLabels.a_tf2, arcMid(arcPts3), 0, 0);
+      positionLabel(this.dandelinAngleLabels.a_te2, arcMid(arcPts4), 0, 0);
+      if (this.thetaTopMid) {
+        positionLabel(this.dandelinAngleLabels.a_theta_top, this.thetaTopMid, 0, 0);
+      }
+      if (this.thetaOrigMid) {
+        positionLabel(this.dandelinAngleLabels.a_theta_orig, this.thetaOrigMid, 0, 0);
+      }
+    }
+
+    this.dandelinRenderer.render(this.dandelinScene, this.dandelinCamera);
+  }
+
   destroy() {
     cancelAnimationFrame(this.animationId);
     window.removeEventListener('resize', this.resizeBound);
@@ -1148,6 +1715,9 @@ export class Level8 {
     }
     if (this.logContainer && this.logContainer.parentNode) {
       this.logContainer.parentNode.removeChild(this.logContainer);
+    }
+    if (this.dandelinContainer && this.dandelinContainer.parentNode) {
+      this.dandelinContainer.parentNode.removeChild(this.dandelinContainer);
     }
   }
 }
