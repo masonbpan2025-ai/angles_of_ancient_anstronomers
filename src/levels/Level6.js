@@ -53,10 +53,11 @@ export class Level6 {
 
     // Ptolemaic Epicycle Simulator State
     this.planets = [
+      { name: 'Mercury', deferent: 60, epicycle: 23.2, deferentSpeed: 1.0, epicycleSpeed: 4.15 },
+      { name: 'Venus', deferent: 60, epicycle: 43.1, deferentSpeed: 1.0, epicycleSpeed: 1.6 },
       { name: 'Mars', deferent: 60, epicycle: 39.5, deferentSpeed: 0.5, epicycleSpeed: 1.0 },
       { name: 'Jupiter', deferent: 60, epicycle: 11.5, deferentSpeed: 0.08, epicycleSpeed: 1.0 },
-      { name: 'Saturn', deferent: 60, epicycle: 6.5, deferentSpeed: 0.03, epicycleSpeed: 1.0 },
-      { name: 'Venus', deferent: 60, epicycle: 43.1, deferentSpeed: 1.0, epicycleSpeed: 1.6 }
+      { name: 'Saturn', deferent: 60, epicycle: 6.5, deferentSpeed: 0.03, epicycleSpeed: 1.0 }
     ];
     this.selectedPlanetName = 'All';
     this.isSimPlaying = true;
@@ -140,8 +141,8 @@ export class Level6 {
     // Epicycle path history
     this.epicyclePath = [];
     this.nightSkyPath = [];
-    this.allEpicyclePaths = { Mars: [], Jupiter: [], Saturn: [], Venus: [] };
-    this.allNightSkyPaths = { Mars: [], Jupiter: [], Saturn: [], Venus: [] };
+    this.allEpicyclePaths = { Mercury: [], Venus: [], Mars: [], Jupiter: [], Saturn: [] };
+    this.allNightSkyPaths = { Mercury: [], Venus: [], Mars: [], Jupiter: [], Saturn: [] };
     this.time = 0;
 
     this.animate = this.animate.bind(this);
@@ -202,8 +203,8 @@ export class Level6 {
     this.time = 0;
     this.epicyclePath = [];
     this.nightSkyPath = [];
-    this.allEpicyclePaths = { Mars: [], Jupiter: [], Saturn: [], Venus: [] };
-    this.allNightSkyPaths = { Mars: [], Jupiter: [], Saturn: [], Venus: [] };
+    this.allEpicyclePaths = { Mercury: [], Venus: [], Mars: [], Jupiter: [], Saturn: [] };
+    this.allNightSkyPaths = { Mercury: [], Venus: [], Mars: [], Jupiter: [], Saturn: [] };
     this.prevAlpha = 0;
     this.angleVelocity = 0;
   }
@@ -747,6 +748,7 @@ export class Level6 {
       const R_base = wPanel * 0.07;
       const R_sun = R_base * 0.6;
       const allPlanets = [
+        { name: 'Mercury', r_def: R_sun, r_epi: R_sun * 0.387, defSpeed: 1.0, epiSpeed: 4.15, color: '#38bdf8' },
         { name: 'Venus', r_def: R_sun, r_epi: R_sun * 0.723, defSpeed: 1.0, epiSpeed: 1.6, color: '#10b981' },
         { name: 'Mars', r_def: R_sun * 1.52, r_epi: R_sun, defSpeed: 0.5, epiSpeed: 1.0, color: '#f59e0b' },
         { name: 'Jupiter', r_def: R_sun * 5.20, r_epi: R_sun, defSpeed: 0.08, epiSpeed: 1.0, color: '#ef4444' },
@@ -913,16 +915,18 @@ export class Level6 {
       const legendY = yPanel + hPanel - 20;
       ctx.font = '500 8px Outfit';
       ctx.textAlign = 'left';
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText("● Mercury", legendX, legendY);
       ctx.fillStyle = '#10b981';
-      ctx.fillText("● Venus", legendX, legendY);
+      ctx.fillText("● Venus", legendX + 55, legendY);
       ctx.fillStyle = '#f59e0b';
-      ctx.fillText("● Mars", legendX + 50, legendY);
+      ctx.fillText("● Mars", legendX + 105, legendY);
       ctx.fillStyle = '#ef4444';
-      ctx.fillText("● Jupiter", legendX + 95, legendY);
+      ctx.fillText("● Jupiter", legendX + 150, legendY);
       ctx.fillStyle = '#a78bfa';
-      ctx.fillText("● Saturn", legendX + 150, legendY);
+      ctx.fillText("● Saturn", legendX + 205, legendY);
       ctx.fillStyle = '#fbbf24';
-      ctx.fillText("● Sun's Orbit", legendX + 205, legendY);
+      ctx.fillText("● Sun's Orbit", legendX + 255, legendY);
     } else {
       const R_deferent = wPanel * 0.3; // scale deferent
       const R_epicycle = R_deferent * (this.epicycleRadius / 60); // scale epicycle based on ratio
@@ -1004,7 +1008,7 @@ export class Level6 {
       ctx.fillText("Epicycle", epiLabelX, epiLabelY);
 
       // Sun's orbit (dashed orange/yellow circle)
-      const R_sun = (this.selectedPlanetName === 'Venus') ? R_deferent : R_epicycle;
+      const R_sun = (this.selectedPlanetName === 'Venus' || this.selectedPlanetName === 'Mercury') ? R_deferent : R_epicycle;
       ctx.strokeStyle = 'rgba(251, 191, 36, 0.15)';
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
@@ -1224,11 +1228,12 @@ export class Level6 {
       const R_base = wPanel * 0.07;
       const R_sun = R_base * 0.6;
       const skyObjects = [
-        { name: 'Venus', r_def: R_sun, r_epi: R_sun * 0.723, defSpeed: 1.0, epiSpeed: 1.6, color: '#10b981', yOffset: -50, type: 'planet' },
-        { name: 'Sun', r_def: R_sun, r_epi: 0, defSpeed: 1.0, epiSpeed: 0, color: '#fbbf24', yOffset: -25, type: 'sun' },
-        { name: 'Mars', r_def: R_sun * 1.52, r_epi: R_sun, defSpeed: 0.5, epiSpeed: 1.0, color: '#f59e0b', yOffset: 0, type: 'planet' },
-        { name: 'Jupiter', r_def: R_sun * 5.20, r_epi: R_sun, defSpeed: 0.08, epiSpeed: 1.0, color: '#ef4444', yOffset: 25, type: 'planet' },
-        { name: 'Saturn', r_def: R_sun * 9.58, r_epi: R_sun, defSpeed: 0.03, epiSpeed: 1.0, color: '#a78bfa', yOffset: 50, type: 'planet' }
+        { name: 'Mercury', r_def: R_sun, r_epi: R_sun * 0.387, defSpeed: 1.0, epiSpeed: 4.15, color: '#38bdf8', yOffset: -65, type: 'planet' },
+        { name: 'Venus', r_def: R_sun, r_epi: R_sun * 0.723, defSpeed: 1.0, epiSpeed: 1.6, color: '#10b981', yOffset: -40, type: 'planet' },
+        { name: 'Sun', r_def: R_sun, r_epi: 0, defSpeed: 1.0, epiSpeed: 0, color: '#fbbf24', yOffset: -20, type: 'sun' },
+        { name: 'Mars', r_def: R_sun * 1.52, r_epi: R_sun, defSpeed: 0.5, epiSpeed: 1.0, color: '#f59e0b', yOffset: 5, type: 'planet' },
+        { name: 'Jupiter', r_def: R_sun * 5.20, r_epi: R_sun, defSpeed: 0.08, epiSpeed: 1.0, color: '#ef4444', yOffset: 30, type: 'planet' },
+        { name: 'Saturn', r_def: R_sun * 9.58, r_epi: R_sun, defSpeed: 0.03, epiSpeed: 1.0, color: '#a78bfa', yOffset: 55, type: 'planet' }
       ];
 
       skyObjects.forEach(obj => {
@@ -1250,7 +1255,7 @@ export class Level6 {
           alphaVal = Math.atan2(-pPlanetY, pPlanetX);
           
           // Calculate dynamic vertical offset based on epicycle to show retrograde loops!
-          const wobbleAmp = obj.name === 'Venus' ? 14 : (obj.name === 'Mars' ? 10 : (obj.name === 'Jupiter' ? 6 : 4));
+          const wobbleAmp = obj.name === 'Mercury' ? 18 : (obj.name === 'Venus' ? 14 : (obj.name === 'Mars' ? 10 : (obj.name === 'Jupiter' ? 6 : 4)));
           yOffsetDynamic = obj.yOffset + wobbleAmp * Math.sin(epiAngle);
         }
 
@@ -1882,14 +1887,13 @@ export class Level6 {
           <div class="space-y-1.5 mt-1">
             <span class="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Historical Presets:</span>
             <div class="grid grid-cols-4 gap-1">
-              <button id="preset-moon-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Moon</button>
               <button id="preset-mercury-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Mercury</button>
               <button id="preset-venus-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Venus</button>
               <button id="preset-sun-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Sun</button>
               <button id="preset-mars-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Mars</button>
               <button id="preset-jupiter-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Jupiter</button>
               <button id="preset-saturn-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition">Saturn</button>
-              <button id="preset-fourier-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition text-pink-300 border-pink-955/30 font-semibold">Fourier</button>
+              <button id="preset-fourier-btn" class="bg-slate-800 hover:bg-slate-700 text-[10px] py-1 rounded border border-slate-700 transition text-pink-300 border-pink-955/30 font-semibold col-span-2">Fourier</button>
             </div>
           </div>
         ` : chalSelectorHTML}
@@ -2015,26 +2019,13 @@ export class Level6 {
       });
     }
 
-    const moonBtn = document.getElementById('preset-moon-btn');
-    if (moonBtn) {
-      moonBtn.addEventListener('click', () => {
-        this.solvingEpicyclesR = 60;
-        this.solvingEpicyclesr = 5.25;
-        this.solvingEpicyclesw1 = 1.0;
-        this.solvingEpicyclesw2 = 13.4;
-        this.solvingEpicyclesPath = [];
-        this.solvingEpicyclesTime = 0;
-        this.updateSolvingEpicyclesUI();
-      });
-    }
-
     const mercuryBtn = document.getElementById('preset-mercury-btn');
     if (mercuryBtn) {
       mercuryBtn.addEventListener('click', () => {
         this.solvingEpicyclesR = 60;
-        this.solvingEpicyclesr = 22.5;
+        this.solvingEpicyclesr = 23.2;
         this.solvingEpicyclesw1 = 1.0;
-        this.solvingEpicyclesw2 = 4.2;
+        this.solvingEpicyclesw2 = 4.15;
         this.solvingEpicyclesPath = [];
         this.solvingEpicyclesTime = 0;
         this.updateSolvingEpicyclesUI();

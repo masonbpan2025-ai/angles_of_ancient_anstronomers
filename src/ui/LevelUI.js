@@ -1722,11 +1722,12 @@ export class LevelUI {
               "• <strong>Deferant</strong> (Deferent Path): The main normalized orbit centered near Earth. Ptolemy fixed its radius to a standard value of <strong>60 parts</strong> for every planet.<br>" +
               "• <strong>Epicycle</strong>: A smaller circle whose center moves along the deferant. Its size represents the relative planet's orbit size compared to Earth's orbit. The relative orbital ratio is defined as:<br>" +
               "  - <strong>Outer Planets</strong> (Mars, Jupyter, Saturn): <i>planet orbit size / earth orbit size</i><br>" +
-              "  - <strong>Inner Planets</strong> (Venus): <i>earth orbit size / planet orbit size</i><br><br>" +
+              "  - <strong>Inner Planets</strong> (Mercury, Venus): <i>earth orbit size / planet orbit size</i><br><br>" +
               "An <strong>Astronomical Unit (AU)</strong> is the average Earth-Sun distance (Earth's orbit size = 1 AU). The task is to calculate the epicycle size given the planet's orbit size in AU using:<br>" +
               "<div class='math-block text-center bg-slate-950/60 border border-slate-800/80 p-1.5 py-1 rounded my-1 font-mono text-[10px] text-sky-400'>epicycle radius = 60 / ratio</div>" +
               "For example, Mars' orbit size is 1.52 AU. Its ratio is 1.52 / 1.0 = 1.52, so Mars' epicycle should be 60 / 1.52 ≈ 39.5.",
-        question: "Calculate and verify the expected epicycle radius for Venus, Mars, Jupyter, and Saturn:<br>" +
+        question: "Calculate and verify the expected epicycle radius for Mercury, Venus, Mars, Jupyter, and Saturn:<br>" +
+                  "• <strong>Mercury</strong>: 0.387 AU (ratio = 1.0 / 0.387)<br>" +
                   "• <strong>Venus</strong>: 0.723 AU (ratio = 1.0 / 0.723)<br>" +
                   "• <strong>Mars</strong>: 1.52 AU (ratio = 1.52 / 1.0)<br>" +
                   "• <strong>Jupyter (Jupiter)</strong>: 5.20 AU (ratio = 5.20 / 1.0)<br>" +
@@ -1794,6 +1795,10 @@ export class LevelUI {
             <div class="flex flex-col gap-2 hidden" id="epicycles-input-container">
               <div class="grid grid-cols-2 gap-2 text-xs">
                 <div class="flex items-center gap-1.5">
+                  <span class="text-slate-400 font-semibold w-14">Mercury:</span>
+                  <input type="number" id="calc-mercury" class="w-16 bg-slate-900 border border-slate-800 text-white text-xs px-2 py-1 rounded outline-none focus:border-sky-500" placeholder="e.g. 23.2" step="0.1">
+                </div>
+                <div class="flex items-center gap-1.5">
                   <span class="text-slate-400 font-semibold w-14">Venus:</span>
                   <input type="number" id="calc-venus" class="w-16 bg-slate-900 border border-slate-800 text-white text-xs px-2 py-1 rounded outline-none focus:border-sky-500" placeholder="e.g. 43.1" step="0.1">
                 </div>
@@ -1805,7 +1810,7 @@ export class LevelUI {
                   <span class="text-slate-400 font-semibold w-14">Jupyter:</span>
                   <input type="number" id="calc-jupiter" class="w-16 bg-slate-900 border border-slate-800 text-white text-xs px-2 py-1 rounded outline-none focus:border-sky-500" placeholder="e.g. 11.5" step="0.1">
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 col-span-2">
                   <span class="text-slate-400 font-semibold w-14">Saturn:</span>
                   <input type="number" id="calc-saturn" class="w-16 bg-slate-900 border border-slate-800 text-white text-xs px-2 py-1 rounded outline-none focus:border-sky-500" placeholder="e.g. 6.5" step="0.1">
                 </div>
@@ -2022,10 +2027,11 @@ export class LevelUI {
               <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Planet:</span>
               <select id="planet-select" class="bg-slate-950 border border-slate-800 text-sky-400 font-semibold text-xs px-3 py-1.5 rounded-lg outline-none focus:border-sky-500 transition cursor-pointer">
                 <option value="All" selected>All Planets</option>
+                <option value="Mercury">Mercury</option>
+                <option value="Venus">Venus</option>
                 <option value="Mars">Mars</option>
                 <option value="Jupiter">Jupiter</option>
                 <option value="Saturn">Saturn</option>
-                <option value="Venus">Venus</option>
               </select>
             </div>
             <div class="flex items-center gap-2">
@@ -2150,23 +2156,25 @@ export class LevelUI {
 
     const verifyEpiBtn = document.getElementById('verify-epi-btn');
     verifyEpiBtn.addEventListener('click', () => {
+      const mer = parseFloat(document.getElementById('calc-mercury')?.value || '0');
       const v = parseFloat(document.getElementById('calc-venus').value);
       const m = parseFloat(document.getElementById('calc-mars').value);
       const j = parseFloat(document.getElementById('calc-jupiter').value);
       const s = parseFloat(document.getElementById('calc-saturn').value);
-      if (isNaN(v) || isNaN(m) || isNaN(j) || isNaN(s)) return;
+      if (isNaN(mer) || isNaN(v) || isNaN(m) || isNaN(j) || isNaN(s)) return;
       tabFeedback.classList.remove('hidden');
+      const merOk = Math.abs(mer - 23.2) <= 0.35 || Math.abs(mer - 23.22) <= 0.1;
       const vOk = Math.abs(v - 43.1) <= 0.45 || Math.abs(v - 43.38) <= 0.1;
       const mOk = Math.abs(m - 39.5) <= 0.15 || Math.abs(m - 39.47) <= 0.1;
       const jOk = Math.abs(j - 11.5) <= 0.15 || Math.abs(j - 11.54) <= 0.1;
       const sOk = Math.abs(s - 6.5) <= 0.25 || Math.abs(s - 6.26) <= 0.1;
-      if (vOk && mOk && jOk && sOk) {
+      if (merOk && vOk && mOk && jOk && sOk) {
         tabFeedback.textContent = "Correct! Epicycle sizes match the Keplerian/Ptolemaic scale ratios.";
         tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
         this.ptolemyVerified.epicycles = true;
         updateChecklist();
       } else {
-        tabFeedback.textContent = "Incorrect. Use: Venus (60 × 0.723 = 43.1/43.4), Mars (60 / 1.52 = 39.5), Jupyter (60 / 5.2 = 11.5), Saturn (60 / 9.58 = 6.5/6.3).";
+        tabFeedback.textContent = "Incorrect. Use: Mercury (60 × 0.387 = 23.2), Venus (60 × 0.723 = 43.1/43.4), Mars (60 / 1.52 = 39.5), Jupyter (60 / 5.2 = 11.5), Saturn (60 / 9.58 = 6.5/6.3).";
         tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
       }
     });
@@ -2312,10 +2320,11 @@ export class LevelUI {
           <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Planet:</span>
           <select id="planet-select" class="bg-slate-950 border border-slate-800 text-sky-400 font-semibold text-xs px-3 py-1.5 rounded-lg outline-none focus:border-sky-500 transition cursor-pointer">
             <option value="All" selected>All Planets</option>
+            <option value="Mercury">Mercury</option>
+            <option value="Venus">Venus</option>
             <option value="Mars">Mars</option>
             <option value="Jupiter">Jupiter</option>
             <option value="Saturn">Saturn</option>
-            <option value="Venus">Venus</option>
           </select>
         </div>
         <div class="flex items-center gap-2">
