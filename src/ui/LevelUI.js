@@ -2523,15 +2523,17 @@ export class LevelUI {
             <!-- Kepler's equation (time) explanation -->
             <div id="keq-content-time" class="flex flex-col gap-2">
               <p class="text-[10.5px] leading-relaxed text-slate-300">
-                Kepler realized that <strong>area, not distance, was the true measure of time</strong>. He equated the physical swept area from the Sun to a uniform "ideal" clock angle M:
+                Kepler realized that <strong>area, not distance, was the true measure of time</strong>. Kepler's 2nd Law states that physical sector area <span class="text-amber-300 font-semibold">P–S–periapsis</span> on the ellipse increases linearly with time.
               </p>
+              <div class="bg-slate-950/50 p-2 rounded border border-slate-900/60 text-[10px] space-y-1 text-slate-300">
+                <div>• The circumscribed circle is a <strong>vertically stretched version</strong> of the ellipse (scaled in y by ratio <span class="font-mono text-violet-300">a/b</span>).</div>
+                <div>• Since uniform scaling preserves area ratios, the stretched sector area <span class="text-sky-300 font-semibold">Q–S–periapsis</span> on the circle <strong>also increases linearly with time</strong>.</div>
+                <div>• This allows us to work directly on the circle: ideal clock sector <span class="text-emerald-300 font-semibold">M–C–periapsis</span> (<span class="font-mono text-emerald-300">½a²M</span>) equals stretched swept area <span class="text-sky-300 font-semibold">Q–S–periapsis</span>.</div>
+              </div>
               <div class="bg-slate-950/50 p-2 rounded border border-slate-900/60 font-mono text-[10px] space-y-1 text-center">
-                <div class="text-violet-300">½a²M = ½a²E − ½a²e·sin E</div>
+                <div class="text-violet-300">½a²M = Sector(C–Q) − Triangle(C–S–Q) = ½a²E − ½a²e·sin E</div>
                 <div class="text-sky-300">⟹  M = E − e·sin E</div>
               </div>
-              <p class="text-[10px] text-slate-400 leading-relaxed">
-                <span class="text-violet-300">Sector (C to Q)</span> − <span class="text-amber-300">Triangle (C–S–Q)</span> = <span class="text-sky-300">Swept Area (S to Q)</span>. Set equal to <span class="text-emerald-300">½a²M</span> and divide by ½a² to get the pure-angle form.
-              </p>
               <p class="text-[10px] text-slate-400 leading-relaxed pt-1.5 border-t border-slate-850">
                 <strong>Goal / Practical Use Cases:</strong> Relates orbital position (<span class="italic text-violet-300 font-serif">E</span>) to elapsed time (<span class="italic text-emerald-300 font-serif">M</span>). Key for <strong>orbital predictions (ephemerides)</strong>. Since time <span class="italic text-slate-300 font-serif">t</span> flows uniformly, we calculate <span class="italic text-emerald-300 font-serif">M</span>, then solve this transcendental equation numerically to find <span class="italic text-violet-300 font-serif">E(t)</span> and locate the planet!
               </p>
