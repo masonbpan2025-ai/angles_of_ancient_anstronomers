@@ -492,6 +492,18 @@ if (newAngle < 0) newAngle +=2 * Math.PI; const buffer=0.15; setAngles(prev=> {
                                                         className="text-purple-400">sin(α)sin(β)</span>
                                                 </div>
                                             </div>
+
+                                            <div
+                                                className="bg-indigo-950/40 rounded-lg p-4 border border-indigo-900/50 space-y-2 text-xs text-slate-300 font-sans">
+                                                <h3 className="text-indigo-300 font-semibold text-xs uppercase tracking-wider">
+                                                    Historical Reference</h3>
+                                                <p className="leading-relaxed">
+                                                    The specific geometric configuration shown in the image—where right triangles are stacked inside a bounding rectangle to visuals-test the angle sum identities—is widely popularized and famously compiled by mathematician Roger B. Nelsen in his book <a href="https://bookstore.ams.org/view?ProductCode=CLRM-PWW-SET#:~:text=Roger%20B.%20Nelsen%2C%20Proofs%20Without%20Words%2C%20Vols.,Imprint%20of%20the%20American%20Mathematical%20Society%2C%20Softcover" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 underline font-semibold">Proofs Without Words</a>.
+                                                </p>
+                                                <p className="leading-relaxed">
+                                                    See examples of such style on the <a href="https://artofproblemsolving.com/wiki/index.php/Proofs_without_words?srsltid=AfmBOoojee4hWvHp3OP3b0rjzjXNnay19Yt32Ma2YB1TeywTUzbZzP2O" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 underline font-semibold">AoPS Wiki: Proofs Without Words</a> page.
+                                                </p>
+                                            </div>
                                         </div>
                                         )}
                                     </div>

@@ -3377,6 +3377,16 @@ export class Level6 {
                 cos(α+β) = <span class="text-white">cos(α)cos(β)</span> - <span class="text-purple-400">sin(α)sin(β)</span>
               </div>
             </div>
+
+            <div class="bg-indigo-950/30 rounded-lg p-2 border border-indigo-900/40 text-[9px] text-slate-300 space-y-1 font-sans">
+              <div class="text-indigo-300 font-bold uppercase tracking-wider text-[9.5px]">Historical Reference</div>
+              <p class="leading-relaxed">
+                The specific geometric configuration shown in the image—where right triangles are stacked inside a bounding rectangle to visuals-test the angle sum identities—is widely popularized and famously compiled by mathematician Roger B. Nelsen in his book <a href="https://bookstore.ams.org/view?ProductCode=CLRM-PWW-SET#:~:text=Roger%20B.%20Nelsen%2C%20Proofs%20Without%20Words%2C%20Vols.,Imprint%20of%20the%20American%20Mathematical%20Society%2C%20Softcover" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:text-sky-300 underline font-semibold">Proofs Without Words</a>.
+              </p>
+              <p class="leading-relaxed">
+                See examples of such style on the <a href="https://artofproblemsolving.com/wiki/index.php/Proofs_without_words?srsltid=AfmBOoojee4hWvHp3OP3b0rjzjXNnay19Yt32Ma2YB1TeywTUzbZzP2O" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:text-sky-300 underline font-semibold">AoPS Wiki: Proofs Without Words</a> page.
+              </p>
+            </div>
           </div>
         `}
       </div>
