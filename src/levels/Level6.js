@@ -95,10 +95,12 @@ export class Level6 {
     this.fourierFrame = 'helio'; // 'helio' or 'geo'
 
     // Ptolemy's Theorem State
-    this.ptolemyMode = 'proof'; // 'proof', 'sine-sum', or 'cosine-sum'
+    this.ptolemyMode = 'proof'; // 'proof', 'sine-sum', 'cosine-sum', or 'rect-proof'
     this.ptolemyAngles = { A: 11 * Math.PI / 6, B: Math.PI / 4, C: 3 * Math.PI / 4, D: 4 * Math.PI / 3 };
     this.ptolemyProofStep = 0;
     this.ptolemyActivePoint = null;
+    this.rectAlpha = 35;
+    this.rectBeta = 25;
 
     // Challenge state
     this.selectedChallengeId = 'c1';
@@ -2851,6 +2853,179 @@ export class Level6 {
     const rightPanelWidth = 400;
     const cx = taskPanelWidth + (this.canvas.width - taskPanelWidth - rightPanelWidth) / 2;
     const cy = this.canvas.height / 2;
+
+    if (this.ptolemyMode === 'rect-proof') {
+      const alphaRad = (this.rectAlpha * Math.PI) / 180;
+      const betaRad = (this.rectBeta * Math.PI) / 180;
+      const rectScale = Math.min(this.canvas.width - 840, this.canvas.height - 150) * 0.70;
+      const O = { x: cx - rectScale * 0.40, y: cy + rectScale * 0.38 };
+
+      const P1 = {
+        x: O.x + rectScale * Math.cos(alphaRad + betaRad),
+        y: O.y - rectScale * Math.sin(alphaRad + betaRad)
+      };
+      const P2 = {
+        x: O.x + rectScale * Math.cos(betaRad) * Math.cos(alphaRad),
+        y: O.y - rectScale * Math.cos(betaRad) * Math.sin(alphaRad)
+      };
+
+      const V_bl = { x: O.x, y: O.y };
+      const V_br = { x: P2.x, y: O.y };
+      const V_tl = { x: O.x, y: P1.y };
+      const V_tr = { x: P2.x, y: P1.y };
+
+      const drawRightAngle = (p, p1, p2, size = 12) => {
+        const angle1 = Math.atan2(p1.y - p.y, p1.x - p.x);
+        const angle2 = Math.atan2(p2.y - p.y, p2.x - p.x);
+        const d1 = { x: Math.cos(angle1) * size, y: Math.sin(angle1) * size };
+        const d2 = { x: Math.cos(angle2) * size, y: Math.sin(angle2) * size };
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(p.x + d1.x, p.y + d1.y);
+        ctx.lineTo(p.x + d1.x + d2.x, p.y + d1.y + d2.y);
+        ctx.lineTo(p.x + d2.x, p.y + d2.y);
+        ctx.stroke();
+      };
+
+      const drawLabelLine = (p1, p2, text, color, offset = 18, bg = true) => {
+        const lx = (p1.x + p2.x) / 2;
+        const ly = (p1.y + p2.y) / 2;
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+        const tx = lx + nx * offset;
+        const ty = ly + ny * offset;
+
+        if (bg) {
+          ctx.fillStyle = '#0f172a';
+          ctx.globalAlpha = 0.8;
+          ctx.font = '600 11px Outfit, monospace';
+          const tw = ctx.measureText(text).width + 8;
+          ctx.fillRect(tx - tw / 2, ty - 8, tw, 16);
+          ctx.globalAlpha = 1.0;
+        }
+
+        ctx.fillStyle = color;
+        ctx.font = '600 11.5px Outfit, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, tx, ty);
+      };
+
+      // 1. Draw Bounding Rectangle
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(V_bl.x, V_bl.y);
+      ctx.lineTo(V_br.x, V_br.y);
+      ctx.lineTo(V_tr.x, V_tr.y);
+      ctx.lineTo(V_tl.x, V_tl.y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 2. Fill Triangles
+      // Bottom Triangle (alpha)
+      ctx.fillStyle = 'rgba(250, 204, 21, 0.12)';
+      ctx.beginPath();
+      ctx.moveTo(O.x, O.y); ctx.lineTo(V_br.x, V_br.y); ctx.lineTo(P2.x, P2.y); ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Top Triangle (beta)
+      ctx.fillStyle = 'rgba(96, 165, 250, 0.12)';
+      ctx.beginPath();
+      ctx.moveTo(O.x, O.y); ctx.lineTo(P2.x, P2.y); ctx.lineTo(P1.x, P1.y); ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 3. Right Angle Indicators
+      drawRightAngle(V_br, O, V_tr);
+      drawRightAngle(V_tr, V_br, V_tl);
+      drawRightAngle(V_tl, V_tr, O);
+      drawRightAngle(O, V_tl, V_br);
+      drawRightAngle(P2, V_br, P1);
+
+      // 4. Central Hypotenuse
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(O.x, O.y);
+      ctx.lineTo(P1.x, P1.y);
+      ctx.stroke();
+      drawLabelLine(O, P1, '1', '#cbd5e1', -18);
+
+      // 5. Angle Arcs (alpha & beta)
+      const arcR1 = 45;
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(O.x, O.y, arcR1, -alphaRad, 0, false);
+      ctx.stroke();
+      ctx.fillStyle = '#facc15';
+      ctx.font = '700 13px Outfit';
+      ctx.fillText('α', O.x + 55, O.y - 12);
+
+      const arcR2 = 35;
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(O.x, O.y, arcR2, -(alphaRad + betaRad), -alphaRad, false);
+      ctx.stroke();
+      ctx.fillStyle = '#60a5fa';
+      ctx.font = '700 13px Outfit';
+      ctx.fillText('β', O.x + 40 * Math.cos(alphaRad + betaRad / 2), O.y - 40 * Math.sin(alphaRad + betaRad / 2));
+
+      // 6. Side Labels
+      drawLabelLine(O, P2, 'cos(β)', '#facc15', 14);
+      drawLabelLine(P2, P1, 'sin(β)', '#60a5fa', -20);
+
+      // Rectangle Edge Projections
+      drawLabelLine(O, V_br, 'cos(α)cos(β)', '#ffffff', 18);
+      drawLabelLine(V_br, { x: V_br.x, y: P2.y }, 'cos(α)sin(β)', '#60a5fa', -30, false);
+      drawLabelLine({ x: V_br.x, y: P2.y }, V_tr, 'sin(α)cos(β)', '#facc15', -30, false);
+
+      drawLabelLine(O, V_tl, 'sin(α+β)', '#4ade80', 22);
+      drawLabelLine(V_tl, P1, 'cos(α+β)', '#f472b6', -16);
+      drawLabelLine(P1, V_tr, 'sin(α)sin(β)', '#c084fc', -16);
+
+      // Internal Construction Lines
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(P2.x, P2.y); ctx.lineTo(V_br.x, P2.y);
+      ctx.moveTo(P1.x, P1.y); ctx.lineTo(P1.x, V_tr.y);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(P1.x, P1.y); ctx.lineTo(P1.x, O.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 7. Title Header Overlay
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 14px Outfit,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Rectangle Proof: Angle Addition & Subtraction', cx, 38);
+
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '700 12px Outfit,monospace';
+      ctx.fillText(`sin(α+β) = sin(α)cos(β) + cos(α)sin(β)  |  cos(α+β) = cos(α)cos(β) - sin(α)sin(β)`, cx, 58);
+      return;
+    }
+
     const radius = Math.min(this.canvas.width - 820, this.canvas.height - 140) * 0.42;
 
     const getPoint = (ang) => ({
@@ -3010,20 +3185,23 @@ export class Level6 {
   getPtolemyParamPanelHTML() {
     const isProof = this.ptolemyMode === 'proof';
     const isSine = this.ptolemyMode === 'sine-sum';
+    const isCosine = this.ptolemyMode === 'cosine-sum';
+    const isRect = this.ptolemyMode === 'rect-proof';
 
     return `
       <div class="flex flex-col gap-2 font-sans w-full">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
           <div class="flex items-center gap-1.5">
             <h4 class="text-xs font-bold text-sky-400">Ptolemy's Theorem Explorer</h4>
             <span class="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded uppercase font-semibold">${this.ptolemyMode}</span>
           </div>
         </div>
 
-        <div class="flex bg-slate-950/60 rounded-lg p-0.5 border border-slate-850">
-          <button id="ptolemy-mode-proof-btn" class="flex-1 text-[10px] py-1 rounded transition ${isProof ? 'bg-slate-800 text-indigo-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">General Proof</button>
-          <button id="ptolemy-mode-sine-btn" class="flex-1 text-[10px] py-1 rounded transition ${isSine ? 'bg-slate-800 text-sky-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Sine Subtraction</button>
-          <button id="ptolemy-mode-cosine-btn" class="flex-1 text-[10px] py-1 rounded transition ${this.ptolemyMode === 'cosine-sum' ? 'bg-slate-800 text-sky-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Cosine Sum</button>
+        <div class="flex bg-slate-950/60 rounded-lg p-0.5 border border-slate-850 flex-wrap gap-0.5">
+          <button id="ptolemy-mode-proof-btn" class="flex-1 min-w-[65px] text-[9.5px] py-1 rounded transition ${isProof ? 'bg-slate-800 text-indigo-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">General Proof</button>
+          <button id="ptolemy-mode-sine-btn" class="flex-1 min-w-[65px] text-[9.5px] py-1 rounded transition ${isSine ? 'bg-slate-800 text-sky-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Ptolemy Sine</button>
+          <button id="ptolemy-mode-cosine-btn" class="flex-1 min-w-[65px] text-[9.5px] py-1 rounded transition ${isCosine ? 'bg-slate-800 text-sky-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Ptolemy Cosine</button>
+          <button id="ptolemy-mode-rect-btn" class="flex-1 min-w-[65px] text-[9.5px] py-1 rounded transition ${isRect ? 'bg-green-950/80 text-green-400 font-semibold shadow-sm border border-green-700/50' : 'text-slate-400 hover:text-slate-200'}">Rectangle Proof</button>
         </div>
 
         ${isProof ? `
@@ -3047,13 +3225,64 @@ export class Level6 {
               ][this.ptolemyProofStep]}
             </p>
           </div>
+        ` : isSine ? `
+          <div class="bg-indigo-950/40 rounded-lg p-2.5 border border-indigo-900/50 space-y-2 font-sans">
+            <h4 class="text-indigo-300 font-semibold text-[10.5px] uppercase tracking-wider">PTOLEMY'S EQUATION</h4>
+            <p class="text-slate-300 font-mono text-[10px]">AC × BD = (AB × CD) + (BC × AD)</p>
+            <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-center font-serif text-[11.5px]">
+              1 × <span class="text-purple-400 font-bold">sin(α - β)</span> = <span class="text-yellow-400 font-bold">sin(α)</span><span class="text-blue-400 font-bold">cos(β)</span> - <span class="text-green-400 font-bold">cos(α)</span><span class="text-pink-400 font-bold">sin(β)</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-850 text-slate-200 text-[9.5px] font-mono">
+              <div>sin(45° - 30°) = (√2/2 × √3/2) - (√2/2 × 1/2)</div>
+              <div class="text-green-400 font-bold mt-0.5">= (√6 - √2) / 4 ≈ 0.2588</div>
+            </div>
+          </div>
+        ` : isCosine ? `
+          <div class="bg-indigo-950/40 rounded-lg p-2.5 border border-indigo-900/50 space-y-2 font-sans">
+            <h4 class="text-indigo-300 font-semibold text-[10.5px] uppercase tracking-wider">PTOLEMY'S EQUATION</h4>
+            <p class="text-slate-300 font-mono text-[10px]">AC × BD = (AB × CD) + (BC × AD)</p>
+            <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-center font-serif text-[11.5px]">
+              <span class="text-green-400 font-bold">cos(α + β)</span> = <span class="text-purple-400 font-bold">cos(α)</span><span class="text-blue-400 font-bold">cos(β)</span> - <span class="text-yellow-400 font-bold">sin(α)</span><span class="text-pink-400 font-bold">sin(β)</span>
+            </div>
+          </div>
         ` : `
-          <div class="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 font-mono text-[10px] space-y-1.5">
-            <div class="text-slate-400 font-bold font-sans text-[10.5px]">Sine Subtraction Identity: sin(α - β)</div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-850 text-slate-200">
-              <div>sin(45° - 30°) = sin(45°)cos(30°) - cos(45°)sin(30°)</div>
-              <div class="text-sky-400 font-bold mt-1">= (√2/2 × √3/2) - (√2/2 × 1/2)</div>
-              <div class="text-green-400 font-bold">= (√6 - √2) / 4 ≈ 0.2588</div>
+          <div class="space-y-2 text-[10px]">
+            <p class="text-slate-300 leading-relaxed text-[9.5px]">
+              This alternative classic geometric proof uses a bounding rectangle to derive both Angle Addition and Subtraction identities simultaneously. Adjust angles below:
+            </p>
+            <div class="bg-slate-950/80 rounded-lg p-2 border border-slate-800 space-y-2">
+              <div>
+                <div class="flex justify-between text-[9.5px] mb-0.5">
+                  <span class="text-yellow-400 font-bold">Angle α: ${this.rectAlpha}°</span>
+                </div>
+                <input type="range" id="rect-alpha-slider" min="5" max="65" value="${this.rectAlpha}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-yellow-400">
+              </div>
+              <div>
+                <div class="flex justify-between text-[9.5px] mb-0.5">
+                  <span class="text-sky-400 font-bold">Angle β: ${this.rectBeta}°</span>
+                </div>
+                <input type="range" id="rect-beta-slider" min="5" max="65" value="${this.rectBeta}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+              </div>
+            </div>
+
+            <div class="bg-slate-950/80 rounded-lg p-2 border border-slate-800 space-y-1 font-mono text-[9px]">
+              <div class="text-slate-300 font-bold uppercase tracking-wider border-b border-slate-800 pb-0.5 font-sans text-[9.5px]">Vertical Sides (Height)</div>
+              <div class="flex justify-between"><span class="text-slate-400">Left Edge</span><span class="text-green-400 font-bold">sin(α+β)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Right Edge Bottom</span><span class="text-sky-400">cos(α)sin(β)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Right Edge Top</span><span class="text-yellow-400">sin(α)cos(β)</span></div>
+              <div class="border-t border-slate-800 pt-1 text-center font-bold text-green-400 font-serif text-[10px]">
+                sin(α+β) = <span class="text-yellow-400">sin(α)cos(β)</span> + <span class="text-sky-400">cos(α)sin(β)</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/80 rounded-lg p-2 border border-slate-800 space-y-1 font-mono text-[9px]">
+              <div class="text-slate-300 font-bold uppercase tracking-wider border-b border-slate-800 pb-0.5 font-sans text-[9.5px]">Horizontal Sides (Width)</div>
+              <div class="flex justify-between"><span class="text-slate-400">Bottom Edge Total</span><span class="text-white">cos(α)cos(β)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Top Edge Left</span><span class="text-pink-400 font-bold">cos(α+β)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Top Edge Right</span><span class="text-purple-400">sin(α)sin(β)</span></div>
+              <div class="border-t border-slate-800 pt-1 text-center font-bold text-pink-400 font-serif text-[10px]">
+                cos(α+β) = <span class="text-white">cos(α)cos(β)</span> - <span class="text-purple-400">sin(α)sin(β)</span>
+              </div>
             </div>
           </div>
         `}
@@ -3085,6 +3314,34 @@ export class Level6 {
       btnProof.addEventListener('click', () => {
         this.ptolemyMode = 'proof';
         this.ptolemyAngles = { A: 11 * Math.PI / 6, B: Math.PI / 4, C: 3 * Math.PI / 4, D: 4 * Math.PI / 3 };
+        this.updatePtolemyUI();
+      });
+    }
+
+    const btnRect = document.getElementById('ptolemy-mode-rect-btn');
+    if (btnRect) {
+      btnRect.addEventListener('click', () => {
+        this.ptolemyMode = 'rect-proof';
+        this.updatePtolemyUI();
+      });
+    }
+
+    const rectAlphaSlider = document.getElementById('rect-alpha-slider');
+    if (rectAlphaSlider) {
+      rectAlphaSlider.addEventListener('input', (e) => {
+        let val = parseFloat(e.target.value);
+        this.rectAlpha = val;
+        if (val + this.rectBeta >= 90) this.rectBeta = 89 - val;
+        this.updatePtolemyUI();
+      });
+    }
+
+    const rectBetaSlider = document.getElementById('rect-beta-slider');
+    if (rectBetaSlider) {
+      rectBetaSlider.addEventListener('input', (e) => {
+        let val = parseFloat(e.target.value);
+        this.rectBeta = val;
+        if (this.rectAlpha + val >= 90) this.rectAlpha = 89 - val;
         this.updatePtolemyUI();
       });
     }
