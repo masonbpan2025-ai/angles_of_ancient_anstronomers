@@ -3331,8 +3331,11 @@ export class Level6 {
           <div class="bg-indigo-950/40 rounded-lg p-2.5 border border-indigo-900/50 space-y-2 font-sans">
             <h4 class="text-indigo-300 font-semibold text-[10.5px] uppercase tracking-wider">PTOLEMY'S EQUATION</h4>
             <p class="text-slate-300 font-mono text-[10px]">AC × BD = (AB × CD) + (BC × AD)</p>
-            <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-center font-serif text-[11.5px]">
-              <span class="text-green-400 font-bold">cos(α + β)</span> = <span class="text-purple-400 font-bold">cos(α)</span><span class="text-blue-400 font-bold">cos(β)</span> - <span class="text-yellow-400 font-bold">sin(α)</span><span class="text-pink-400 font-bold">sin(β)</span>
+            <p class="text-slate-400 font-mono text-[10px] text-center">
+              <span class="text-blue-400 font-semibold">cos(β)</span><span class="text-purple-400 font-semibold">cos(α)</span> = <span class="text-yellow-400 font-semibold">sin(α)</span><span class="text-pink-400 font-semibold">sin(β)</span> + <span class="text-green-400 font-semibold">cos(α+β)</span> × 1
+            </p>
+            <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-center font-serif text-[12px]">
+              <span class="text-green-400 font-bold">cos(α+β)</span> = <span class="text-purple-400 font-bold">cos(α)</span><span class="text-blue-400 font-bold">cos(β)</span> - <span class="text-yellow-400 font-bold">sin(α)</span><span class="text-pink-400 font-bold">sin(β)</span>
             </div>
           </div>
         ` : `
