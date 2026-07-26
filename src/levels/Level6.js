@@ -3136,7 +3136,101 @@ export class Level6 {
     drawSide(pts.A, pts.C, '#e2e8f0', 2); // AC white
     drawSide(pts.B, pts.D, '#c084fc', 2.5); // BD purple
 
-    // 6. Draw Vertex Dots & Labels
+    // 6. Draw Side & Diagonal Labels for Trig Modes
+    const drawLabelLine = (p1, p2, text, color, offset = 18) => {
+      const lx = (p1.x + p2.x) / 2;
+      const ly = (p1.y + p2.y) / 2;
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      const tx = lx + nx * offset;
+      const ty = ly + ny * offset;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.globalAlpha = 0.85;
+      ctx.font = '600 11px Outfit, sans-serif';
+      const tw = ctx.measureText(text).width + 12;
+      ctx.fillRect(tx - tw / 2, ty - 9, tw, 18);
+      ctx.globalAlpha = 1.0;
+
+      ctx.fillStyle = color;
+      ctx.font = '600 11.5px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, tx, ty);
+    };
+
+    if (this.ptolemyMode === 'sine-sum') {
+      drawLabelLine(pts.A, pts.B, 'cos(α)', '#facc15', 18);
+      drawLabelLine(pts.B, pts.C, 'sin(α)', '#4ade80', 18);
+      drawLabelLine(pts.A, pts.D, 'cos(β)', '#60a5fa', 18);
+      drawLabelLine(pts.D, pts.C, 'sin(β)', '#f472b6', -20);
+      drawLabelLine(pts.B, pts.D, 'sin(α+β)', '#c084fc', -22);
+
+      // Angle Arcs at A
+      const angAC = Math.atan2(pts.C.y - pts.A.y, pts.C.x - pts.A.x);
+      const angAB = Math.atan2(pts.B.y - pts.A.y, pts.B.x - pts.A.x);
+      const angAD = Math.atan2(pts.D.y - pts.A.y, pts.D.x - pts.A.x);
+
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(pts.A.x, pts.A.y, 35, angAC, angAB, true);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#facc15';
+      ctx.font = 'bold 12px Outfit';
+      ctx.fillText('α', pts.A.x + 48 * Math.cos((angAC + angAB) / 2), pts.A.y + 48 * Math.sin((angAC + angAB) / 2));
+
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(pts.A.x, pts.A.y, 35, angAC, angAD, false);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#60a5fa';
+      ctx.font = 'bold 12px Outfit';
+      ctx.fillText('β', pts.A.x + 48 * Math.cos((angAC + angAD) / 2), pts.A.y + 48 * Math.sin((angAC + angAD) / 2));
+    } else if (this.ptolemyMode === 'cosine-sum') {
+      drawLabelLine(pts.A, pts.B, 'sin(α)', '#facc15', 18);
+      drawLabelLine(pts.B, pts.C, 'cos(α+β)', '#4ade80', 18);
+      drawLabelLine(pts.C, pts.D, 'sin(β)', '#f472b6', 18);
+      drawLabelLine(pts.B, pts.D, 'cos(α)', '#c084fc', 20);
+      drawLabelLine(pts.A, pts.C, 'cos(β)', '#60a5fa', -20);
+
+      // Angle Arcs at A
+      const angAD = Math.atan2(pts.D.y - pts.A.y, pts.D.x - pts.A.x);
+      const angAB = Math.atan2(pts.B.y - pts.A.y, pts.B.x - pts.A.x);
+      const angAC = Math.atan2(pts.C.y - pts.A.y, pts.C.x - pts.A.x);
+
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(pts.A.x, pts.A.y, 35, angAC, angAB, true);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#facc15';
+      ctx.font = 'bold 11px Outfit';
+      ctx.fillText('90°-α', pts.A.x + 52 * Math.cos((angAC + angAB) / 2), pts.A.y + 52 * Math.sin((angAC + angAB) / 2));
+
+      ctx.strokeStyle = '#f472b6';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(pts.A.x, pts.A.y, 50, angAD, angAC, true);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#f472b6';
+      ctx.font = 'bold 12px Outfit';
+      ctx.fillText('β', pts.A.x + 65 * Math.cos((angAD + angAC) / 2), pts.A.y + 65 * Math.sin((angAD + angAC) / 2));
+    }
+
+    // 7. Draw Vertex Dots & Labels
     const drawVertex = (p, label, isFixed) => {
       ctx.fillStyle = isFixed ? '#64748b' : '#38bdf8';
       ctx.beginPath();
@@ -3160,7 +3254,7 @@ export class Level6 {
     drawVertex(pts.C, 'C', this.ptolemyMode === 'sine-sum');
     drawVertex(pts.D, 'D', this.ptolemyMode === 'cosine-sum');
 
-    // 7. Title & Live Calculation Header Overlay
+    // 8. Title & Live Calculation Header Overlay
     ctx.fillStyle = '#ffffff';
     ctx.font = '600 14px Outfit,sans-serif';
     ctx.textAlign = 'center';
@@ -3231,10 +3325,6 @@ export class Level6 {
             <p class="text-slate-300 font-mono text-[10px]">AC × BD = (AB × CD) + (BC × AD)</p>
             <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-center font-serif text-[11.5px]">
               1 × <span class="text-purple-400 font-bold">sin(α - β)</span> = <span class="text-yellow-400 font-bold">sin(α)</span><span class="text-blue-400 font-bold">cos(β)</span> - <span class="text-green-400 font-bold">cos(α)</span><span class="text-pink-400 font-bold">sin(β)</span>
-            </div>
-            <div class="bg-slate-900 p-2 rounded border border-slate-850 text-slate-200 text-[9.5px] font-mono">
-              <div>sin(45° - 30°) = (√2/2 × √3/2) - (√2/2 × 1/2)</div>
-              <div class="text-green-400 font-bold mt-0.5">= (√6 - √2) / 4 ≈ 0.2588</div>
             </div>
           </div>
         ` : isCosine ? `
