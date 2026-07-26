@@ -94,6 +94,12 @@ export class Level6 {
     this.fourierPlaying = true;
     this.fourierFrame = 'helio'; // 'helio' or 'geo'
 
+    // Ptolemy's Theorem State
+    this.ptolemyMode = 'sine-sum'; // 'sine-sum', 'cosine-sum', or 'proof'
+    this.ptolemyAngles = { A: Math.PI, B: 4.2, C: 0, D: 1.2 };
+    this.ptolemyProofStep = 0;
+    this.ptolemyActivePoint = null;
+
     // Challenge state
     this.selectedChallengeId = 'c1';
     this.solvedChallenges = []; // list of solved IDs, e.g. ['c1']
@@ -228,6 +234,8 @@ export class Level6 {
       this.fourierCoefficients = [];
       this.fourierFrame = 'helio';
       setTimeout(() => this.updateFourierUI(), 50);
+    } else if (tab === 'ptolemy') {
+      setTimeout(() => this.updatePtolemyUI(), 50);
     }
   }
 
@@ -235,6 +243,28 @@ export class Level6 {
     const onMouseDown = (e) => {
       // Don't drag/draw if clicked on the sidebar UI card
       if (e.clientX < 420) return;
+
+      if (this.subtask === 'ptolemy') {
+        const taskPanelWidth = 400;
+        const W_illus = this.canvas.width - taskPanelWidth;
+        const cx = taskPanelWidth + W_illus / 2;
+        const cy = this.canvas.height / 2;
+        const radius = Math.min(W_illus, this.canvas.height) * 0.35;
+
+        const pts = ['A', 'B', 'C', 'D'];
+        for (let pt of pts) {
+          if (this.ptolemyMode === 'sine-sum' && (pt === 'A' || pt === 'C')) continue;
+          if (this.ptolemyMode === 'cosine-sum' && (pt === 'A' || pt === 'D')) continue;
+          const ang = this.ptolemyAngles[pt];
+          const px = cx + radius * Math.cos(ang);
+          const py = cy + radius * Math.sin(ang);
+          const dist = Math.hypot(e.clientX - px, e.clientY - py);
+          if (dist < 25) {
+            this.ptolemyActivePoint = pt;
+            return;
+          }
+        }
+      }
 
       if (this.subtask === 'fourier' && this.fourierMode === 'draw') {
         const taskPanelWidth = 400;
@@ -254,6 +284,17 @@ export class Level6 {
     };
 
     const onMouseMove = (e) => {
+      if (this.subtask === 'ptolemy' && this.ptolemyActivePoint) {
+        const taskPanelWidth = 400;
+        const W_illus = this.canvas.width - taskPanelWidth;
+        const cx = taskPanelWidth + W_illus / 2;
+        const cy = this.canvas.height / 2;
+        let newAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+        if (newAngle < 0) newAngle += 2 * Math.PI;
+        this.ptolemyAngles[this.ptolemyActivePoint] = newAngle;
+        return;
+      }
+
       if (this.subtask === 'fourier' && this.fourierMode === 'draw' && this.isDrawingCustom) {
         const taskPanelWidth = 400;
         const W_illus = this.canvas.width - taskPanelWidth;
@@ -276,6 +317,11 @@ export class Level6 {
     };
 
     const onMouseUp = () => {
+      if (this.subtask === 'ptolemy' && this.ptolemyActivePoint) {
+        this.ptolemyActivePoint = null;
+        return;
+      }
+
       if (this.subtask === 'fourier' && this.fourierMode === 'draw' && this.isDrawingCustom) {
         this.isDrawingCustom = false;
         if (this.drawPoints.length > 5) {
@@ -1436,6 +1482,8 @@ export class Level6 {
         this.drawSolvingEpicyclesView();
       } else if (this.subtask === 'fourier') {
         this.drawFourierView();
+      } else if (this.subtask === 'ptolemy') {
+        this.drawPtolemyView();
       }
 
       // Update simulation logic for epicycles tab
@@ -2793,6 +2841,267 @@ export class Level6 {
     if (toggleCircles) {
       toggleCircles.addEventListener('change', (e) => {
         this.showCircles = e.target.checked;
+      });
+    }
+  }
+
+  drawPtolemyView() {
+    const ctx = this.ctx;
+    const taskPanelWidth = 400;
+    const W_illus = this.canvas.width - taskPanelWidth;
+    const cx = taskPanelWidth + W_illus / 2;
+    const cy = this.canvas.height / 2;
+    const radius = Math.min(W_illus, this.canvas.height) * 0.35;
+
+    const getPoint = (ang) => ({
+      x: cx + radius * Math.cos(ang),
+      y: cy + radius * Math.sin(ang)
+    });
+    const dist = (p1, p2) => Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+    const pts = {
+      A: getPoint(this.ptolemyAngles.A),
+      B: getPoint(this.ptolemyAngles.B),
+      C: getPoint(this.ptolemyAngles.C),
+      D: getPoint(this.ptolemyAngles.D)
+    };
+
+    const scale = 1 / (radius * 2); // diameter = 1
+
+    const AB = dist(pts.A, pts.B);
+    const BC = dist(pts.B, pts.C);
+    const CD = dist(pts.C, pts.D);
+    const DA = dist(pts.D, pts.A);
+    const AC = dist(pts.A, pts.C);
+    const BD = dist(pts.B, pts.D);
+
+    // 1. Draw outer circle
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 2. Draw Quadrilateral polygon fill
+    ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
+    ctx.beginPath();
+    ctx.moveTo(pts.A.x, pts.A.y);
+    ctx.lineTo(pts.B.x, pts.B.y);
+    ctx.lineTo(pts.C.x, pts.C.y);
+    ctx.lineTo(pts.D.x, pts.D.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Highlight proof steps if in 'proof' mode
+    if (this.ptolemyMode === 'proof') {
+      const lengthAE = (AB * CD) / (BD || 1);
+      const t = lengthAE / (AC || 1);
+      const E = {
+        x: pts.A.x + t * (pts.C.x - pts.A.x),
+        y: pts.A.y + t * (pts.C.y - pts.A.y)
+      };
+
+      // Draw E line
+      ctx.strokeStyle = '#e0e7ff';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(pts.B.x, pts.B.y);
+      ctx.lineTo(E.x, E.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Point E dot
+      ctx.fillStyle = '#a5b4fc';
+      ctx.beginPath();
+      ctx.arc(E.x, E.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 11px Outfit';
+      ctx.fillText('E', E.x + 8, E.y - 4);
+
+      // Step highlights
+      if (this.ptolemyProofStep === 2 || this.ptolemyProofStep === 3) {
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(pts.A.x, pts.A.y); ctx.lineTo(pts.B.x, pts.B.y); ctx.lineTo(E.x, E.y); ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = 'rgba(74, 222, 128, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(pts.D.x, pts.D.y); ctx.lineTo(pts.B.x, pts.B.y); ctx.lineTo(pts.C.x, pts.C.y); ctx.closePath(); ctx.fill();
+      } else if (this.ptolemyProofStep === 4 || this.ptolemyProofStep === 5) {
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(pts.A.x, pts.A.y); ctx.lineTo(pts.B.x, pts.B.y); ctx.lineTo(pts.D.x, pts.D.y); ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = 'rgba(192, 132, 252, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(E.x, E.y); ctx.lineTo(pts.B.x, pts.B.y); ctx.lineTo(pts.C.x, pts.C.y); ctx.closePath(); ctx.fill();
+      }
+    }
+
+    // 4. Draw Quadrilateral Sides
+    const drawSide = (p1, p2, color, width = 2) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    };
+
+    drawSide(pts.A, pts.B, '#eab308', 2.5); // AB yellow
+    drawSide(pts.B, pts.C, '#22c55e', 2.5); // BC green
+    drawSide(pts.C, pts.D, '#ec4899', 2.5); // CD pink
+    drawSide(pts.D, pts.A, '#38bdf8', 2.5); // DA blue
+
+    // 5. Draw Diagonals
+    drawSide(pts.A, pts.C, '#e2e8f0', 2); // AC white
+    drawSide(pts.B, pts.D, '#c084fc', 2.5); // BD purple
+
+    // 6. Draw Vertex Dots & Labels
+    const drawVertex = (p, label, isFixed) => {
+      ctx.fillStyle = isFixed ? '#64748b' : '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 13px Outfit';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const dirX = (p.x - cx) / radius;
+      const dirY = (p.y - cy) / radius;
+      ctx.fillText(label, p.x + dirX * 18, p.y + dirY * 18);
+    };
+
+    drawVertex(pts.A, 'A', this.ptolemyMode !== 'proof');
+    drawVertex(pts.B, 'B', false);
+    drawVertex(pts.C, 'C', this.ptolemyMode === 'sine-sum');
+    drawVertex(pts.D, 'D', this.ptolemyMode === 'cosine-sum');
+
+    // 7. Title & Live Calculation Header Overlay
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 14px Outfit,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText("Ptolemy's Theorem & Chord Trigonometry", taskPanelWidth + W_illus / 2, 38);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = '700 12px Outfit,monospace';
+    const leftVal = (AC * scale * BD * scale).toFixed(4);
+    const rightVal = (AB * scale * CD * scale + BC * scale * DA * scale).toFixed(4);
+    ctx.fillText(`AC·BD = (AB·CD) + (BC·AD)  ⟹  ${leftVal} = ${rightVal}`, taskPanelWidth + W_illus / 2, 58);
+  }
+
+  updatePtolemyUI() {
+    if (this.subtask !== 'ptolemy') return;
+    const paramPanel = document.getElementById('param-panel');
+    if (paramPanel) {
+      paramPanel.innerHTML = this.getPtolemyParamPanelHTML();
+      this.attachPtolemyEventListeners();
+    }
+  }
+
+  getPtolemyParamPanelHTML() {
+    const isProof = this.ptolemyMode === 'proof';
+    const isSine = this.ptolemyMode === 'sine-sum';
+
+    return `
+      <div class="flex flex-col gap-2 font-sans w-full">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <div class="flex items-center gap-1.5">
+            <h4 class="text-xs font-bold text-sky-400">Ptolemy's Theorem Explorer</h4>
+            <span class="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded uppercase font-semibold">${this.ptolemyMode}</span>
+          </div>
+        </div>
+
+        <div class="flex bg-slate-950/60 rounded-lg p-0.5 border border-slate-850">
+          <button id="ptolemy-mode-sine-btn" class="flex-1 text-[10px] py-1 rounded transition ${isSine ? 'bg-slate-800 text-sky-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Sine Subtraction</button>
+          <button id="ptolemy-mode-cosine-btn" class="flex-1 text-[10px] py-1 rounded transition ${this.ptolemyMode === 'cosine-sum' ? 'bg-slate-800 text-sky-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Cosine Sum</button>
+          <button id="ptolemy-mode-proof-btn" class="flex-1 text-[10px] py-1 rounded transition ${isProof ? 'bg-slate-800 text-indigo-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">General Proof</button>
+        </div>
+
+        ${isProof ? `
+          <div class="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center text-[10px]">
+              <span class="font-bold text-slate-300 uppercase">Proof Step ${this.ptolemyProofStep + 1} / 7</span>
+              <div class="flex gap-1.5">
+                <button id="ptolemy-prev-step-btn" ${this.ptolemyProofStep === 0 ? 'disabled' : ''} class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-[9.5px] disabled:opacity-40">Prev</button>
+                <button id="ptolemy-next-step-btn" ${this.ptolemyProofStep === 6 ? 'disabled' : ''} class="px-2 py-0.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[9.5px] font-bold disabled:opacity-40">Next</button>
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-300 leading-relaxed">
+              ${[
+                "Start with cyclic quadrilateral ABCD. Draw diagonals AC and BD.",
+                "Locate point E on diagonal AC such that ∠ABE = ∠DBC.",
+                "△ABE ~ △DBC because ∠ABE = ∠DBC (by construction) and ∠BAE = ∠BDC (subtend arc BC).",
+                "Ratio of sides: AB / BD = AE / CD ⟹ AB × CD = AE × BD.",
+                "△ABD ~ △EBC because ∠ABD = ∠EBC and ∠BDA = ∠BCE (subtend arc AB).",
+                "Ratio of sides: AD / EC = BD / BC ⟹ AD × BC = EC × BD.",
+                "Adding equations: (AB × CD) + (AD × BC) = (AE + EC) × BD = AC × BD."
+              ][this.ptolemyProofStep]}
+            </p>
+          </div>
+        ` : `
+          <div class="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 font-mono text-[10px] space-y-1.5">
+            <div class="text-slate-400 font-bold font-sans text-[10.5px]">Sine Subtraction Identity: sin(α - β)</div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-850 text-slate-200">
+              <div>sin(45° - 30°) = sin(45°)cos(30°) - cos(45°)sin(30°)</div>
+              <div class="text-sky-400 font-bold mt-1">= (√2/2 × √3/2) - (√2/2 × 1/2)</div>
+              <div class="text-green-400 font-bold">= (√6 - √2) / 4 ≈ 0.2588</div>
+            </div>
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  attachPtolemyEventListeners() {
+    const btnSine = document.getElementById('ptolemy-mode-sine-btn');
+    if (btnSine) {
+      btnSine.addEventListener('click', () => {
+        this.ptolemyMode = 'sine-sum';
+        this.ptolemyAngles = { A: Math.PI, B: 4.2, C: 0, D: 1.2 };
+        this.updatePtolemyUI();
+      });
+    }
+
+    const btnCosine = document.getElementById('ptolemy-mode-cosine-btn');
+    if (btnCosine) {
+      btnCosine.addEventListener('click', () => {
+        this.ptolemyMode = 'cosine-sum';
+        this.ptolemyAngles = { A: Math.PI, B: 4.0, C: 5.2, D: 0 };
+        this.updatePtolemyUI();
+      });
+    }
+
+    const btnProof = document.getElementById('ptolemy-mode-proof-btn');
+    if (btnProof) {
+      btnProof.addEventListener('click', () => {
+        this.ptolemyMode = 'proof';
+        this.ptolemyAngles = { A: 11 * Math.PI / 6, B: Math.PI / 4, C: 3 * Math.PI / 4, D: 4 * Math.PI / 3 };
+        this.updatePtolemyUI();
+      });
+    }
+
+    const prevBtn = document.getElementById('ptolemy-prev-step-btn');
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        this.ptolemyProofStep = Math.max(0, this.ptolemyProofStep - 1);
+        this.updatePtolemyUI();
+      });
+    }
+
+    const nextBtn = document.getElementById('ptolemy-next-step-btn');
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        this.ptolemyProofStep = Math.min(6, this.ptolemyProofStep + 1);
+        this.updatePtolemyUI();
       });
     }
   }

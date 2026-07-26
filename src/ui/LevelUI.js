@@ -31,7 +31,8 @@ export class LevelUI {
       parallax: false,
       epicycles: false,
       solvingEpicycles: false,
-      fourier: false
+      fourier: false,
+      ptolemy: false
     };
     this.copernicusVerified = false;
     this.kepler1Verified = false;
@@ -1747,19 +1748,32 @@ export class LevelUI {
         answer: null
       },
       fourier: {
-        title: "4. Epicycle & Fourier",
-        desc: "Fourier analysis shows that any closed curve can be drawn by adding enough epicycles. In fact, Copernicus' and Ptolemy's epicycles were early, discrete Fourier approximations of elliptical planetary motion!<br><br>" +
-              "<strong>Heliocentric Ellipse vs. Geocentric Epicycles</strong>:<br>" +
-              "Kepler showed that planets move in ellipses (focus at Sun) with eccentricity <i>e</i>. Using Fourier expansion, we can approximate an elliptical orbit using a chain of circular epicycles rotating at multiples of the mean motion frequency (&omega;, 2&omega;, -&omega;).<br><br>" +
-              "<em>Note: Planetary eccentricities in this simulator are exaggerated (e.g. Mercury e = 0.55 instead of 0.206) to make the visual effect of adding more epicycles clearly visible!</em><br><br>" +
-              "• Use the **Reference Frame** dropdown to switch between Heliocentric (Sun Center) and Geocentric (Earth Center) modes.<br>" +
-              "• Increase the epicycle count slider on the right to see how additional terms approximate the actual elliptical or geocentric loop orbits.<br>" +
-              "• Try **Freeplay Draw Mode**! Click, drag, and draw any closed loop in the panel, then watch the Fourier Transform compute the exact epicycle chain to reproduce your drawing!",
-        question: "Using the simulator on the right, select Mercury (Exaggerated e = 0.55) in Ellipse Mode, Heliocentric reference frame. What is the minimum number of epicycles needed to closely approximate its actual elliptical path (reducing visual error to &lt;1%)?",
-        placeholder: "e.g. 3",
-        answer: 3
-      }
-    };
+          title: "4. Epicycle & Fourier",
+          desc: "Fourier analysis shows that any closed curve can be drawn by adding enough epicycles. In fact, Copernicus' and Ptolemy's epicycles were early, discrete Fourier approximations of elliptical planetary motion!<br><br>" +
+                "<strong>Heliocentric Ellipse vs. Geocentric Epicycles</strong>:<br>" +
+                "Kepler showed that planets move in ellipses (focus at Sun) with eccentricity <i>e</i>. Using Fourier expansion, we can approximate an elliptical orbit using a chain of circular epicycles rotating at multiples of the mean motion frequency (&omega;, 2&omega;, -&omega;).<br><br>" +
+                "<em>Note: Planetary eccentricities in this simulator are exaggerated (e.g. Mercury e = 0.55 instead of 0.206) to make the visual effect of adding more epicycles clearly visible!</em><br><br>" +
+                "• Use the **Reference Frame** dropdown to switch between Heliocentric (Sun Center) and Geocentric (Earth Center) modes.<br>" +
+                "• Increase the epicycle count slider on the right to see how additional terms approximate the actual elliptical or geocentric loop orbits.<br>" +
+                "• Try **Freeplay Draw Mode**! Click, drag, and draw any closed loop in the panel, then watch the Fourier Transform compute the exact epicycle chain to reproduce your drawing!",
+          question: "Using the simulator on the right, select Mercury (Exaggerated e = 0.55) in Ellipse Mode, Heliocentric reference frame. What is the minimum number of epicycles needed to closely approximate its actual elliptical path (reducing visual error to &lt;1%)?",
+          placeholder: "e.g. 3",
+          answer: 3
+        },
+        ptolemy: {
+          title: "5. Ptolemy's Theorem & Chord Trigonometry",
+          desc: "To construct the trigonometric chord tables in his <i>Almagest</i>, Ptolemy derived <strong>Ptolemy's Theorem</strong> for cyclic quadrilaterals (quadrilaterals inscribed in a circle):<br>" +
+                "<div class='math-block text-center bg-slate-950/60 border border-slate-800/80 p-2 py-1.5 rounded my-1.5 font-mono text-[11px] text-sky-400 font-bold'>AC · BD = (AB · CD) + (BC · AD)</div>" +
+                "When diagonal AC is set as the circle's diameter (length 1), the chord lengths correspond directly to trigonometric functions (&sin; and &cos;). This geometric theorem directly proves the Sine and Cosine Angle Addition &amp; Subtraction identities!<br><br>" +
+                "Specifically, for angle subtraction &sin;(&alpha; - &beta;):<br>" +
+                "<div class='math-block text-center bg-slate-950/60 border border-slate-800/80 p-2 py-1.5 rounded my-1.5 font-mono text-[11px] text-sky-400 font-bold'>sin(&alpha; - &beta;) = sin(&alpha;)cos(&beta;) - cos(&alpha;)sin(&beta;)</div>",
+          question: "Use Ptolemy's Sine Subtraction Identity with &alpha; = 45° and &beta; = 30° to compute <strong>sin(15°) = sin(45° - 30°)</strong>.<br>" +
+                    "Given: sin(45°) = cos(45°) = &radic;2/2 &approx; 0.7071, sin(30°) = 0.5, cos(30°) = &radic;3/2 &approx; 0.8660.<br>" +
+                    "Calculate sin(15°) = (&radic;6 - &radic;2) / 4. Enter your answer rounded to 4 decimal places.",
+          placeholder: "e.g. 0.2588",
+          answer: 0.2588
+        }
+      };
 
     this.container.innerHTML = `
       <div class="level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800" style="width: 380px; max-height: calc(100% - 60px); bottom: 20px; left: 20px;">
@@ -1775,6 +1789,7 @@ export class LevelUI {
           <button id="tab-epicycles" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Retrograde & Epicycles</button>
           <button id="tab-solving-epicycles" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Solving Epicycles</button>
           <button id="tab-fourier" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Fourier &amp; Ellipses</button>
+          <button id="tab-ptolemy" class="tab-btn px-2 py-1 text-[10px] font-semibold rounded transition font-medium" style="background: transparent; color: rgb(148, 163, 184);">Ptolemy's Theorem</button>
         </div>
 
         <!-- Tab Contents Card -->
@@ -1824,6 +1839,12 @@ export class LevelUI {
               <button id="verify-four-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
             </div>
 
+            <!-- Ptolemy Theorem Input -->
+            <div class="flex gap-2 hidden" id="ptolemy-input-container">
+              <input type="number" id="calc-ptolemy" class="flex-1 bg-slate-900 border border-slate-800 text-white text-xs px-3 py-2 rounded-lg outline-none focus:border-sky-500 transition" placeholder="e.g. 0.2588" step="0.0001">
+              <button id="verify-ptolemy-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-semibold px-4 py-2 rounded-lg text-xs transition">Verify</button>
+            </div>
+
             <div id="tab-feedback" class="text-[11px] font-semibold hidden"></div>
           </div>
 
@@ -1858,6 +1879,10 @@ export class LevelUI {
             <span class="status-check text-red-500">❌</span>
             <span>Epicycle &amp; Fourier Transform Verified</span>
           </div>
+          <div id="check-ptolemy" class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium transition">
+            <span class="status-check text-red-500">❌</span>
+            <span>Ptolemy's Theorem Verified</span>
+          </div>
         </div>
 
         <!-- Final Unlock Button -->
@@ -1870,341 +1895,415 @@ export class LevelUI {
       </div>
     `;
 
-    document.getElementById('exit-btn').addEventListener('click', () => {
-      gameState.activeLevel = null;
-      gameState.notify();
-    });
+      document.getElementById('exit-btn').addEventListener('click', () => {
+        gameState.activeLevel = null;
+        gameState.notify();
+      });
 
-    const tabTitle = document.getElementById('tab-title');
-    const tabDesc = document.getElementById('tab-desc');
-    const tabQuestion = document.getElementById('tab-question');
-    const calcInput = document.getElementById('calc-input');
-    const verifyTabBtn = document.getElementById('verify-tab-btn');
-    const tabFeedback = document.getElementById('tab-feedback');
-    const finalSubmitBtn = document.getElementById('final-submit-btn');
-    const paramPanel = document.getElementById('param-panel');
+      const tabTitle = document.getElementById('tab-title');
+      const tabDesc = document.getElementById('tab-desc');
+      const tabQuestion = document.getElementById('tab-question');
+      const calcInput = document.getElementById('calc-input');
+      const verifyTabBtn = document.getElementById('verify-tab-btn');
+      const tabFeedback = document.getElementById('tab-feedback');
+      const finalSubmitBtn = document.getElementById('final-submit-btn');
+      const paramPanel = document.getElementById('param-panel');
 
-    const updateChecklist = () => {
-      const pItem = document.getElementById('check-parallax');
-      const eItem = document.getElementById('check-epicycles');
-      const checkSolving = document.getElementById('check-solving-epicycles');
-      
-      const checkFourier = document.getElementById('check-fourier');
+      const updateChecklist = () => {
+        const pItem = document.getElementById('check-parallax');
+        const eItem = document.getElementById('check-epicycles');
+        const checkSolving = document.getElementById('check-solving-epicycles');
+        const checkFourier = document.getElementById('check-fourier');
+        const checkPtolemy = document.getElementById('check-ptolemy');
 
-      if (pItem) {
-        const iconEl = pItem.querySelector('.status-check');
-        if (this.ptolemyVerified.parallax) {
-          iconEl.textContent = '✅';
-          pItem.classList.remove('text-slate-500');
-          pItem.classList.add('text-green-500');
+        if (pItem) {
+          const iconEl = pItem.querySelector('.status-check');
+          if (this.ptolemyVerified.parallax) {
+            iconEl.textContent = '✅';
+            pItem.classList.remove('text-slate-500');
+            pItem.classList.add('text-green-500');
+          } else {
+            iconEl.textContent = '❌';
+            pItem.classList.remove('text-green-500');
+            pItem.classList.add('text-slate-500');
+          }
+        }
+
+        if (eItem) {
+          const iconEl = eItem.querySelector('.status-check');
+          if (this.ptolemyVerified.epicycles) {
+            iconEl.textContent = '✅';
+            eItem.classList.remove('text-slate-500');
+            eItem.classList.add('text-green-500');
+          } else {
+            iconEl.textContent = '❌';
+            eItem.classList.remove('text-green-500');
+            eItem.classList.add('text-slate-500');
+          }
+        }
+
+        if (checkSolving) {
+          const iconEl = checkSolving.querySelector('.status-check');
+          const progEl = checkSolving.querySelector('.progress-text');
+          const solvedCount = window.activeLevelInstance && window.activeLevelInstance.solvedChallenges ? window.activeLevelInstance.solvedChallenges.length : 0;
+          
+          if (this.ptolemyVerified.solvingEpicycles) {
+            iconEl.textContent = '✅';
+            checkSolving.classList.remove('text-slate-500');
+            checkSolving.classList.add('text-green-500');
+            progEl.textContent = 'Solving Epicycles (4/4 Solved)';
+          } else {
+            iconEl.textContent = '❌';
+            checkSolving.classList.remove('text-green-500');
+            checkSolving.classList.add('text-slate-500');
+            progEl.textContent = `Solving Epicycles (${solvedCount}/4 Solved)`;
+          }
+        }
+
+        if (checkFourier) {
+          const iconEl = checkFourier.querySelector('.status-check');
+          if (this.ptolemyVerified.fourier) {
+            iconEl.textContent = '✅';
+            checkFourier.classList.remove('text-slate-500');
+            checkFourier.classList.add('text-green-500');
+          } else {
+            iconEl.textContent = '❌';
+            checkFourier.classList.remove('text-green-500');
+            checkFourier.classList.add('text-slate-500');
+          }
+        }
+
+        if (checkPtolemy) {
+          const iconEl = checkPtolemy.querySelector('.status-check');
+          if (this.ptolemyVerified.ptolemy) {
+            iconEl.textContent = '✅';
+            checkPtolemy.classList.remove('text-slate-500');
+            checkPtolemy.classList.add('text-green-500');
+          } else {
+            iconEl.textContent = '❌';
+            checkPtolemy.classList.remove('text-green-500');
+            checkPtolemy.classList.add('text-slate-500');
+          }
+        }
+
+        if (this.ptolemyVerified.parallax && this.ptolemyVerified.epicycles && this.ptolemyVerified.solvingEpicycles && this.ptolemyVerified.fourier && this.ptolemyVerified.ptolemy) {
+          finalSubmitBtn.disabled = false;
+          finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
+          finalSubmitBtn.style.color = 'white';
+          finalSubmitBtn.style.cursor = 'pointer';
+          finalSubmitBtn.classList.remove('bg-slate-800', 'text-slate-500', 'cursor-not-allowed');
+          finalSubmitBtn.classList.add('hover:bg-green-600');
         } else {
-          iconEl.textContent = '❌';
-          pItem.classList.remove('text-green-500');
-          pItem.classList.add('text-slate-500');
+          finalSubmitBtn.disabled = true;
+          finalSubmitBtn.style.background = 'rgb(30, 41, 59)'; // slate-800
+          finalSubmitBtn.style.color = 'rgb(100, 116, 139)';
+          finalSubmitBtn.style.cursor = 'not-allowed';
+          finalSubmitBtn.classList.remove('hover:bg-green-600');
         }
-      }
+      };
 
-      if (eItem) {
-        const iconEl = eItem.querySelector('.status-check');
-        if (this.ptolemyVerified.epicycles) {
-          iconEl.textContent = '✅';
-          eItem.classList.remove('text-slate-500');
-          eItem.classList.add('text-green-500');
-        } else {
-          iconEl.textContent = '❌';
-          eItem.classList.remove('text-green-500');
-          eItem.classList.add('text-slate-500');
-        }
-      }
-
-      if (checkSolving) {
-        const iconEl = checkSolving.querySelector('.status-check');
-        const progEl = checkSolving.querySelector('.progress-text');
-        const solvedCount = window.activeLevelInstance && window.activeLevelInstance.solvedChallenges ? window.activeLevelInstance.solvedChallenges.length : 0;
-        
-        if (this.ptolemyVerified.solvingEpicycles) {
-          iconEl.textContent = '✅';
-          checkSolving.classList.remove('text-slate-500');
-          checkSolving.classList.add('text-green-500');
-          progEl.textContent = 'Solving Epicycles (4/4 Solved)';
-        } else {
-          iconEl.textContent = '❌';
-          checkSolving.classList.remove('text-green-500');
-          checkSolving.classList.add('text-slate-500');
-          progEl.textContent = `Solving Epicycles (${solvedCount}/4 Solved)`;
-        }
-      }
-
-      if (checkFourier) {
-        const iconEl = checkFourier.querySelector('.status-check');
-        if (this.ptolemyVerified.fourier) {
-          iconEl.textContent = '✅';
-          checkFourier.classList.remove('text-slate-500');
-          checkFourier.classList.add('text-green-500');
-        } else {
-          iconEl.textContent = '❌';
-          checkFourier.classList.remove('text-green-500');
-          checkFourier.classList.add('text-slate-500');
-        }
-      }
-
-      if (this.ptolemyVerified.parallax && this.ptolemyVerified.epicycles && this.ptolemyVerified.solvingEpicycles && this.ptolemyVerified.fourier) {
-        finalSubmitBtn.disabled = false;
-        finalSubmitBtn.style.background = 'rgb(34, 197, 94)'; // green-500
-        finalSubmitBtn.style.color = 'white';
-        finalSubmitBtn.style.cursor = 'pointer';
-        finalSubmitBtn.classList.remove('bg-slate-800', 'text-slate-500', 'cursor-not-allowed');
-        finalSubmitBtn.classList.add('hover:bg-green-600');
-      } else {
-        finalSubmitBtn.disabled = true;
-        finalSubmitBtn.style.background = 'rgb(30, 41, 59)'; // slate-800
-        finalSubmitBtn.style.color = 'rgb(100, 116, 139)';
-        finalSubmitBtn.style.cursor = 'not-allowed';
-        finalSubmitBtn.classList.remove('hover:bg-green-600');
-      }
-    };
-
-    const updateEpicycleControls = () => {
-      if (!window.activeLevelInstance) return;
-      const inst = window.activeLevelInstance;
-      const readoutEpiR = document.getElementById('readout-epi-r');
-      const readoutDefSpeed = document.getElementById('readout-def-speed');
-      const readoutEpiSpeed = document.getElementById('readout-epi-speed');
-      if (readoutEpiR) readoutEpiR.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.epicycleRadius.toFixed(1);
-      if (readoutDefSpeed) readoutDefSpeed.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.deferentSpeed.toFixed(2);
-      if (readoutEpiSpeed) readoutEpiSpeed.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.epicycleSpeed.toFixed(2);
-    };
-
-    const updateTabContent = () => {
-      const data = tabData[activeTab];
-      tabTitle.textContent = data.title;
-      tabDesc.innerHTML = data.desc;
-      tabQuestion.innerHTML = data.question;
-
-      const verifyArea = document.getElementById('verify-area');
-      const parallaxSliderArea = document.getElementById('parallax-slider-area');
-      const parallaxInputContainer = document.getElementById('parallax-input-container');
-      const epicyclesInputContainer = document.getElementById('epicycles-input-container');
-      const fourierInputContainer = document.getElementById('fourier-input-container');
-      
-      if (activeTab === 'parallax') {
-        verifyArea.classList.remove('hidden');
-        parallaxInputContainer.classList.remove('hidden');
-        epicyclesInputContainer.classList.add('hidden');
-        fourierInputContainer.classList.add('hidden');
-        parallaxSliderArea.classList.remove('hidden');
-        calcInput.placeholder = data.placeholder;
-        calcInput.value = '';
-        tabFeedback.classList.add('hidden');
-        if (this.ptolemyVerified.parallax) {
-          calcInput.value = '0.000214';
-          tabFeedback.textContent = "Correct! The parallax angle is extremely tiny (~0.000214°).";
-          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
-          tabFeedback.classList.remove('hidden');
-        }
-        paramPanel.style.display = 'none';
-        
-      } else if (activeTab === 'epicycles') {
-        verifyArea.classList.remove('hidden');
-        parallaxInputContainer.classList.add('hidden');
-        epicyclesInputContainer.classList.remove('hidden');
-        fourierInputContainer.classList.add('hidden');
-        parallaxSliderArea.classList.add('hidden');
-        tabFeedback.classList.add('hidden');
-        
-        paramPanel.style.display = 'flex';
-        paramPanel.className = "absolute bottom-6 right-6 left-[420px] bg-slate-900/90 backdrop-blur-md border border-slate-800 p-4 rounded-xl shadow-xl flex flex-col gap-2.5 text-slate-200 pointer-events-auto shadow-2xl";
-        paramPanel.style.width = "";
-        paramPanel.style.maxHeight = "";
-        paramPanel.style.bottom = "";
-        paramPanel.style.right = "";
-        paramPanel.style.left = "";
-        paramPanel.style.top = "";
-
-        paramPanel.innerHTML = `
-          <div class="flex flex-wrap items-center justify-between gap-4 w-full">
-            <div class="flex items-center gap-2">
-              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Planet:</span>
-              <select id="planet-select" class="bg-slate-950 border border-slate-800 text-sky-400 font-semibold text-xs px-3 py-1.5 rounded-lg outline-none focus:border-sky-500 transition cursor-pointer">
-                <option value="All" selected>All Planets</option>
-                <option value="Mercury">Mercury</option>
-                <option value="Venus">Venus</option>
-                <option value="Mars">Mars</option>
-                <option value="Jupiter">Jupiter</option>
-                <option value="Saturn">Saturn</option>
-              </select>
-            </div>
-            <div class="flex items-center gap-2">
-              <button id="play-pause-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5">
-                <span id="play-pause-icon">▶</span>
-                <span id="play-pause-text">Play</span>
-              </button>
-              <button id="reset-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-1.5 rounded-lg text-xs border border-slate-700 transition">
-                Reset
-              </button>
-            </div>
-            <div class="flex gap-4 text-xs font-medium">
-              <div>Epicycle R: <span class="text-sky-400 font-mono" id="readout-epi-r">All</span></div>
-              <div>Deferent Speed: <span class="text-sky-400 font-mono" id="readout-def-speed">All</span></div>
-              <div>Epicycle Speed: <span class="text-sky-400 font-mono" id="readout-epi-speed">All</span></div>
-            </div>
-          </div>
-        `;
-
+      const updateEpicycleControls = () => {
+        if (!window.activeLevelInstance) return;
         const inst = window.activeLevelInstance;
-        if (inst) {
-          document.getElementById('planet-select').addEventListener('change', (e) => {
-            inst.selectPlanet(e.target.value);
-            updateEpicycleControls();
-          });
-          document.getElementById('play-pause-btn').addEventListener('click', () => {
-            inst.togglePlay();
-            updateEpicycleControls();
-          });
-          document.getElementById('reset-btn').addEventListener('click', () => {
-            inst.resetSimulation();
-            updateEpicycleControls();
-          });
-          updateEpicycleControls();
-        }
-      } else if (activeTab === 'solving-epicycles') {
-        verifyArea.classList.add('hidden');
-        parallaxSliderArea.classList.add('hidden');
-        tabFeedback.classList.add('hidden');
+        const readoutEpiR = document.getElementById('readout-epi-r');
+        const readoutDefSpeed = document.getElementById('readout-def-speed');
+        const readoutEpiSpeed = document.getElementById('readout-epi-speed');
+        if (readoutEpiR) readoutEpiR.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.epicycleRadius.toFixed(1);
+        if (readoutDefSpeed) readoutDefSpeed.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.deferentSpeed.toFixed(2);
+        if (readoutEpiSpeed) readoutEpiSpeed.textContent = inst.selectedPlanetName === 'All' ? 'All' : inst.epicycleSpeed.toFixed(2);
+      };
+
+      const updateTabContent = () => {
+        const data = tabData[activeTab];
+        tabTitle.textContent = data.title;
+        tabDesc.innerHTML = data.desc;
+        tabQuestion.innerHTML = data.question;
+
+        const verifyArea = document.getElementById('verify-area');
+        const parallaxSliderArea = document.getElementById('parallax-slider-area');
+        const parallaxInputContainer = document.getElementById('parallax-input-container');
+        const epicyclesInputContainer = document.getElementById('epicycles-input-container');
+        const fourierInputContainer = document.getElementById('fourier-input-container');
+        const ptolemyInputContainer = document.getElementById('ptolemy-input-container');
         
-        paramPanel.style.display = 'flex';
-        paramPanel.className = "level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800 pointer-events-auto p-4 rounded-xl flex flex-col gap-2.5 text-slate-200 overflow-y-auto";
-        paramPanel.style.width = "380px";
-        paramPanel.style.maxHeight = "calc(100% - 60px)";
-        paramPanel.style.bottom = "20px";
-        paramPanel.style.right = "20px";
-        paramPanel.style.left = "auto";
-        paramPanel.style.top = "auto";
+        if (activeTab === 'parallax') {
+          verifyArea.classList.remove('hidden');
+          parallaxInputContainer.classList.remove('hidden');
+          epicyclesInputContainer.classList.add('hidden');
+          fourierInputContainer.classList.add('hidden');
+          ptolemyInputContainer.classList.add('hidden');
+          parallaxSliderArea.classList.remove('hidden');
+          calcInput.placeholder = data.placeholder;
+          calcInput.value = '';
+          tabFeedback.classList.add('hidden');
+          if (this.ptolemyVerified.parallax) {
+            calcInput.value = '0.000214';
+            tabFeedback.textContent = "Correct! The parallax angle is extremely tiny (~0.000214°).";
+            tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+            tabFeedback.classList.remove('hidden');
+          }
+          paramPanel.style.display = 'none';
+          
+        } else if (activeTab === 'epicycles') {
+          verifyArea.classList.remove('hidden');
+          parallaxInputContainer.classList.add('hidden');
+          epicyclesInputContainer.classList.remove('hidden');
+          fourierInputContainer.classList.add('hidden');
+          ptolemyInputContainer.classList.add('hidden');
+          parallaxSliderArea.classList.add('hidden');
+          tabFeedback.classList.add('hidden');
+          
+          paramPanel.style.display = 'flex';
+          paramPanel.className = "absolute bottom-6 right-6 left-[420px] bg-slate-900/90 backdrop-blur-md border border-slate-800 p-4 rounded-xl shadow-xl flex flex-col gap-2.5 text-slate-200 pointer-events-auto shadow-2xl";
+          paramPanel.style.width = "";
+          paramPanel.style.maxHeight = "";
+          paramPanel.style.bottom = "";
+          paramPanel.style.right = "";
+          paramPanel.style.left = "";
+          paramPanel.style.top = "";
 
-        const inst = window.activeLevelInstance;
-        if (inst && typeof inst.updateSolvingEpicyclesUI === 'function') {
-          inst.updateSolvingEpicyclesUI();
+          paramPanel.innerHTML = `
+            <div class="flex flex-wrap items-center justify-between gap-4 w-full">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Planet:</span>
+                <select id="planet-select" class="bg-slate-950 border border-slate-800 text-sky-400 font-semibold text-xs px-3 py-1.5 rounded-lg outline-none focus:border-sky-500 transition cursor-pointer">
+                  <option value="All" selected>All Planets</option>
+                  <option value="Mercury">Mercury</option>
+                  <option value="Venus">Venus</option>
+                  <option value="Mars">Mars</option>
+                  <option value="Jupiter">Jupiter</option>
+                  <option value="Saturn">Saturn</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="play-pause-btn" class="bg-sky-500 hover:bg-sky-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5">
+                  <span id="play-pause-icon">▶</span>
+                  <span id="play-pause-text">Play</span>
+                </button>
+                <button id="reset-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-1.5 rounded-lg text-xs border border-slate-700 transition">
+                  Reset
+                </button>
+              </div>
+              <div class="flex gap-4 text-xs font-medium">
+                <div>Epicycle R: <span class="text-sky-400 font-mono" id="readout-epi-r">All</span></div>
+                <div>Deferent Speed: <span class="text-sky-400 font-mono" id="readout-def-speed">All</span></div>
+                <div>Epicycle Speed: <span class="text-sky-400 font-mono" id="readout-epi-speed">All</span></div>
+              </div>
+            </div>
+          `;
+
+          const inst = window.activeLevelInstance;
+          if (inst) {
+            document.getElementById('planet-select').addEventListener('change', (e) => {
+              inst.selectPlanet(e.target.value);
+              updateEpicycleControls();
+            });
+            document.getElementById('play-pause-btn').addEventListener('click', () => {
+              inst.togglePlay();
+              updateEpicycleControls();
+            });
+            document.getElementById('reset-btn').addEventListener('click', () => {
+              inst.resetSimulation();
+              updateEpicycleControls();
+            });
+            updateEpicycleControls();
+          }
+        } else if (activeTab === 'solving-epicycles') {
+          verifyArea.classList.add('hidden');
+          parallaxSliderArea.classList.add('hidden');
+          tabFeedback.classList.add('hidden');
+          
+          paramPanel.style.display = 'flex';
+          paramPanel.className = "level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800 pointer-events-auto p-4 rounded-xl flex flex-col gap-2.5 text-slate-200 overflow-y-auto";
+          paramPanel.style.width = "380px";
+          paramPanel.style.maxHeight = "calc(100% - 60px)";
+          paramPanel.style.bottom = "20px";
+          paramPanel.style.right = "20px";
+          paramPanel.style.left = "auto";
+          paramPanel.style.top = "auto";
+
+          const inst = window.activeLevelInstance;
+          if (inst && typeof inst.updateSolvingEpicyclesUI === 'function') {
+            inst.updateSolvingEpicyclesUI();
+          }
+        } else if (activeTab === 'fourier') {
+          verifyArea.classList.remove('hidden');
+          parallaxInputContainer.classList.add('hidden');
+          epicyclesInputContainer.classList.add('hidden');
+          fourierInputContainer.classList.remove('hidden');
+          ptolemyInputContainer.classList.add('hidden');
+          parallaxSliderArea.classList.add('hidden');
+          tabFeedback.classList.add('hidden');
+          
+          paramPanel.style.display = 'flex';
+          paramPanel.className = "level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800 pointer-events-auto p-4 rounded-xl flex flex-col gap-2.5 text-slate-200 overflow-y-auto";
+          paramPanel.style.width = "380px";
+          paramPanel.style.maxHeight = "calc(100% - 60px)";
+          paramPanel.style.bottom = "20px";
+          paramPanel.style.right = "20px";
+          paramPanel.style.left = "auto";
+          paramPanel.style.top = "auto";
+
+          const inst = window.activeLevelInstance;
+          if (inst && typeof inst.updateFourierUI === 'function') {
+            inst.updateFourierUI();
+          }
+        } else if (activeTab === 'ptolemy') {
+          verifyArea.classList.remove('hidden');
+          parallaxInputContainer.classList.add('hidden');
+          epicyclesInputContainer.classList.add('hidden');
+          fourierInputContainer.classList.add('hidden');
+          ptolemyInputContainer.classList.remove('hidden');
+          parallaxSliderArea.classList.add('hidden');
+          tabFeedback.classList.add('hidden');
+          
+          if (this.ptolemyVerified.ptolemy) {
+            const ptolemyInput = document.getElementById('calc-ptolemy');
+            if (ptolemyInput) ptolemyInput.value = '0.2588';
+            tabFeedback.textContent = "Correct! sin(15°) = (√6 - √2) / 4 ≈ 0.2588.";
+            tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+            tabFeedback.classList.remove('hidden');
+          }
+
+          paramPanel.style.display = 'flex';
+          paramPanel.className = "level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800 pointer-events-auto p-4 rounded-xl flex flex-col gap-2.5 text-slate-200 overflow-y-auto";
+          paramPanel.style.width = "380px";
+          paramPanel.style.maxHeight = "calc(100% - 60px)";
+          paramPanel.style.bottom = "20px";
+          paramPanel.style.right = "20px";
+          paramPanel.style.left = "auto";
+          paramPanel.style.top = "auto";
+
+          const inst = window.activeLevelInstance;
+          if (inst && typeof inst.updatePtolemyUI === 'function') {
+            inst.updatePtolemyUI();
+          }
         }
-      } else if (activeTab === 'fourier') {
-        verifyArea.classList.remove('hidden');
-        parallaxInputContainer.classList.add('hidden');
-        epicyclesInputContainer.classList.add('hidden');
-        fourierInputContainer.classList.remove('hidden');
-        parallaxSliderArea.classList.add('hidden');
-        tabFeedback.classList.add('hidden');
+      };
+
+      const switchTab = (tab) => {
+        activeTab = tab;
+        const tabP = document.getElementById('tab-parallax');
+        const tabE = document.getElementById('tab-epicycles');
+        const tabS = document.getElementById('tab-solving-epicycles');
+        const tabF = document.getElementById('tab-fourier');
+        const tabPt = document.getElementById('tab-ptolemy');
         
-        paramPanel.style.display = 'flex';
-        paramPanel.className = "level-panel shadow-2xl backdrop-blur-md bg-slate-900/90 border border-slate-800 pointer-events-auto p-4 rounded-xl flex flex-col gap-2.5 text-slate-200 overflow-y-auto";
-        paramPanel.style.width = "380px";
-        paramPanel.style.maxHeight = "calc(100% - 60px)";
-        paramPanel.style.bottom = "20px";
-        paramPanel.style.right = "20px";
-        paramPanel.style.left = "auto";
-        paramPanel.style.top = "auto";
-
-        const inst = window.activeLevelInstance;
-        if (inst && typeof inst.updateFourierUI === 'function') {
-          inst.updateFourierUI();
+        tabP.style.background = tab === 'parallax' ? 'rgb(56, 189, 248)' : 'transparent';
+        tabP.style.color = tab === 'parallax' ? 'black' : 'rgb(148, 163, 184)';
+        tabE.style.background = tab === 'epicycles' ? 'rgb(56, 189, 248)' : 'transparent';
+        tabE.style.color = tab === 'epicycles' ? 'black' : 'rgb(148, 163, 184)';
+        tabS.style.background = tab === 'solving-epicycles' ? 'rgb(56, 189, 248)' : 'transparent';
+        tabS.style.color = tab === 'solving-epicycles' ? 'black' : 'rgb(148, 163, 184)';
+        tabF.style.background = tab === 'fourier' ? 'rgb(56, 189, 248)' : 'transparent';
+        tabF.style.color = tab === 'fourier' ? 'black' : 'rgb(148, 163, 184)';
+        if (tabPt) {
+          tabPt.style.background = tab === 'ptolemy' ? 'rgb(56, 189, 248)' : 'transparent';
+          tabPt.style.color = tab === 'ptolemy' ? 'black' : 'rgb(148, 163, 184)';
         }
-      }
-    };
-
-    const switchTab = (tab) => {
-      activeTab = tab;
-      const tabP = document.getElementById('tab-parallax');
-      const tabE = document.getElementById('tab-epicycles');
-      const tabS = document.getElementById('tab-solving-epicycles');
-      const tabF = document.getElementById('tab-fourier');
-      
-      tabP.style.background = tab === 'parallax' ? 'rgb(56, 189, 248)' : 'transparent';
-      tabP.style.color = tab === 'parallax' ? 'black' : 'rgb(148, 163, 184)';
-      tabE.style.background = tab === 'epicycles' ? 'rgb(56, 189, 248)' : 'transparent';
-      tabE.style.color = tab === 'epicycles' ? 'black' : 'rgb(148, 163, 184)';
-      tabS.style.background = tab === 'solving-epicycles' ? 'rgb(56, 189, 248)' : 'transparent';
-      tabS.style.color = tab === 'solving-epicycles' ? 'black' : 'rgb(148, 163, 184)';
-      tabF.style.background = tab === 'fourier' ? 'rgb(56, 189, 248)' : 'transparent';
-      tabF.style.color = tab === 'fourier' ? 'black' : 'rgb(148, 163, 184)';
-      
-      if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
-        window.activeLevelInstance.setSubtask(tab);
-      }
-      updateTabContent();
-      updateChecklist();
-    };
-
-    document.getElementById('tab-parallax').addEventListener('click', () => switchTab('parallax'));
-    document.getElementById('tab-epicycles').addEventListener('click', () => switchTab('epicycles'));
-    document.getElementById('tab-solving-epicycles').addEventListener('click', () => switchTab('solving-epicycles'));
-    document.getElementById('tab-fourier').addEventListener('click', () => switchTab('fourier'));
-
-    verifyTabBtn.addEventListener('click', () => {
-      const val = parseFloat(calcInput.value);
-      if (isNaN(val)) return;
-      tabFeedback.classList.remove('hidden');
-      if (activeTab === 'parallax') {
-        if (Math.abs(val - 0.000214) <= 0.000002) {
-          tabFeedback.textContent = "Correct! The parallax angle is extremely tiny (~0.000214°).";
-          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
-          this.ptolemyVerified.parallax = true;
-          updateChecklist();
-        } else {
-          tabFeedback.textContent = "Incorrect. Use: p_deg = 1 / (d * 3600) = 1 / (1.30 * 3600) ≈ 0.000214°. Try 0.000214.";
-          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+        
+        if (window.activeLevelInstance && typeof window.activeLevelInstance.setSubtask === 'function') {
+          window.activeLevelInstance.setSubtask(tab);
         }
-      }
-    });
-
-    const verifyEpiBtn = document.getElementById('verify-epi-btn');
-    verifyEpiBtn.addEventListener('click', () => {
-      const mer = parseFloat(document.getElementById('calc-mercury')?.value || '0');
-      const v = parseFloat(document.getElementById('calc-venus').value);
-      const m = parseFloat(document.getElementById('calc-mars').value);
-      const j = parseFloat(document.getElementById('calc-jupiter').value);
-      const s = parseFloat(document.getElementById('calc-saturn').value);
-      if (isNaN(mer) || isNaN(v) || isNaN(m) || isNaN(j) || isNaN(s)) return;
-      tabFeedback.classList.remove('hidden');
-      const merOk = Math.abs(mer - 23.2) <= 0.35 || Math.abs(mer - 23.22) <= 0.1;
-      const vOk = Math.abs(v - 43.1) <= 0.45 || Math.abs(v - 43.38) <= 0.1;
-      const mOk = Math.abs(m - 39.5) <= 0.15 || Math.abs(m - 39.47) <= 0.1;
-      const jOk = Math.abs(j - 11.5) <= 0.15 || Math.abs(j - 11.54) <= 0.1;
-      const sOk = Math.abs(s - 6.5) <= 0.25 || Math.abs(s - 6.26) <= 0.1;
-      if (merOk && vOk && mOk && jOk && sOk) {
-        tabFeedback.textContent = "Correct! Epicycle sizes match the Keplerian/Ptolemaic scale ratios.";
-        tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
-        this.ptolemyVerified.epicycles = true;
+        updateTabContent();
         updateChecklist();
-      } else {
-        tabFeedback.textContent = "Incorrect. Use: Mercury (60 × 0.387 = 23.2), Venus (60 × 0.723 = 43.1/43.4), Mars (60 / 1.52 = 39.5), Jupyter (60 / 5.2 = 11.5), Saturn (60 / 9.58 = 6.5/6.3).";
-        tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
-      }
-    });
+      };
 
-    const verifyFourBtn = document.getElementById('verify-four-btn');
-    if (verifyFourBtn) {
-      verifyFourBtn.addEventListener('click', () => {
-        const val = parseFloat(document.getElementById('calc-fourier').value);
+      document.getElementById('tab-parallax').addEventListener('click', () => switchTab('parallax'));
+      document.getElementById('tab-epicycles').addEventListener('click', () => switchTab('epicycles'));
+      document.getElementById('tab-solving-epicycles').addEventListener('click', () => switchTab('solving-epicycles'));
+      document.getElementById('tab-fourier').addEventListener('click', () => switchTab('fourier'));
+      const tabPtBtn = document.getElementById('tab-ptolemy');
+      if (tabPtBtn) tabPtBtn.addEventListener('click', () => switchTab('ptolemy'));
+
+      verifyTabBtn.addEventListener('click', () => {
+        const val = parseFloat(calcInput.value);
         if (isNaN(val)) return;
-        const tabFeedback = document.getElementById('tab-feedback');
         tabFeedback.classList.remove('hidden');
-        if (val === 3) {
-          tabFeedback.textContent = "Correct! 3 epicycles (deferent + 2 harmonic epicycles) approximate Mercury's ellipse to <1% error.";
-          tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
-          this.ptolemyVerified.fourier = true;
-          updateChecklist();
-        } else {
-          tabFeedback.textContent = "Incorrect. Mercury's high eccentricity requires at least 3 terms (1 deferent, 2 epicycles) to get a close fit. Try 3.";
-          tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+        if (activeTab === 'parallax') {
+          if (Math.abs(val - 0.000214) <= 0.000002) {
+            tabFeedback.textContent = "Correct! The parallax angle is extremely tiny (~0.000214°).";
+            tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+            this.ptolemyVerified.parallax = true;
+            updateChecklist();
+          } else {
+            tabFeedback.textContent = "Incorrect. Use: p_deg = 1 / (d * 3600) = 1 / (1.30 * 3600) ≈ 0.000214°. Try 0.000214.";
+            tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+          }
         }
       });
+
+      const verifyEpiBtn = document.getElementById('verify-epi-btn');
+      if (verifyEpiBtn) {
+        verifyEpiBtn.addEventListener('click', () => {
+          const mer = parseFloat(document.getElementById('calc-mercury')?.value || '0');
+          const v = parseFloat(document.getElementById('calc-venus')?.value || '0');
+          const m = parseFloat(document.getElementById('calc-mars')?.value || '0');
+          const j = parseFloat(document.getElementById('calc-jupiter')?.value || '0');
+          const s = parseFloat(document.getElementById('calc-saturn')?.value || '0');
+          if (isNaN(mer) || isNaN(v) || isNaN(m) || isNaN(j) || isNaN(s)) return;
+          tabFeedback.classList.remove('hidden');
+          const merOk = Math.abs(mer - 23.2) <= 0.35 || Math.abs(mer - 23.22) <= 0.1;
+          const vOk = Math.abs(v - 43.1) <= 0.45 || Math.abs(v - 43.38) <= 0.1;
+          const mOk = Math.abs(m - 39.5) <= 0.15 || Math.abs(m - 39.47) <= 0.1;
+          const jOk = Math.abs(j - 11.5) <= 0.15 || Math.abs(j - 11.54) <= 0.1;
+          const sOk = Math.abs(s - 6.5) <= 0.25 || Math.abs(s - 6.26) <= 0.1;
+          if (merOk && vOk && mOk && jOk && sOk) {
+            tabFeedback.textContent = "Correct! Epicycle sizes match the Keplerian/Ptolemaic scale ratios.";
+            tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+            this.ptolemyVerified.epicycles = true;
+            updateChecklist();
+          } else {
+            tabFeedback.textContent = "Incorrect. Use: Mercury (60 × 0.387 = 23.2), Venus (60 × 0.723 = 43.1/43.4), Mars (60 / 1.52 = 39.5), Jupyter (60 / 5.2 = 11.5), Saturn (60 / 9.58 = 6.5/6.3).";
+            tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+          }
+        });
+      }
+
+      const verifyFourBtn = document.getElementById('verify-four-btn');
+      if (verifyFourBtn) {
+        verifyFourBtn.addEventListener('click', () => {
+          const val = parseFloat(document.getElementById('calc-fourier')?.value || '0');
+          if (isNaN(val)) return;
+          tabFeedback.classList.remove('hidden');
+          if (val === 3) {
+            tabFeedback.textContent = "Correct! 3 epicycles (deferent + 2 harmonic epicycles) approximate Mercury's ellipse to <1% error.";
+            tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+            this.ptolemyVerified.fourier = true;
+            updateChecklist();
+          } else {
+            tabFeedback.textContent = "Incorrect. Mercury's high eccentricity requires at least 3 terms (1 deferent, 2 epicycles) to get a close fit. Try 3.";
+            tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+          }
+        });
+      }
+
+      const verifyPtolemyBtn = document.getElementById('verify-ptolemy-btn');
+      if (verifyPtolemyBtn) {
+        verifyPtolemyBtn.addEventListener('click', () => {
+          const val = parseFloat(document.getElementById('calc-ptolemy')?.value || '0');
+          if (isNaN(val)) return;
+          tabFeedback.classList.remove('hidden');
+          const exactVal = (Math.sqrt(6) - Math.sqrt(2)) / 4; // ~0.258819
+          if (Math.abs(val - 0.2588) <= 0.0005 || Math.abs(val - exactVal) <= 0.001) {
+            tabFeedback.textContent = "Correct! sin(15°) = (√6 - √2) / 4 ≈ 0.2588.";
+            tabFeedback.className = "text-[11px] font-semibold text-green-500 mt-1";
+            this.ptolemyVerified.ptolemy = true;
+            updateChecklist();
+          } else {
+            tabFeedback.textContent = "Incorrect. sin(45°)cos(30°) - cos(45°)sin(30°) = (0.7071 × 0.8660) - (0.7071 × 0.5) ≈ 0.2588. Try 0.2588.";
+            tabFeedback.className = "text-[11px] font-semibold text-red-500 mt-1";
+          }
+        });
+      }
+
+      finalSubmitBtn.addEventListener('click', () => {
+        gameState.completeLevel(6);
+      });
+
+      updateTabContent();
+      updateChecklist();
     }
-
-    finalSubmitBtn.addEventListener('click', () => {
-      gameState.completeLevel(6);
-    });
-
-    updateTabContent();
-    updateChecklist();
-  }
 
   renderLevel7() {
     this.container.innerHTML = `
