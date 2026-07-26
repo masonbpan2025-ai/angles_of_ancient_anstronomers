@@ -95,8 +95,8 @@ export class Level6 {
     this.fourierFrame = 'helio'; // 'helio' or 'geo'
 
     // Ptolemy's Theorem State
-    this.ptolemyMode = 'sine-sum'; // 'sine-sum', 'cosine-sum', or 'proof'
-    this.ptolemyAngles = { A: Math.PI, B: 4.2, C: 0, D: 1.2 };
+    this.ptolemyMode = 'proof'; // 'proof', 'sine-sum', or 'cosine-sum'
+    this.ptolemyAngles = { A: 11 * Math.PI / 6, B: Math.PI / 4, C: 3 * Math.PI / 4, D: 4 * Math.PI / 3 };
     this.ptolemyProofStep = 0;
     this.ptolemyActivePoint = null;
 
@@ -246,10 +246,10 @@ export class Level6 {
 
       if (this.subtask === 'ptolemy') {
         const taskPanelWidth = 400;
-        const W_illus = this.canvas.width - taskPanelWidth;
-        const cx = taskPanelWidth + W_illus / 2;
+        const rightPanelWidth = 400;
+        const cx = taskPanelWidth + (this.canvas.width - taskPanelWidth - rightPanelWidth) / 2;
         const cy = this.canvas.height / 2;
-        const radius = Math.min(W_illus, this.canvas.height) * 0.35;
+        const radius = Math.min(this.canvas.width - 820, this.canvas.height - 140) * 0.42;
 
         const pts = ['A', 'B', 'C', 'D'];
         for (let pt of pts) {
@@ -286,8 +286,8 @@ export class Level6 {
     const onMouseMove = (e) => {
       if (this.subtask === 'ptolemy' && this.ptolemyActivePoint) {
         const taskPanelWidth = 400;
-        const W_illus = this.canvas.width - taskPanelWidth;
-        const cx = taskPanelWidth + W_illus / 2;
+        const rightPanelWidth = 400;
+        const cx = taskPanelWidth + (this.canvas.width - taskPanelWidth - rightPanelWidth) / 2;
         const cy = this.canvas.height / 2;
         let newAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
         if (newAngle < 0) newAngle += 2 * Math.PI;
@@ -2848,10 +2848,10 @@ export class Level6 {
   drawPtolemyView() {
     const ctx = this.ctx;
     const taskPanelWidth = 400;
-    const W_illus = this.canvas.width - taskPanelWidth;
-    const cx = taskPanelWidth + W_illus / 2;
+    const rightPanelWidth = 400;
+    const cx = taskPanelWidth + (this.canvas.width - taskPanelWidth - rightPanelWidth) / 2;
     const cy = this.canvas.height / 2;
-    const radius = Math.min(W_illus, this.canvas.height) * 0.35;
+    const radius = Math.min(this.canvas.width - 820, this.canvas.height - 140) * 0.42;
 
     const getPoint = (ang) => ({
       x: cx + radius * Math.cos(ang),
@@ -2989,13 +2989,13 @@ export class Level6 {
     ctx.fillStyle = '#ffffff';
     ctx.font = '600 14px Outfit,sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText("Ptolemy's Theorem & Chord Trigonometry", taskPanelWidth + W_illus / 2, 38);
+    ctx.fillText("Ptolemy's Theorem & Chord Trigonometry", cx, 38);
 
     ctx.fillStyle = '#38bdf8';
     ctx.font = '700 12px Outfit,monospace';
     const leftVal = (AC * scale * BD * scale).toFixed(4);
     const rightVal = (AB * scale * CD * scale + BC * scale * DA * scale).toFixed(4);
-    ctx.fillText(`AC·BD = (AB·CD) + (BC·AD)  ⟹  ${leftVal} = ${rightVal}`, taskPanelWidth + W_illus / 2, 58);
+    ctx.fillText(`AC·BD = (AB·CD) + (BC·AD)  ⟹  ${leftVal} = ${rightVal}`, cx, 58);
   }
 
   updatePtolemyUI() {
@@ -3021,9 +3021,9 @@ export class Level6 {
         </div>
 
         <div class="flex bg-slate-950/60 rounded-lg p-0.5 border border-slate-850">
+          <button id="ptolemy-mode-proof-btn" class="flex-1 text-[10px] py-1 rounded transition ${isProof ? 'bg-slate-800 text-indigo-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">General Proof</button>
           <button id="ptolemy-mode-sine-btn" class="flex-1 text-[10px] py-1 rounded transition ${isSine ? 'bg-slate-800 text-sky-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Sine Subtraction</button>
           <button id="ptolemy-mode-cosine-btn" class="flex-1 text-[10px] py-1 rounded transition ${this.ptolemyMode === 'cosine-sum' ? 'bg-slate-800 text-sky-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">Cosine Sum</button>
-          <button id="ptolemy-mode-proof-btn" class="flex-1 text-[10px] py-1 rounded transition ${isProof ? 'bg-slate-800 text-indigo-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'}">General Proof</button>
         </div>
 
         ${isProof ? `
