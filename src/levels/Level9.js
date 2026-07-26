@@ -522,8 +522,8 @@ export class Level9 {
     const sunY = 200;
     const r = 150;
 
-    const px = sunX + r * Math.sin(twoTheta);
-    const py = sunY - r * Math.cos(twoTheta);
+    const px = sunX + r * Math.cos(twoTheta);
+    const py = sunY - r * Math.sin(twoTheta);
 
     if (!this.accelerationUIInitialized) {
       this.accelerationContainer.innerHTML = `
@@ -551,8 +551,8 @@ export class Level9 {
                 <p class="text-[10px] text-slate-300 mb-2 leading-relaxed font-sans">
                   Newton analyzed an orbit as a series of constant falling drops towards the center.
                   Over a small time interval t:
-                  <br>• The satellite travels horizontally by v · t (inertial tangent).
-                  <br>• It falls vertically towards the center by ½ · a · t².
+                  <br>• The vertical component represents velocity displacement (v · t).
+                  <br>• The horizontal component represents fall due to gravity (½ · a · t²).
                 </p>
                 <p class="text-[10px] text-slate-400 leading-relaxed font-sans">
                   As the time interval t → 0 (drag the slider in the top-right to test), the approximation sin(2θ) ≈ 2θ and tanθ ≈ θ becomes exact.
@@ -579,7 +579,7 @@ export class Level9 {
                 </div>
               </div>
 
-              <!-- Proof Derivation Card (Moved to Left Panel) -->
+              <!-- Proof Derivation Card -->
               <div class="bg-slate-850/50 p-3 rounded-xl border border-slate-800/80 font-mono text-[9.5px] space-y-2">
                 <h3 class="text-[11px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1.5 font-sans">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
@@ -651,33 +651,34 @@ export class Level9 {
 
                 <!-- Circle Orbit -->
                 <circle cx="${sunX}" cy="${sunY}" r="${r}" fill="none" stroke="#475569" stroke-width="1.5" />
+                <circle cx="${sunX}" cy="${sunY}" r="2.5" fill="#eab308" />
 
-                <!-- Vertical diameter dashed line -->
-                <line x1="${sunX}" y1="${sunY - r}" x2="${sunX}" y2="${sunY + r}" stroke="rgba(255,255,255,0.15)" stroke-dasharray="3,3" />
+                <!-- Horizontal diameter baseline -->
+                <line x1="${sunX - r}" y1="${sunY}" x2="${sunX + r}" y2="${sunY}" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />
 
                 <!-- Chords and lines -->
-                <line id="svg-chord-top" x1="${sunX}" y1="${sunY - r}" x2="${px}" y2="${py}" stroke="#94a3b8" stroke-width="1" />
-                <line id="svg-chord-bot" x1="${sunX}" y1="${sunY + r}" x2="${px}" y2="${py}" stroke="#64748b" stroke-width="1" />
+                <line id="svg-chord-bot" x1="${sunX - r}" y1="${sunY}" x2="${px}" y2="${py}" stroke="#64748b" stroke-width="1" />
+                <line id="svg-chord-top" x1="${sunX + r}" y1="${sunY}" x2="${px}" y2="${py}" stroke="#94a3b8" stroke-width="1" />
                 <line id="svg-radius-line" x1="${sunX}" y1="${sunY}" x2="${px}" y2="${py}" stroke="#eab308" stroke-width="1.2" />
-                <text id="svg-radius-text" x="" y="" fill="#eab308" font-size="8.5" font-family="Outfit" font-weight="bold">R</text>
+                <text id="svg-radius-text" x="" y="" fill="#eab308" font-size="10" font-family="Outfit" font-weight="bold">R</text>
 
-                <!-- Vertical segment representing fall (1/2 * a * t^2) -->
-                <line id="svg-fall-line" x1="${sunX}" y1="${sunY - r}" x2="${sunX}" y2="${py}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
-                <text id="svg-fall-text" x="${sunX - 55}" y="" fill="#38bdf8" font-size="7.5" font-family="Outfit" font-weight="bold">½ · a · t²</text>
+                <!-- Horizontal segment representing fall (1/2 * a * t^2) pointing LEFT -->
+                <line id="svg-fall-line" x1="${sunX + r}" y1="${sunY}" x2="${px}" y2="${sunY}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
+                <text id="svg-fall-text" x="" y="" fill="#38bdf8" font-size="10.5" font-family="Outfit" font-weight="bold" text-anchor="middle">½ · a · t²</text>
 
-                <!-- Horizontal segment representing velocity (v * t) -->
-                <line id="svg-vel-line" x1="${sunX}" y1="${py}" x2="${px}" y2="${py}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
-                <text id="svg-vel-text" x="" y="" fill="#38bdf8" font-size="7.5" font-family="Outfit" font-weight="bold" text-anchor="middle">v · t</text>
+                <!-- Vertical segment representing velocity (v * t) pointing UP -->
+                <line id="svg-vel-line" x1="${px}" y1="${sunY}" x2="${px}" y2="${py}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)" />
+                <text id="svg-vel-text" x="" y="" fill="#38bdf8" font-size="10.5" font-family="Outfit" font-weight="bold" text-anchor="end">v · t</text>
 
                 <!-- Angle Arcs -->
                 <path id="svg-arc-center" d="" fill="none" stroke="#eab308" stroke-width="1" />
-                <text id="svg-arc-center-text" x="" y="" fill="#eab308" font-size="7" font-family="Outfit">2θ</text>
+                <text id="svg-arc-center-text" x="" y="" fill="#eab308" font-size="7.5" font-family="Outfit">2θ</text>
 
                 <path id="svg-arc-bottom" d="" fill="none" stroke="#64748b" stroke-width="1" />
-                <text id="svg-arc-bottom-text" x="" y="" fill="#64748b" font-size="7" font-family="Outfit">θ</text>
+                <text id="svg-arc-bottom-text" x="" y="" fill="#64748b" font-size="7.5" font-family="Outfit">θ</text>
 
                 <path id="svg-arc-chord" d="" fill="none" stroke="#94a3b8" stroke-width="1" />
-                <text id="svg-arc-chord-text" x="" y="" fill="#94a3b8" font-size="7" font-family="Outfit">θ</text>
+                <text id="svg-arc-chord-text" x="" y="" fill="#94a3b8" font-size="7.5" font-family="Outfit">θ</text>
               </svg>
             </div>
           </div>
@@ -697,78 +698,82 @@ export class Level9 {
     this.accelerationContainer.querySelector('#accel-x-slider').value = this.accelerationX;
     this.accelerationContainer.querySelector('#accel-angle-val').textContent = `${twoThetaDeg}°`;
 
-    const pxVal = sunX + r * Math.sin(twoTheta);
-    const pyVal = sunY - r * Math.cos(twoTheta);
+    const pxVal = sunX + r * Math.cos(twoTheta);
+    const pyVal = sunY - r * Math.sin(twoTheta);
 
+    this.accelerationContainer.querySelector('#svg-chord-top').setAttribute('x1', sunX + r);
+    this.accelerationContainer.querySelector('#svg-chord-top').setAttribute('y1', sunY);
     this.accelerationContainer.querySelector('#svg-chord-top').setAttribute('x2', pxVal);
     this.accelerationContainer.querySelector('#svg-chord-top').setAttribute('y2', pyVal);
     
+    this.accelerationContainer.querySelector('#svg-chord-bot').setAttribute('x1', sunX - r);
+    this.accelerationContainer.querySelector('#svg-chord-bot').setAttribute('y1', sunY);
     this.accelerationContainer.querySelector('#svg-chord-bot').setAttribute('x2', pxVal);
     this.accelerationContainer.querySelector('#svg-chord-bot').setAttribute('y2', pyVal);
 
     this.accelerationContainer.querySelector('#svg-radius-line').setAttribute('x2', pxVal);
     this.accelerationContainer.querySelector('#svg-radius-line').setAttribute('y2', pyVal);
     
-    const dxP = pxVal - sunX;
-    const dyP = pyVal - sunY;
-    const lenP = Math.sqrt(dxP*dxP + dyP*dyP);
-    const uxP = dxP / (lenP || 1);
-    const uyP = dyP / (lenP || 1);
-    const perpX = -uyP;
-    const perpY = uxP;
-    const textX = sunX + dxP * 0.5 + perpX * 8;
-    const textY = sunY + dyP * 0.5 + perpY * 8;
+    const textX = sunX + (pxVal - sunX) * 0.5 - 10;
+    const textY = sunY + (pyVal - sunY) * 0.5 - 6;
     this.accelerationContainer.querySelector('#svg-radius-text').setAttribute('x', textX);
     this.accelerationContainer.querySelector('#svg-radius-text').setAttribute('y', textY);
 
-    this.accelerationContainer.querySelector('#svg-fall-line').setAttribute('y2', pyVal - 2);
-    this.accelerationContainer.querySelector('#svg-fall-text').setAttribute('y', (sunY - r) + (pyVal - (sunY - r)) / 2 + 3);
+    // Vertical line (v · t): from (pxVal, sunY) pointing UP to (pxVal, pyVal), label on left
+    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('x1', pxVal);
+    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('y1', sunY);
+    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('x2', pxVal);
+    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('y2', pyVal + 2);
+    this.accelerationContainer.querySelector('#svg-vel-text').setAttribute('x', pxVal - 8);
+    this.accelerationContainer.querySelector('#svg-vel-text').setAttribute('y', sunY - (sunY - pyVal) / 2 + 3);
 
-    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('y1', pyVal);
-    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('x2', pxVal - 2);
-    this.accelerationContainer.querySelector('#svg-vel-line').setAttribute('y2', pyVal);
-    this.accelerationContainer.querySelector('#svg-vel-text').setAttribute('x', sunX + (pxVal - sunX) / 2);
-    this.accelerationContainer.querySelector('#svg-vel-text').setAttribute('y', pyVal + 10);
+    // Horizontal line (1/2 * a * t^2): from (sunX + r, sunY) pointing LEFT to (pxVal, sunY)
+    this.accelerationContainer.querySelector('#svg-fall-line').setAttribute('x1', sunX + r);
+    this.accelerationContainer.querySelector('#svg-fall-line').setAttribute('y1', sunY);
+    this.accelerationContainer.querySelector('#svg-fall-line').setAttribute('x2', pxVal + 2);
+    this.accelerationContainer.querySelector('#svg-fall-line').setAttribute('y2', sunY);
+    this.accelerationContainer.querySelector('#svg-fall-text').setAttribute('x', pxVal + (sunX + r - pxVal) / 2);
+    this.accelerationContainer.querySelector('#svg-fall-text').setAttribute('y', sunY + 16);
 
+    // Center arc (2theta) at (sunX, sunY)
     const arcR1 = 28;
-    const startX1 = sunX;
-    const startY1 = sunY - arcR1;
-    const endX1 = sunX + arcR1 * Math.sin(twoTheta);
-    const endY1 = sunY - arcR1 * Math.cos(twoTheta);
-    const pathD1 = `M ${startX1} ${startY1} A ${arcR1} ${arcR1} 0 0 1 ${endX1} ${endY1}`;
+    const startX1 = sunX + arcR1;
+    const startY1 = sunY;
+    const endX1 = sunX + arcR1 * Math.cos(twoTheta);
+    const endY1 = sunY - arcR1 * Math.sin(twoTheta);
+    const pathD1 = `M ${startX1} ${startY1} A ${arcR1} ${arcR1} 0 0 0 ${endX1} ${endY1}`;
     this.accelerationContainer.querySelector('#svg-arc-center').setAttribute('d', pathD1);
-    const labelAngle1 = -Math.PI/2 + twoTheta/2;
+    const labelAngle1 = -twoTheta / 2;
     this.accelerationContainer.querySelector('#svg-arc-center-text').setAttribute('x', sunX + (arcR1 + 10) * Math.cos(labelAngle1));
     this.accelerationContainer.querySelector('#svg-arc-center-text').setAttribute('y', sunY + (arcR1 + 10) * Math.sin(labelAngle1) + 3);
 
-    const botY = sunY + r;
+    // Left arc (theta) at (sunX - r, sunY)
     const arcR2 = 35;
-    const startX2 = sunX;
-    const startY2 = botY - arcR2;
-    const dxBot = pxVal - sunX;
-    const dyBot = pyVal - botY;
-    const chordAngle = Math.atan2(dyBot, dxBot);
-    const endX2 = sunX + arcR2 * Math.cos(chordAngle);
-    const endY2 = botY + arcR2 * Math.sin(chordAngle);
-    const pathD2 = `M ${startX2} ${startY2} A ${arcR2} ${arcR2} 0 0 1 ${endX2} ${endY2}`;
+    const leftX = sunX - r;
+    const startX2 = leftX + arcR2;
+    const startY2 = sunY;
+    const endX2 = leftX + arcR2 * Math.cos(theta);
+    const endY2 = sunY - arcR2 * Math.sin(theta);
+    const pathD2 = `M ${startX2} ${startY2} A ${arcR2} ${arcR2} 0 0 0 ${endX2} ${endY2}`;
     this.accelerationContainer.querySelector('#svg-arc-bottom').setAttribute('d', pathD2);
-    const labelAngle2 = -Math.PI/2 + theta/2;
-    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('x', sunX + (arcR2 + 10) * Math.cos(labelAngle2));
-    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('y', botY + (arcR2 + 10) * Math.sin(labelAngle2) + 3);
+    const labelAngle2 = -theta / 2;
+    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('x', leftX + (arcR2 + 10) * Math.cos(labelAngle2));
+    this.accelerationContainer.querySelector('#svg-arc-bottom-text').setAttribute('y', sunY + (arcR2 + 10) * Math.sin(labelAngle2) + 3);
 
-    const arcR3 = 30;
-    const startX3 = pxVal - arcR3;
-    const startY3 = pyVal;
-    const dxChord = sunX - pxVal;
-    const dyChord = (sunY - r) - pyVal;
-    const chordAngleTop = Math.atan2(dyChord, dxChord);
-    const endX3 = pxVal + arcR3 * Math.cos(chordAngleTop);
-    const endY3 = pyVal + arcR3 * Math.sin(chordAngleTop);
-    const pathD3 = `M ${startX3} ${startY3} A ${arcR3} ${arcR3} 0 0 1 ${endX3} ${endY3}`;
+    // Point P arc (theta) at (pxVal, pyVal)
+    const arcR3 = 25;
+    const startX3 = pxVal;
+    const startY3 = pyVal + arcR3;
+    const dxChordR = (sunX + r) - pxVal;
+    const dyChordR = sunY - pyVal;
+    const anglePR = Math.atan2(dyChordR, dxChordR);
+    const endX3 = pxVal + arcR3 * Math.cos(anglePR);
+    const endY3 = pyVal + arcR3 * Math.sin(anglePR);
+    const pathD3 = `M ${startX3} ${startY3} A ${arcR3} ${arcR3} 0 0 0 ${endX3} ${endY3}`;
     this.accelerationContainer.querySelector('#svg-arc-chord').setAttribute('d', pathD3);
-    const labelAngle3 = Math.PI - theta/2;
-    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('x', pxVal + (arcR3 + 12) * Math.cos(labelAngle3));
-    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('y', pyVal + (arcR3 + 12) * Math.sin(labelAngle3) + 3);
+    const labelAngle3 = Math.PI / 2 - theta / 2;
+    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('x', pxVal + (arcR3 + 8) * Math.cos(labelAngle3));
+    this.accelerationContainer.querySelector('#svg-arc-chord-text').setAttribute('y', pyVal + (arcR3 + 8) * Math.sin(labelAngle3) + 3);
 
     const statusDesc = this.accelerationContainer.querySelector('#accel-status-desc');
     const ratio = Math.sin(twoTheta) / (twoTheta || 1);
