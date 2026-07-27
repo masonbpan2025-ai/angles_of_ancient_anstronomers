@@ -2990,8 +2990,8 @@ export class Level6 {
 
       // Rectangle Edge Projections
       drawLabelLine(O, V_br, 'cos(α)cos(β)', '#ffffff', 18);
-      drawLabelLine(V_br, { x: V_br.x, y: P2.y }, 'cos(α)sin(β)', '#60a5fa', -30, false);
-      drawLabelLine({ x: V_br.x, y: P2.y }, V_tr, 'sin(α)cos(β)', '#facc15', -30, false);
+      drawLabelLine(V_br, { x: V_br.x, y: P2.y }, 'sin(α)cos(β)', '#facc15', -30, false);
+      drawLabelLine({ x: V_br.x, y: P2.y }, V_tr, 'cos(α)sin(β)', '#60a5fa', -30, false);
 
       drawLabelLine(O, V_tl, 'sin(α+β)', '#4ade80', 22);
       drawLabelLine(V_tl, P1, 'cos(α+β)', '#f472b6', -16);
@@ -3361,8 +3361,8 @@ export class Level6 {
             <div class="bg-slate-950/80 rounded-lg p-2 border border-slate-800 space-y-1 font-mono text-[9px]">
               <div class="text-slate-300 font-bold uppercase tracking-wider border-b border-slate-800 pb-0.5 font-sans text-[9.5px]">Vertical Sides (Height)</div>
               <div class="flex justify-between"><span class="text-slate-400">Left Edge</span><span class="text-green-400 font-bold">sin(α+β)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Right Edge Bottom</span><span class="text-sky-400">cos(α)sin(β)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Right Edge Top</span><span class="text-yellow-400">sin(α)cos(β)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Right Edge Bottom</span><span class="text-yellow-400">sin(α)cos(β)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Right Edge Top</span><span class="text-sky-400">cos(α)sin(β)</span></div>
               <div class="border-t border-slate-800 pt-1 text-center font-bold text-green-400 font-serif text-[10px]">
                 sin(α+β) = <span class="text-yellow-400">sin(α)cos(β)</span> + <span class="text-sky-400">cos(α)sin(β)</span>
               </div>
